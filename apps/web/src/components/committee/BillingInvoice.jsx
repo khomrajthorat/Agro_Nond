@@ -357,10 +357,13 @@ const formatCurrency = (num) => {
 const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-IN', {
+    return date.toLocaleString('en-IN', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
     });
 };
 
@@ -441,49 +444,49 @@ const BillingInvoice = ({ data, type = 'farmer' }) => {
     const finalAmount = data.finalAmount || data.netAmount || baseAmount;
 
     // Calculate rate
-   let rate = data.rate || 0;
-let rateUnit = hasQuantity ? 'kg' : 'Nag';
+    let rate = data.rate || 0;
+    let rateUnit = hasQuantity ? 'kg' : 'Nag';
 
-// Fallback calculation if rate not provided
-if (rate === 0 && baseAmount > 0) {
-    if (hasQuantity && quantity > 0) {
-        rate = baseAmount / quantity;
-    } else if (hasNag && nag > 0) {
-        rate = baseAmount / nag;
-    } else if (displayQty > 0) {
-        // Original dev/bhargav fallback
-        rate = baseAmount / displayQty;
+    // Fallback calculation if rate not provided
+    if (rate === 0 && baseAmount > 0) {
+        if (hasQuantity && quantity > 0) {
+            rate = baseAmount / quantity;
+        } else if (hasNag && nag > 0) {
+            rate = baseAmount / nag;
+        } else if (displayQty > 0) {
+            // Original dev/bhargav fallback
+            rate = baseAmount / displayQty;
+        }
     }
-}
 
-// Get splits from data (may be undefined or empty array)
-const splits = data.splits || [];
+    // Get splits from data (may be undefined or empty array)
+    const splits = data.splits || [];
 
-const rateDetailsLines = (() => {
-    if (splits.length > 0) {
-        return splits.map((s, i) => {
-            const sUnit = hasQuantity ? 'kg' : 'Nag';
-            return `₹${formatNumber(s.rate)} for ${formatNumber(s.qty)} ${sUnit}`;
-        });
-    }
-    // Single-rate fallback
-    if (displayQty > 0) {
-        const rate = (baseAmount / displayQty).toFixed(2);
-        return [`₹${rate} for ${formatNumber(displayQty)} ${unit}`];
-    }
-    return ['-'];
-})();
+    const rateDetailsLines = (() => {
+        if (splits.length > 0) {
+            return splits.map((s, i) => {
+                const sUnit = hasQuantity ? 'kg' : 'Nag';
+                return `₹${formatNumber(s.rate)} for ${formatNumber(s.qty)} ${sUnit}`;
+            });
+        }
+        // Single-rate fallback
+        if (displayQty > 0) {
+            const rate = (baseAmount / displayQty).toFixed(2);
+            return [`₹${rate} for ${formatNumber(displayQty)} ${unit}`];
+        }
+        return ['-'];
+    })();
 
-// ── Commission percentage ──
+    // ── Commission percentage ──
     // ── Commission percentage ──
     const commissionPercent = data.commissionRate
         ? (data.commissionRate * 100).toFixed(1)
         : (baseAmount > 0 ? ((commission / baseAmount) * 100).toFixed(1) : '4.0');
 
     const getQuantityDisplay = () => {
-if (hasQuantity && hasNag) return `${formatNumber(quantity)} kg / ${formatNumber(nag)} Nag`;
-if (hasQuantity) return `${formatNumber(quantity)} kg`;
-if (hasNag) return `${formatNumber(nag)} Nag`;
+        if (hasQuantity && hasNag) return `${formatNumber(quantity)} kg / ${formatNumber(nag)} Nag`;
+        if (hasQuantity) return `${formatNumber(quantity)} kg`;
+        if (hasNag) return `${formatNumber(nag)} Nag`;
         return '-';
     };
 
@@ -533,6 +536,12 @@ if (hasNag) return `${formatNumber(nag)} Nag`;
                             <Text style={styles.detailsLabel}>Invoice Date</Text>
                             <Text style={styles.detailsValue}>{formatDate(data.date)}</Text>
                         </View>
+                        {data.token && (
+                            <View style={styles.detailsRow}>
+                                <Text style={styles.detailsLabel}>Token No</Text>
+                                <Text style={[styles.detailsValue, { color: colors.brand }]}>#{data.token}</Text>
+                            </View>
+                        )}
                     </View>
                 </View>
 

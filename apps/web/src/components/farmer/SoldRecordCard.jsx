@@ -1,5 +1,6 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { Download, CheckCircle, Clock, X } from 'lucide-react';
+import { getInvoiceData } from '../../lib/invoiceUtils';
 
 // Lazy load PDF components
 const PDFDownloadLink = lazy(() =>
@@ -156,32 +157,8 @@ const SoldRecordCard = ({ record, farmerName }) => {
   // Get farmer name from record or prop
   const actualFarmerName = record.farmer_id?.full_name || farmerName || 'Farmer';
 
-  // Invoice Data
-  const invoiceData = {
-    id: record._id || record.id || 'N/A',
-    date: date.toISOString(),
-    name: actualFarmerName,
-    crop: record.vegetable,
-    // Use actual sold quantities
-    qty: hasQuantity ? soldQty : 0,
-    nag: !hasQuantity ? soldQty : 0,
-    rate: parseFloat(avgRate) || 0,
-    splits: splits || [], // Pass splits for multi-row PDF display
-    baseAmount: totalSaleAmount,
-    commission: estimatedCommission,
-    commissionRate: commissionRate, // Pass explicitly for PDF
-    finalAmount: netPayable,
-    // Invoice status logic:
-    // If Payment Pending -> Payment Pending
-    // If Sold -> Full (entire lot sold)
-    // If Partial -> Partial (some remaining)
-    // If Pending -> Pending
-    status: isPaymentPending ? 'Payment Pending' :
-      (computedStatus === 'Sold' ? 'Full' :
-        (computedStatus === 'Partial' ? 'Partial' :
-          (computedStatus === 'WeightPending' ? 'WeightPending' : 'Pending'))),
-    type: 'pay'
-  };
+  // Invoice Data - Use shared helper to ensure PDF consistency (includes address, phone, token, etc.)
+  const invoiceData = getInvoiceData(record, actualFarmerName);
 
 
 

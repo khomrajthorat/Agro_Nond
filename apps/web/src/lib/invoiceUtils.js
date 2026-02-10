@@ -100,6 +100,8 @@ export const getInvoiceData = (record, farmerName = 'Farmer') => {
         id: record._id || record.id || 'N/A',
         date: date.toISOString(),
         name: actualFarmerName,
+        address: record.farmer_id?.location || record.farmer_id?.address || '',
+        phone: record.farmer_id?.phone || '',
         crop: record.vegetable,
         // Use actual sold quantities
         qty: hasQuantity ? soldQty : 0,
@@ -115,6 +117,7 @@ export const getInvoiceData = (record, farmerName = 'Farmer') => {
             (computedStatus === 'Sold' ? 'Full' :
                 (computedStatus === 'Partial' ? 'Partial' :
                     (computedStatus === 'WeightPending' ? 'WeightPending' : 'Pending'))),
-        type: 'pay'
+        type: 'pay',
+        token: record.token || null
     };
 };
