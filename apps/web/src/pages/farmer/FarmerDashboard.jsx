@@ -558,6 +558,7 @@ const FarmerDashboard = () => {
     pendingLotsCount: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [dailyToken, setDailyToken] = useState(null); // Daily Token for today
   const [profile, setProfile] = useState({
     name: '',
     phone: '',
@@ -654,10 +655,21 @@ const FarmerDashboard = () => {
     }
   };
 
+  // Fetch daily token
+  const fetchDailyToken = useCallback(async () => {
+    try {
+      const data = await api.records.myToken();
+      setDailyToken(data.token);
+    } catch (error) {
+      console.error('Failed to fetch token:', error);
+    }
+  }, []);
+
   // ✅ NEW: Fetch records on mount
   useEffect(() => {
     fetchRecords(true, 1, 'All', '');
     fetchStats();
+    fetchDailyToken();
     loadProfile();
   }, []);
 
@@ -707,6 +719,7 @@ const FarmerDashboard = () => {
       setView('dashboard');
       fetchRecords(true, 1, filterStatus, selectedDate); // Refresh and go to page 1
       fetchStats();
+      fetchDailyToken(); // Refresh token after adding record
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.error || 'Failed to save record');
@@ -969,29 +982,39 @@ const FarmerDashboard = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 w-full sm:w-auto">
-              <button
-                onClick={handleDownloadReport}
-                className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm"
-              >
-                <Download size={20} className="text-gray-500" />
-                Download Report
-              </button>
-              <button
-                onClick={() => setView('history')}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition hover:shadow-md"
-              >
-                <History size={20} />
-                Sales History
-              </button>
-              <button
-                onClick={() => setView('addRecord')}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl sm:rounded-full shadow-lg shadow-green-200 transition hover:shadow-xl hover:-translate-y-1"
-              >
-                <Plus size={20} />
-                New Record
-              </button>
-            </div>
+            {/* Token Badge - Only show if token exists */}
+            {dailyToken && (
+              <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl shadow-lg shadow-orange-200 animate-pulse-once">
+                <div className="text-white">
+                  <p className="text-xs font-medium opacity-90">Your Token Today</p>
+                  <p className="text-3xl font-black">#{dailyToken}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 w-full sm:w-auto mt-4">
+            <button
+              onClick={handleDownloadReport}
+              className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm"
+            >
+              <Download size={20} className="text-gray-500" />
+              Download Report
+            </button>
+            <button
+              onClick={() => setView('history')}
+              className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition hover:shadow-md"
+            >
+              <History size={20} />
+              Sales History
+            </button>
+            <button
+              onClick={() => setView('addRecord')}
+              className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl sm:rounded-full shadow-lg shadow-green-200 transition hover:shadow-xl hover:-translate-y-1"
+            >
+              <Plus size={20} />
+              New Record
+            </button>
           </div>
         </div>
 

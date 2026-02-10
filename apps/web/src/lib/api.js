@@ -120,6 +120,10 @@ export const api = {
       body: JSON.stringify({ official_qty: weight })
     }),
 
+    // --- Token Methods ---
+    searchByToken: (token) => apiRequest(`/api/records/search-by-token?token=${token}`, { method: 'GET' }),
+    myToken: () => apiRequest('/api/records/my-token', { method: 'GET' }),
+
     // --- NEW Farmer Dashboard Methods ---
     myRecords: (params = {}) => {
       const query = new URLSearchParams(params).toString();
