@@ -718,6 +718,7 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
         // Calculate Stats
         let totalRevenue = 0;
         let totalQuantity = 0;
+        let totalNag = 0;
         let pendingPayment = 0;
         const vegetableStats = {};
 
@@ -734,18 +735,22 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
 
             // Count quantity (official weight preferred, else estimated)
             const qty = record.official_qty || record.quantity || 0;
+            const nag = record.official_nag || record.nag || 0;
             totalQuantity += qty;
+            totalNag += nag;
 
             // Vegetable stats
             if (!vegetableStats[record.vegetable]) {
                 vegetableStats[record.vegetable] = {
                     name: record.vegetable,
                     quantity: 0,
+                    nag: 0,
                     count: 0,
                     revenue: 0
                 };
             }
             vegetableStats[record.vegetable].quantity += qty;
+            vegetableStats[record.vegetable].nag += nag;
             vegetableStats[record.vegetable].count += 1;
             if (record.status === 'Sold') {
                 vegetableStats[record.vegetable].revenue += record.total_amount || 0;
@@ -757,6 +762,7 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
             stats: {
                 totalRevenue,
                 totalQuantity,
+                totalNag,
                 pendingPayment,
                 vegetableSummary: Object.values(vegetableStats)
             }
