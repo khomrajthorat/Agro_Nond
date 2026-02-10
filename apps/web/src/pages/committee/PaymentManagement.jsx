@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { RefreshCw, Search, CheckCircle, Clock, IndianRupee, ArrowUpRight, ArrowDownLeft, X, ChevronRight, Calendar } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import TransactionReport from '../../components/committee/TransactionReport';
 import api from '../../lib/api';
 
 const PaymentManagement = () => {
@@ -23,6 +25,75 @@ const PaymentManagement = () => {
     const [traderPendings, setTraderPendings] = useState([]);
     const [selectedPendingIds, setSelectedPendingIds] = useState([]);
     const [bulkStep, setBulkStep] = useState(1);
+
+    // PDF Report State
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [reportData, setReportData] = useState([]);
+    const [readyToDownload, setReadyToDownload] = useState(false);
+
+    const handleDownloadReport = async () => {
+        try {
+            setIsDownloading(true);
+            setReadyToDownload(false);
+
+            // Fetch ALL records matching current filters (limit=10000)
+            const params = { limit: 10000 };
+
+            // Apply current filters
+            if (selectedDate) params.date = selectedDate;
+            if (searchTerm) params.search = searchTerm;
+            if (filter === 'receivables') params.statusType = 'pending_trader'; // backend might need adjustment or handle client side?
+            // Note: The backend finance.billingRecords.list supports 'period' but maybe not flexible search?
+            // Let's check api usage: api.finance.billingRecords.list({ limit: 100 })
+            // The filteredRecords logic in frontend does search/date filtering manually on the 100 records?
+            // Wait, fetchRecords uses {limit: 100}. If we want ALL, we should ask backend.
+            // If backend doesn't support deep search, we might need to fetch a lot and filter client side.
+            // For now, let's request a large limit.
+
+            const data = await api.finance.billingRecords.list(params);
+
+            if (data && data.records) {
+                // Apply frontend filtering to the full dataset if backend doesn't support specific filters
+                // The current component filters `records` (which acts as a view/buffer) using `filteredRecords`.
+                // We should replicate that filtering on the full dataset.
+
+                let fullRecords = data.records;
+
+                // 1. Search Filter
+                if (searchTerm) {
+                    const searchLower = searchTerm.toLowerCase();
+                    fullRecords = fullRecords.filter(record =>
+                        (record.farmer_id?.full_name?.toLowerCase().includes(searchLower)) ||
+                        (record.trader_id?.business_name?.toLowerCase().includes(searchLower))
+                    );
+                }
+
+                // 2. Date Filter (if not handled by backend param)
+                if (selectedDate) {
+                    fullRecords = fullRecords.filter(record => {
+                        const recordDate = new Date(record.createdAt).toISOString().split('T')[0];
+                        return recordDate === selectedDate;
+                    });
+                }
+
+                // 3. Status Filter
+                if (filter === 'receivables') {
+                    fullRecords = fullRecords.filter(r => r.trader_payment_status === 'Pending');
+                } else if (filter === 'payables') {
+                    fullRecords = fullRecords.filter(r => r.farmer_payment_status === 'Pending');
+                }
+
+                setReportData(fullRecords);
+                setReadyToDownload(true);
+                toast.success(`Generated report for ${fullRecords.length} records`);
+            }
+        } catch (error) {
+            console.error("Report generation failed:", error);
+            toast.error("Failed to generate report");
+        } finally {
+            setIsDownloading(false);
+        }
+    };
 
     const fetchRecords = useCallback(async (showLoading = true) => {
         try {
@@ -205,6 +276,41 @@ const PaymentManagement = () => {
                     <p className="text-slate-500 mt-2 text-base">Track market cashflow and settle accounts</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {/* PDF Download Button */}
+                    {readyToDownload ? (
+                        <PDFDownloadLink
+                            document={<TransactionReport records={reportData} filters={{ date: selectedDate, search: searchTerm, period: filter }} />}
+                            fileName={`AgroNond_Transaction_Report_${new Date().toISOString().split('T')[0]}.pdf`}
+                            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-all font-medium shadow-sm"
+                            onClick={() => {
+                                // Optional: Reset state after delay?
+                                setTimeout(() => setReadyToDownload(false), 2000);
+                            }}
+                        >
+                            {({ blob, url, loading, error }) =>
+                                loading ? 'Loading Doc...' : (
+                                    <>
+                                        <ArrowDownLeft size={18} className="rotate-180" />
+                                        Download PDF
+                                    </>
+                                )
+                            }
+                        </PDFDownloadLink>
+                    ) : (
+                        <button
+                            onClick={handleDownloadReport}
+                            disabled={isDownloading}
+                            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all font-medium shadow-sm"
+                        >
+                            {isDownloading ? (
+                                <RefreshCw size={18} className="animate-spin" />
+                            ) : (
+                                <ArrowDownLeft size={18} className="rotate-180" />
+                            )}
+                            {isDownloading ? 'Generating...' : 'Report'}
+                        </button>
+                    )}
+
                     <button
                         onClick={() => fetchRecords()}
                         disabled={loading}

@@ -155,7 +155,7 @@ router.get('/my-records', requireAuth, async (req, res) => {
         if (!status || status === 'All') {
             const totalRecords = await Record.countDocuments(baseQuery);
             const rawRecords = await Record.find(baseQuery)
-                .populate('farmer_id', 'full_name phone farmerId')
+                .populate('farmer_id', 'full_name phone farmerId location')
                 .select('-trader_id -trader_payment_ref -trader_payment_mode -trader_payment_status -net_receivable_from_trader -trader_commission')
                 .sort({ createdAt: -1 })
                 .skip(skip)
@@ -188,7 +188,7 @@ router.get('/my-records', requireAuth, async (req, res) => {
 
         // We fetch ALL matching candidates (without pagination limit) to filter correctly in memory
         const candidateRecords = await Record.find({ ...baseQuery, ...dbStatusQuery })
-            .populate('farmer_id', 'full_name phone farmerId')
+            .populate('farmer_id', 'full_name phone farmerId location')
             .select('-trader_id -trader_payment_ref -trader_payment_mode -trader_payment_status -net_receivable_from_trader -trader_commission')
             .sort({ createdAt: -1 })
             .lean();
@@ -1073,7 +1073,8 @@ router.patch('/:id/sell', requireAuth, async (req, res) => {
                     status: 'RateAssigned',
                     parent_record_id: record._id,
                     is_parent: false,
-                    lot_id: childLotId // Set lot_id here so pre-save hook skips
+                    lot_id: childLotId, // Set lot_id here so pre-save hook skips
+                    token: record.token // Propagate daily token to child record
                 });
 
                 try {

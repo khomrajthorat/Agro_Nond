@@ -410,7 +410,7 @@ router.get('/billing-records', async (req, res) => {
 
         const [records, total] = await Promise.all([
             Record.find(query)
-                .populate('farmer_id', 'full_name farmerId')
+                .populate('farmer_id', 'full_name farmerId phone location')
                 .populate('trader_id', 'full_name business_name customId')
                 .sort({ sold_at: -1 })
                 .skip(skip)

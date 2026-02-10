@@ -12,10 +12,12 @@ import {
     ChevronDown,
     Save,
     Plus,
-    ShoppingBasket
+    ShoppingBasket,
+    Hash
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../lib/api';
+import { api as apiNamed } from '../../lib/api';
 
 export default function LilavEntry() {
     // --- Data (Pre-loaded) ---
@@ -54,6 +56,10 @@ export default function LilavEntry() {
 
     // --- Item Table ---
     const [itemDetails, setItemDetails] = useState({});
+
+    // --- Token Search ---
+    const [tokenSearch, setTokenSearch] = useState('');
+    const [isSearchingToken, setIsSearchingToken] = useState(false);
 
     // --- Refs for click-outside ---
     const farmerDropdownRef = useRef(null);
@@ -153,6 +159,30 @@ export default function LilavEntry() {
         const nagValue = (record.official_nag > 0) ? record.official_nag : (record.nag || 0);
         const qtyValue = (record.official_qty > 0) ? record.official_qty : (record.quantity || 0);
         return { nagValue, qtyValue };
+    };
+
+    // --- Token Search Handler ---
+    const handleTokenSearch = async () => {
+        if (!tokenSearch.trim()) return;
+        setIsSearchingToken(true);
+        try {
+            const result = await apiNamed.records.searchByToken(tokenSearch.trim());
+            if (result?.farmer) {
+                const farmer = result.farmer;
+                setSelectedFarmer(farmer);
+                setFarmerSearch('');
+                setShowFarmerList(false);
+                setSelectedCrops([]);
+                setSelectedCrop(null);
+                setTraderAllocations([]);
+                setTokenSearch('');
+                toast.success(`Farmer Found: ${farmer.full_name} (Token #${farmer.token})`);
+            }
+        } catch (error) {
+            toast.error(error.message || 'No farmer found with this token today');
+        } finally {
+            setIsSearchingToken(false);
+        }
     };
 
     // --- Farmer Selection ---
@@ -445,10 +475,11 @@ export default function LilavEntry() {
     // --- Filtered Lists ---
     const filteredFarmers = useMemo(() => {
         if (!farmerSearch.trim()) return farmers;
+        const search = farmerSearch.toLowerCase();
         return farmers.filter(f =>
-            f.full_name?.toLowerCase().includes(farmerSearch.toLowerCase()) ||
+            f.full_name?.toLowerCase().includes(search) ||
             f.phone?.includes(farmerSearch) ||
-            f.farmerId?.toLowerCase().includes(farmerSearch.toLowerCase())
+            f.farmerId?.toLowerCase().includes(search)
         );
     }, [farmers, farmerSearch]);
 
@@ -500,6 +531,38 @@ export default function LilavEntry() {
             </div>
 
             <div className="px-6 py-6">
+                {/* === TOKEN QUICK SEARCH === */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div className="flex items-center gap-2 flex-1">
+                            <Hash size={18} className="text-green-600" />
+                            <div>
+                                <p className="text-sm font-semibold text-gray-900">Quick Token Search</p>
+                                <p className="text-xs text-gray-500">Enter farmer's daily token to auto-select</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <input
+                                type="number"
+                                value={tokenSearch}
+                                onChange={(e) => setTokenSearch(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleTokenSearch();
+                                }}
+                                placeholder="Token #"
+                                className="w-24 px-3 py-2 rounded-lg border border-green-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none text-center font-bold text-lg"
+                            />
+                            <button
+                                onClick={handleTokenSearch}
+                                disabled={!tokenSearch.trim() || isSearchingToken}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSearchingToken ? <Loader2 size={18} className="animate-spin" /> : 'Find'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {/* === SELECTION BOXES (Vertical Layout) === */}
                 <div className="grid grid-cols-1 gap-6 mb-8 max-w-2xl">
 
@@ -928,7 +991,9 @@ export default function LilavEntry() {
                                         </div>
                                         <div>
                                             <p className="font-semibold text-gray-900">{allocation.traderName}</p>
-                                            <p className="text-xs text-gray-500">{allocation.crop} • {allocation.qty} {allocation.unit}</p>
+                                            <p className="text-xs text-gray-500">
+                                                {allocation.crop} • {allocation.qty} {allocation.unit} • <span className="font-medium text-emerald-600">₹{allocation.baseRate} / {allocation.unit === 'Nag' ? '100 Nag' : '10 Kg'}</span>
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">

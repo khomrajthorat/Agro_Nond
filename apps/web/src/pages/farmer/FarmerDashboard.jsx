@@ -1161,6 +1161,7 @@ const FarmerDashboard = () => {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
+                      <th className="px-3 py-4 text-center font-semibold text-gray-600 uppercase tracking-wider text-xs w-16">Token</th>
                       <th className="px-4 py-4 text-center font-semibold text-gray-600 uppercase tracking-wider text-xs w-24">Date</th>
                       <th className="px-4 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs w-40">Item</th>
                       <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs w-48">Sales Progress</th>
@@ -1173,7 +1174,7 @@ const FarmerDashboard = () => {
                   <tbody className="divide-y divide-gray-100">
                     {displayRecords.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="px-8 py-16 text-center">
+                        <td colSpan="8" className="px-8 py-16 text-center">
                           <Clock size={48} className="mx-auto text-gray-300 mb-3" />
                           <p className="text-gray-600 font-medium">No records found</p>
                           <p className="text-gray-500 text-sm mt-1">Click "New Record" to add your first entry</p>
@@ -1592,6 +1593,17 @@ const RecordRow = memo(({ record, handleEditClick, initiateDelete, getInvoiceDat
 
   return (
     <tr className="hover:bg-gray-50 transition-colors group">
+      {/* Token */}
+      <td className="px-3 py-4 align-top text-center">
+        {record.token ? (
+          <span className="text-green-700 font-bold text-sm">
+            #{record.token}
+          </span>
+        ) : (
+          <span className="text-gray-300">-</span>
+        )}
+      </td>
+
       {/* Date */}
       <td className="px-6 py-4 align-top">
         <div className="text-gray-900 font-medium">{new Date(record.createdAt).toLocaleDateString('en-GB')}</div>
@@ -1763,8 +1775,17 @@ const MobileRecordCard = memo(({ record, handleEditClick, initiateDelete, getInv
     <div className="p-4 hover:bg-gray-50 transition-colors group">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <div className="font-bold text-gray-900 text-lg">{record.vegetable}</div>
-          <div className="text-xs text-gray-500 mt-0.5">{new Date(record.createdAt).toLocaleDateString('en-GB')} at {formatTime(record.createdAt)}</div>
+          <div className="font-bold text-gray-900 text-lg">
+            {record.token && (
+              <span className="mr-2 text-green-700 font-bold text-sm">
+                #{record.token}
+              </span>
+            )}
+            {record.vegetable}
+          </div>
+          <div className="text-xs text-gray-500 mt-0.5">
+            {new Date(record.createdAt).toLocaleDateString('en-GB')} at {formatTime(record.createdAt)}
+          </div>
         </div>
         <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 border ${isPaymentPending
           ? 'bg-orange-100 text-orange-700 border-orange-200'
