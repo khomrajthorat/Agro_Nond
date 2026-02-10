@@ -440,8 +440,8 @@ const WeightDashboard = () => {
             <div className="bg-white border border-green-100 rounded-xl mb-6 overflow-hidden">
               <div className="px-4 py-3 bg-green-50 border-b border-green-100">
                 <div className="flex items-center gap-2">
-                  <Scale size={18} className="text-green-600" />
-                  <h2 className="font-semibold text-gray-900">Ready to Weigh</h2>
+                  <Scale size={40} className="text-green-600" />
+                  <h2 className="font-semibold text-gray-900">Ready to Weight</h2>
                   {tokenFilterFarmerId && (
                     <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
                       Filtered by Token
@@ -524,7 +524,7 @@ const WeightDashboard = () => {
         <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div className="flex items-center gap-2">
-              <CheckCircle size={18} className="text-green-600" />
+              <CheckCircle size={40} className="text-green-600" />
               <h2 className="font-semibold text-gray-900">Completed Records</h2>
             </div>
 
