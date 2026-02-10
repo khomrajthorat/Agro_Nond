@@ -43,132 +43,19 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   );
 };
 
-
-
-// --- VEGETABLE DATA ---
-const VEGETABLE_CATEGORIES = [
-  {
-    id: 'onion-potato',
-    name: 'Onion-Potato',
-    marathi: 'कांदा-बटाटा',
-    items: [
-      { english: 'Onion', marathi: 'कांदा ' },
-      { english: 'Potato', marathi: 'बटाटा ' },
-      { english: 'Garlic', marathi: 'लसूण ' },
-      { english: 'Ginger', marathi: 'आले / अद्रक ' },
-      { english: 'Sweet Potato', marathi: 'रताळे ' }
-    ]
-  },
-  {
-    id: 'daily-veg',
-    name: 'Daily Veg',
-    marathi: 'फळ भाज्या',
-    items: [
-      { english: 'Tomato', marathi: 'टोमॅटो ' },
-      { english: 'Brinjal / Eggplant', marathi: 'वांगी ' },
-      { english: 'Lady Finger / Okra', marathi: 'भेंडी ' },
-      { english: 'Green Chili', marathi: 'हिरवी मिरची' },
-      { english: 'Capsicum', marathi: 'ढोबळी मिरची' },
-      { english: 'Drumstick', marathi: 'शेवगा ' },
-      { english: 'Cucumber', marathi: 'काकडी ' },
-      { english: 'Lemon', marathi: 'लिंबू' }
-    ]
-  },
-  {
-    id: 'leafy-veg',
-    name: 'Leafy Veg',
-    marathi: 'पाला भाज्या',
-    items: [
-      { english: 'Coriander', marathi: 'कोथिंबीर ' },
-      { english: 'Fenugreek', marathi: 'मेथी ' },
-      { english: 'Spinach', marathi: 'पालक ' },
-      { english: 'Dill Leaves', marathi: 'शेपू ' },
-      { english: 'Amaranth', marathi: 'लाल माठ' },
-      { english: 'Mint', marathi: 'पुदिना ' },
-      { english: 'Curry Leaves', marathi: 'कढीपत्ता ' },
-      { english: 'Spring Onion', marathi: 'कांद्याची पात' }
-    ]
-  },
-  {
-    id: 'vine-veg',
-    name: 'Vine Veg / Gourds',
-    marathi: 'वेलवर्गीय',
-    items: [
-      { english: 'Bottle Gourd', marathi: 'दुधी भोपळा ' },
-      { english: 'Bitter Gourd', marathi: 'कारले' },
-      { english: 'Ridge Gourd', marathi: 'डोडका ' },
-      { english: 'Sponge Gourd', marathi: 'घोसाळे' },
-      { english: 'Snake Gourd', marathi: 'पडवळ ' },
-      { english: 'Pumpkin', marathi: 'लाल भोपळा / डांगर ' },
-      { english: 'Ash Gourd', marathi: 'कोहळा' }
-    ]
-  },
-  {
-    id: 'beans-pods',
-    name: 'Beans / Pods',
-    marathi: 'शेंगा भाज्या',
-    items: [
-      { english: 'Cluster Beans', marathi: 'गवार' },
-      { english: 'French Beans', marathi: 'फरसबी' },
-      { english: 'Green Peas', marathi: 'मटार / ओला वाटाणा' },
-      { english: 'Flat Beans', marathi: 'घेवडा / वाल ' },
-      { english: 'Double Beans', marathi: 'डबल बी ' },
-      { english: 'Cowpea', marathi: 'चवळी ' }
-    ]
-  },
-  {
-    id: 'roots-salad',
-    name: 'Roots & Salad',
-    marathi: 'कंदमुळं / कोबी',
-    items: [
-      { english: 'Cabbage', marathi: 'कोबी ' },
-      { english: 'Cauliflower', marathi: 'फ्लॉवर ' },
-      { english: 'Carrot', marathi: 'गाजर ' },
-      { english: 'Radish', marathi: 'मुळा ' },
-      { english: 'Beetroot', marathi: 'बीट ' },
-      { english: 'Elephant Foot Yam', marathi: 'सुरण' }
-    ]
-  },
-  {
-    id: 'fruits',
-    name: 'Fruits',
-    marathi: 'फळे',
-    items: [
-      { english: 'Banana', marathi: 'केळी' },
-      { english: 'Apple', marathi: 'सफरचंद' },
-      { english: 'Pomegranate', marathi: 'डाळिंब' },
-      { english: 'Guava', marathi: 'पेरू' },
-      { english: 'Orange', marathi: 'संत्री' },
-      { english: 'Sweet Lime', marathi: 'मोसंबी' },
-      { english: 'Papaya', marathi: 'पपई ' },
-      { english: 'Watermelon', marathi: 'कलिंगड' },
-      { english: 'Grapes', marathi: 'द्राक्षे' },
-      { english: 'Custard Apple', marathi: 'सीताफळ ' },
-      { english: 'Mango', marathi: 'आंबा' },
-      { english: 'Sapodilla', marathi: 'चिकू ' },
-      { english: 'Pineapple', marathi: 'अननस' }
-    ]
-  }
-];
-
-// Helper to flatten data for search, but UI will use categories
-const ALL_VEGETABLES = VEGETABLE_CATEGORIES.flatMap(category =>
-  category.items.map(item => ({
-    ...item,
-    category: category.name,
-    categoryId: category.id,
-    display: `${item.english} (${item.marathi})`
-  }))
-);
-
 // --- ADD NEW RECORD SECTION ---
 const AddNewRecordSection = ({ onBack, onSave }) => {
   const [selectedMarket, setSelectedMarket] = useState('');
   const [isLoadingMarket, setIsLoadingMarket] = useState(true);
   const [selectedVegetable, setSelectedVegetable] = useState('');
+  const [selectedVegetableData, setSelectedVegetableData] = useState(null); // Track full vegetable object
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState([]); // Track which categories are open
+
+  // Dynamic vegetables from API
+  const [vegetables, setVegetables] = useState([]);
+  const [vegetableCategories, setVegetableCategories] = useState([]);
+  const [isLoadingVegetables, setIsLoadingVegetables] = useState(true);
 
   const [quantities, setQuantities] = useState({
     kg: '',
@@ -176,24 +63,52 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
     quintal: ''
   });
 
-  // ✅ NEW: Nag field state (single vegetable count - multiples of 100)
+  // Nag field state
   const [nag, setNag] = useState('');
 
   const [addedItems, setAddedItems] = useState([]);
 
+  // Fetch vegetables from API
+  useEffect(() => {
+    const fetchVegetables = async () => {
+      try {
+        setIsLoadingVegetables(true);
+        const data = await api.vegetables.list();
+        setVegetables(data.vegetables || []);
+
+        // Transform to category format for UI
+        const grouped = data.grouped || {};
+        const categories = Object.entries(grouped).map(([categoryName, items]) => ({
+          id: categoryName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          name: categoryName,
+          items: items.map(item => ({
+            _id: item._id,
+            english: item.name,
+            marathi: item.marathiName,
+            units: item.units || ['kg']
+          }))
+        }));
+        setVegetableCategories(categories);
+      } catch (error) {
+        console.error('Failed to fetch vegetables:', error);
+        toast.error('Failed to load vegetables');
+      } finally {
+        setIsLoadingVegetables(false);
+      }
+    };
+    fetchVegetables();
+  }, []);
+
   // Use Centralized Market Configuration
-  // All users (farmers, traders, lilav, weight, committee) belong to this single market
   useEffect(() => {
     setSelectedMarket(MARKET_CONFIG.MARKET_NAME);
     setIsLoadingMarket(false);
   }, []);
 
-
   // Filter logic
   const isSearching = searchTerm.length > 0 && selectedVegetable !== searchTerm;
 
-  const filteredCategories = VEGETABLE_CATEGORIES.map(cat => {
-    // If searching, filter items inside. If not searching, keep all items.
+  const filteredCategories = vegetableCategories.map(cat => {
     const matchingItems = isSearching
       ? cat.items.filter(item =>
         item.english.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -202,44 +117,33 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
       : cat.items;
 
     return { ...cat, items: matchingItems };
-  }).filter(cat => cat.items.length > 0 || !isSearching); // Hide empty categories only when searching
-
-  // Toggle Category Accordion
-  const toggleCategory = (categoryId) => {
-    setExpandedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
-
-  // Auto-expand categories when searching
-  useEffect(() => {
-    if (isSearching) {
-      const allCategoryIds = filteredCategories.map(c => c.id);
-      setExpandedCategories(allCategoryIds);
-    } else {
-      setExpandedCategories([]); // Collapse all when clearing search
-    }
-  }, [searchTerm]);
+  }).filter(cat => cat.items.length > 0 || !isSearching);
 
   const handleVegetableSelect = (item, categoryName) => {
     const display = `${item.english} (${item.marathi})`;
     setSelectedVegetable(display);
+    setSelectedVegetableData(item); // Store full item with units
     setSearchTerm(display);
     setIsDropdownOpen(false);
+    // Clear inputs when changing vegetable
+    setQuantities({ kg: '', ton: '', quintal: '' });
+    setNag('');
   };
 
   const clearSelection = () => {
     setSelectedVegetable('');
+    setSelectedVegetableData(null);
     setSearchTerm('');
     setQuantities({ kg: '', ton: '', quintal: '' });
-    setNag(''); // ✅ Clear nag field
+    setNag('');
     setIsDropdownOpen(false);
   };
 
+  // Check if selected vegetable allows kg or nag
+  const allowsKg = selectedVegetableData?.units?.includes('kg') ?? true;
+  const allowsNag = selectedVegetableData?.units?.includes('nag') ?? false;
+
   const handleQuantityChange = (value, type) => {
-    // ✅ NEW: If typing in Quantity, clear Nag
     if (value) {
       setNag('');
     }
@@ -275,11 +179,8 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
     });
   };
 
-  // ✅ NEW: Handler for Nag change
   const handleNagChange = (value) => {
     setNag(value);
-
-    // If typing in Nag, clear Quantities
     if (value) {
       setQuantities({ kg: '', ton: '', quintal: '' });
     }
@@ -291,28 +192,38 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
       return;
     }
 
-    // ✅ VALIDATION: At least one field must be filled (quantity OR nag)
     const hasQuantity = quantities.kg && parseFloat(quantities.kg) > 0;
     const hasNag = nag && parseFloat(nag) > 0;
 
-    if (!hasQuantity && !hasNag) {
-      toast.error('Please enter either Quantity (Kg) or Nag');
-      return;
-    }
-
-    // Safety check (shouldn't happen with UI logic, but good practice)
-    if (hasQuantity && hasNag) {
-      toast.error('Please enter only Quantity OR Nag, not both.');
-      return;
-    }
-
-    // ✅ VALIDATION: Nag must be a multiple of 100
-    if (hasNag) {
-      const nagVal = parseFloat(nag);
-      if (nagVal % 100 !== 0) {
-        toast.error('Nag must be a multiple of 100 (e.g., 100, 200, 300)');
+    // Validation based on allowed units
+    if (allowsKg && allowsNag) {
+      // Both allowed - user must fill one
+      if (!hasQuantity && !hasNag) {
+        toast.error('Please enter either Quantity (Kg) or Nag');
         return;
       }
+      if (hasQuantity && hasNag) {
+        toast.error('Please enter only Quantity OR Nag, not both.');
+        return;
+      }
+    } else if (allowsKg && !allowsNag) {
+      // Only kg allowed
+      if (!hasQuantity) {
+        toast.error('Please enter Quantity (Kg)');
+        return;
+      }
+    } else if (!allowsKg && allowsNag) {
+      // Only nag allowed
+      if (!hasNag) {
+        toast.error('Please enter Nag count');
+        return;
+      }
+    }
+
+    // Check for negative values
+    if ((hasQuantity && parseFloat(quantities.kg) < 0) || (hasNag && parseFloat(nag) < 0)) {
+      toast.error('Quantity cannot be negative');
+      return;
     }
 
     const isDuplicate = addedItems.some(item => item.vegetable === selectedVegetable);
@@ -324,14 +235,12 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
     const newItem = {
       id: Date.now(),
       vegetable: selectedVegetable,
-      quantity: parseFloat(quantities.kg) || 0, // Default to 0 if not filled
-      nag: parseFloat(nag) || 0 // ✅ Store nag value
+      quantity: parseFloat(quantities.kg) || 0,
+      nag: parseFloat(nag) || 0
     };
 
     setAddedItems([...addedItems, newItem]);
     toast.success('Item added to list');
-
-    // Reset fields for next entry
     clearSelection();
   };
 
@@ -356,7 +265,6 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
       items: addedItems
     });
 
-    // setSelectedMarket(''); // Keep market selected
     clearSelection();
     setAddedItems([]);
   };
@@ -431,7 +339,7 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
               </div>
             )}
 
-            {/* Vegetable Dropdown (Accordion Style) */}
+            {/* Vegetable Dropdown */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">Vegetable Name *</label>
 
@@ -445,11 +353,11 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                       setIsDropdownOpen(true);
                     }}
                     onFocus={() => setIsDropdownOpen(true)}
-                    placeholder="Search or Select Category..."
-                    className="w-full px-4 py-3 pr-10 rounded-xl border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white text-gray-900"
+                    placeholder={isLoadingVegetables ? "Loading vegetables..." : "Search or Select..."}
+                    disabled={isLoadingVegetables}
+                    className="w-full px-4 py-3 pr-10 rounded-xl border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white text-gray-900 disabled:bg-gray-100"
                   />
 
-                  {/* Clear / Dropdown Icon Logic */}
                   {searchTerm ? (
                     <button
                       onClick={clearSelection}
@@ -467,7 +375,7 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                 </div>
 
                 {/* Dropdown Menu - Flat List */}
-                {isDropdownOpen && (
+                {isDropdownOpen && !isLoadingVegetables && (
                   <>
                     <div
                       className="fixed inset-0 z-10"
@@ -475,7 +383,6 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                     />
                     <div className="absolute z-20 w-full mt-2 bg-white border border-gray-300 rounded-xl shadow-xl max-h-96 overflow-y-auto custom-scrollbar">
                       {(() => {
-                        // Flatten all vegetables for display
                         const allItems = filteredCategories.flatMap(cat =>
                           cat.items.map(item => ({ ...item, categoryName: cat.name }))
                         );
@@ -490,7 +397,7 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
 
                         return allItems.map((item, idx) => (
                           <button
-                            key={idx}
+                            key={item._id || idx}
                             onClick={() => handleVegetableSelect(item, item.categoryName)}
                             className="w-full px-4 py-3 text-left hover:bg-green-50 transition border-b border-gray-100 last:border-0 flex justify-between items-center group"
                           >
@@ -498,9 +405,20 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                               <p className="text-sm font-medium text-gray-900 group-hover:text-green-700">{item.english}</p>
                               <p className="text-xs text-gray-500 group-hover:text-green-600">{item.marathi}</p>
                             </div>
-                            {selectedVegetable.includes(item.english) && (
-                              <CheckCircle size={16} className="text-green-600" />
-                            )}
+                            <div className="flex items-center gap-2">
+                              {/* Show unit badges */}
+                              <div className="flex gap-1">
+                                {item.units?.includes('kg') && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">KG</span>
+                                )}
+                                {item.units?.includes('nag') && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded">NAG</span>
+                                )}
+                              </div>
+                              {selectedVegetable.includes(item.english) && (
+                                <CheckCircle size={16} className="text-green-600" />
+                              )}
+                            </div>
                           </button>
                         ));
                       })()}
@@ -514,6 +432,14 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                   <div>
                     <p className="text-xs text-gray-600 mb-0.5">Currently Selected:</p>
                     <p className="font-bold text-gray-900 text-sm">{selectedVegetable}</p>
+                    <div className="flex gap-1 mt-1">
+                      {allowsKg && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">KG</span>
+                      )}
+                      {allowsNag && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded">NAG</span>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={clearSelection}
@@ -526,49 +452,71 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
               )}
             </div>
 
-            {/* Quantity and Nag Inputs - Side by Side */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Quantity Input */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Quantity (Leave empty if using Nag)</label>
-                <label className="block text-xs text-gray-500 mb-1 font-medium">Kilograms (Kg)</label>
-                <input
-                  type="number"
-                  value={quantities.kg}
-                  onChange={(e) => handleQuantityChange(e.target.value, 'kg')}
-                  onWheel={(e) => e.target.blur()}
-                  placeholder="0"
-                  step="10"
-                  min="0"
-                  className="w-full px-4 py-3 rounded-xl border border-green-300 focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none bg-green-50/50 text-gray-900 font-semibold"
-                />
-              </div>
+            {/* Quantity and Nag Inputs - Conditionally shown based on vegetable units */}
+            {selectedVegetable && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Quantity Input - Show only if kg is allowed */}
+                {allowsKg && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Quantity {allowsNag ? '(Leave empty if using Nag)' : '*'}
+                    </label>
+                    <label className="block text-xs text-gray-500 mb-1 font-medium">Kilograms (Kg)</label>
+                    <input
+                      type="number"
+                      value={quantities.kg}
+                      onChange={(e) => handleQuantityChange(e.target.value, 'kg')}
+                      onWheel={(e) => e.target.blur()}
+                      placeholder="0"
+                      step="10"
+                      min="0"
+                      className="w-full px-4 py-3 rounded-xl border border-green-300 focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none bg-green-50/50 text-gray-900 font-semibold"
+                    />
+                  </div>
+                )}
 
-              {/* Nag Input */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Nag (Leave empty if using Quantity)</label>
-                <label className="block text-xs text-gray-500 mb-1 font-medium">Nag Count</label>
-                <input
-                  type="number"
-                  value={nag}
-                  onChange={(e) => handleNagChange(e.target.value)}
-                  onWheel={(e) => e.target.blur()}
-                  placeholder="Enter nag (e.g., 100, 200, 300...)"
-                  step="100"
-                  min="0"
-                  className="w-full px-4 py-3 rounded-xl border border-green-300 focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none bg-green-50/50 text-gray-900 font-semibold"
-                />
+                {/* Nag Input - Show only if nag is allowed */}
+                {allowsNag && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Nag {allowsKg ? '(Leave empty if using Quantity)' : '*'}
+                    </label>
+                    <label className="block text-xs text-gray-500 mb-1 font-medium">Nag Count</label>
+                    <input
+                      type="number"
+                      value={nag}
+                      onChange={(e) => handleNagChange(e.target.value)}
+                      onWheel={(e) => e.target.blur()}
+                      placeholder="Enter count (e.g. 5, 50, 100)"
+                      min="0"
+                      className="w-full px-4 py-3 rounded-xl border border-purple-300 focus:border-purple-600 focus:ring-2 focus:ring-purple-100 outline-none bg-purple-50/50 text-gray-900 font-semibold"
+                    />
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-              <p><strong>Note:</strong> Enter value in <strong>either</strong> Quantity <strong>OR</strong> Nag. Filling one will automatically clear the other. Nag must be in multiples of 100.</p>
-            </div>
+            {/* Info note - only show if both units are allowed */}
+            {selectedVegetable && allowsKg && allowsNag && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+                <p><strong>Note:</strong> Enter value in <strong>either</strong> Quantity <strong>OR</strong> Nag. Filling one will automatically clear the other.</p>
+              </div>
+            )}
+
+            {/* Prompt to select vegetable first */}
+            {!selectedVegetable && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600 text-center">
+                <Package size={24} className="mx-auto text-gray-400 mb-2" />
+                <p>Please select a vegetable first to see quantity options</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleAddItem}
-                className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                disabled={!selectedVegetable}
+                className={`px-4 py-3 font-semibold rounded-xl transition shadow-lg hover:shadow-xl flex items-center justify-center gap-2 ${!selectedVegetable ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
               >
                 <Plus size={20} />
                 Add Item
@@ -592,6 +540,7 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
   );
 };
 
+
 // --- MAIN DASHBOARD COMPONENT ---
 const FarmerDashboard = () => {
   const [view, setView] = useState('dashboard');
@@ -609,6 +558,7 @@ const FarmerDashboard = () => {
     pendingLotsCount: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [dailyToken, setDailyToken] = useState(null); // Daily Token for today
   const [profile, setProfile] = useState({
     name: '',
     phone: '',
@@ -705,10 +655,21 @@ const FarmerDashboard = () => {
     }
   };
 
+  // Fetch daily token
+  const fetchDailyToken = useCallback(async () => {
+    try {
+      const data = await api.records.myToken();
+      setDailyToken(data.token);
+    } catch (error) {
+      console.error('Failed to fetch token:', error);
+    }
+  }, []);
+
   // ✅ NEW: Fetch records on mount
   useEffect(() => {
     fetchRecords(true, 1, 'All', '');
     fetchStats();
+    fetchDailyToken();
     loadProfile();
   }, []);
 
@@ -758,6 +719,7 @@ const FarmerDashboard = () => {
       setView('dashboard');
       fetchRecords(true, 1, filterStatus, selectedDate); // Refresh and go to page 1
       fetchStats();
+      fetchDailyToken(); // Refresh token after adding record
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.error || 'Failed to save record');
@@ -1020,29 +982,39 @@ const FarmerDashboard = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 w-full sm:w-auto">
-              <button
-                onClick={handleDownloadReport}
-                className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm"
-              >
-                <Download size={20} className="text-gray-500" />
-                Download Report
-              </button>
-              <button
-                onClick={() => setView('history')}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition hover:shadow-md"
-              >
-                <History size={20} />
-                Sales History
-              </button>
-              <button
-                onClick={() => setView('addRecord')}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl sm:rounded-full shadow-lg shadow-green-200 transition hover:shadow-xl hover:-translate-y-1"
-              >
-                <Plus size={20} />
-                New Record
-              </button>
-            </div>
+            {/* Token Badge - Only show if token exists */}
+            {dailyToken && (
+              <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl shadow-lg shadow-orange-200 animate-pulse-once">
+                <div className="text-white">
+                  <p className="text-xs font-medium opacity-90">Your Token Today</p>
+                  <p className="text-3xl font-black">#{dailyToken}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 w-full sm:w-auto mt-4">
+            <button
+              onClick={handleDownloadReport}
+              className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm"
+            >
+              <Download size={20} className="text-gray-500" />
+              Download Report
+            </button>
+            <button
+              onClick={() => setView('history')}
+              className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition hover:shadow-md"
+            >
+              <History size={20} />
+              Sales History
+            </button>
+            <button
+              onClick={() => setView('addRecord')}
+              className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl sm:rounded-full shadow-lg shadow-green-200 transition hover:shadow-xl hover:-translate-y-1"
+            >
+              <Plus size={20} />
+              New Record
+            </button>
           </div>
         </div>
 
@@ -1587,10 +1559,10 @@ const RecordRow = memo(({ record, handleEditClick, initiateDelete, getInvoiceDat
   const hasQuantity = record.quantity > 0;
 
   const unit = hasQuantity ? 'kg' : 'Nag';
-const totalQty = (hasQuantity ? record.quantity : record.nag) || 0;
+  const totalQty = (hasQuantity ? record.quantity : record.nag) || 0;
 
-// Extract values for UI display from the unified data
-const soldQty = (invoiceData.qty > 0 ? invoiceData.qty : invoiceData.nag) || 0;
+  // Extract values for UI display from the unified data
+  const soldQty = (invoiceData.qty > 0 ? invoiceData.qty : invoiceData.nag) || 0;
   const avgRate = invoiceData.rate;
   const netPayable = invoiceData.finalAmount;
   const totalSaleAmount = invoiceData.baseAmount;
@@ -1759,12 +1731,12 @@ const MobileRecordCard = memo(({ record, handleEditClick, initiateDelete, getInv
   // Logic Scope via Shared Helper
   const invoiceData = getInvoiceData(record);
 
-const hasQuantity = record.quantity > 0;
-const unit = hasQuantity ? 'kg' : 'Nag';
-const totalQty = (hasQuantity ? record.quantity : record.nag) || 0;
+  const hasQuantity = record.quantity > 0;
+  const unit = hasQuantity ? 'kg' : 'Nag';
+  const totalQty = (hasQuantity ? record.quantity : record.nag) || 0;
 
-// Extract values for UI display
-const soldQty = (invoiceData.qty > 0 ? invoiceData.qty : invoiceData.nag) || 0;
+  // Extract values for UI display
+  const soldQty = (invoiceData.qty > 0 ? invoiceData.qty : invoiceData.nag) || 0;
   const totalSaleAmount = invoiceData.baseAmount;
   const splits = invoiceData.splits || [];
 

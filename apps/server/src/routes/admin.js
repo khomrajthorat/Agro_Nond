@@ -489,4 +489,48 @@ router.get('/download-user-report/:userId', requireAuth, requireAdmin, async (re
   }
 });
 
+/**
+ * GET /api/admin/settings
+ * Fetch all system settings
+ */
+router.get('/settings', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const settings = await import('../models/SystemSetting.js').then(m => m.default.find({}).sort({ key: 1 }));
+    res.json(settings);
+  } catch (error) {
+    console.error('Fetch settings error:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+/**
+ * PATCH /api/admin/settings/:key
+ * Update a specific setting
+ */
+router.patch('/settings/:key', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { value, description } = req.body;
+    const SystemSetting = (await import('../models/SystemSetting.js')).default;
+
+    const updates = {
+      value,
+      updated_by: req.user._id
+    };
+
+    if (description) updates.description = description;
+
+    const setting = await SystemSetting.findOneAndUpdate(
+      { key },
+      updates,
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.json(setting);
+  } catch (error) {
+    console.error('Update setting error:', error);
+    res.status(500).json({ error: 'Failed to update setting' });
+  }
+});
+
 export default router;

@@ -155,8 +155,8 @@ export default function WeightHistory() {
                 official_nag: isNag ? value : null
             };
 
-            // Use PATCH for partial updates to avoid overwriting/destroying the record
-            await api.patch(`/api/weight/record/${id}`, updates);
+            // Use api.weight.updateRecord which uses PUT (correct method for this endpoint)
+            await api.weight.updateRecord(id, updates);
 
             toast.success('Weight updated successfully');
             fetchHistory(false);

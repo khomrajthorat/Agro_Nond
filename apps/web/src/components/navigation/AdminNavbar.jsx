@@ -13,6 +13,13 @@ const PAGE_TITLES = {
   '/dashboard/admin/users': 'Users',
   '/dashboard/admin/commission': 'Commission',
   '/dashboard/admin/transactions': 'Transactions',
+  '/dashboard/admin/vegetables': 'Vegetables',
+  '/dashboard/admin/farmers': 'Farmers',
+  '/dashboard/admin/traders': 'Traders',
+  '/dashboard/admin/weight': 'Weight Management',
+  '/dashboard/admin/lilav': 'Auction Management',
+  '/dashboard/admin/committee': 'Committee',
+  '/dashboard/admin/activity-log': 'Activity Log',
 };
 
 export default function AdminNavbar({ onMenuClick }) {

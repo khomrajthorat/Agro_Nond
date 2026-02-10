@@ -1,14 +1,36 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Search, Gavel, User, Coins, TrendingUp, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Search, Gavel, User, Coins, TrendingUp, Filter, Power } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../../lib/api';
 
 export default function LilavManagement() {
     const [searchTerm, setSearchTerm] = useState('');
 
+    const queryClient = useQueryClient();
+
     const { data: bids, isLoading } = useQuery({
         queryKey: ['admin-lilav'],
         queryFn: () => api.admin.lilavBids()
+    });
+
+    const { data: settings } = useQuery({
+        queryKey: ['system-settings'],
+        queryFn: () => api.admin.settings.list()
+    });
+
+    // Find the specific setting or default to enabled (true)
+    const lilavLoginEnabled = settings?.find(s => s.key === 'lilav_login_enabled')?.value ?? true;
+
+    const toggleLoginMutation = useMutation({
+        mutationFn: (newValue) => api.admin.settings.update('lilav_login_enabled', newValue, 'Enable/Disable Lilav Staff Login'),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['system-settings']);
+            toast.success('Login access updated successfully');
+        },
+        onError: () => {
+            toast.error('Failed to update login access');
+        }
     });
 
     const filteredBids = bids?.filter(bid =>
@@ -24,20 +46,46 @@ export default function LilavManagement() {
                     <h1 className="text-2xl font-bold text-gray-800">Lilav (Auction) Management</h1>
                     <p className="text-gray-500 mt-1">Real-time auction records and sales history</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
-                        <input
-                            type="text"
-                            placeholder="Search crop, farmer, trader..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-full sm:w-64 border border-emerald-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm"
-                        />
+
+                <div className="flex items-center gap-4">
+                    {/* Toggle Switch */}
+                    <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-emerald-100 shadow-sm">
+                        <div className={`p-2 rounded-lg ${lilavLoginEnabled ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                            <Power size={18} />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs font-medium text-slate-500">Login Access</span>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={lilavLoginEnabled}
+                                    onChange={(e) => toggleLoginMutation.mutate(e.target.checked)}
+                                    disabled={toggleLoginMutation.isPending}
+                                />
+                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                                <span className="ml-2 text-sm font-medium text-slate-700">
+                                    {lilavLoginEnabled ? 'Active' : 'Disabled'}
+                                </span>
+                            </label>
+                        </div>
                     </div>
-                    <button className="p-2 bg-white border border-emerald-100 rounded-xl text-emerald-600 hover:bg-emerald-50 shadow-sm transition-colors">
-                        <Filter size={20} />
-                    </button>
+
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                            <input
+                                type="text"
+                                placeholder="Search crop, farmer, trader..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 pr-4 py-2 w-full sm:w-64 border border-emerald-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm"
+                            />
+                        </div>
+                        <button className="p-2 bg-white border border-emerald-100 rounded-xl text-emerald-600 hover:bg-emerald-50 shadow-sm transition-colors">
+                            <Filter size={20} />
+                        </button>
+                    </div>
                 </div>
             </div>
 

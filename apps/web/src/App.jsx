@@ -52,6 +52,7 @@ const WeightManagement = lazy(() => import('./pages/admin/WeightManagement'));
 const LilavManagement = lazy(() => import('./pages/admin/LilavManagement'));
 const CommitteeManagement = lazy(() => import('./pages/admin/CommitteeManagement'));
 const ActivityLog = lazy(() => import('./pages/admin/ActivityLog'));
+const VegetableManagement = lazy(() => import('./pages/admin/VegetableManagement'));
 
 // Committee Dashboard
 const CommitteeDashboard = lazy(() => import('./pages/committee/CommitteeDashboard'));
@@ -206,6 +207,7 @@ function App() {
 
                     {/* Lilav (Auction) Section */}
                     <Route path="lilav" element={<LilavEntry />} />
+                    <Route path="vegetables" element={<VegetableManagement />} />
                   </Route>
 
                   {/* Lilav Dashboard - Replaces Accounting */}
@@ -237,6 +239,7 @@ function App() {
                     <Route path="lilav" element={<LilavManagement />} />
                     <Route path="committee" element={<CommitteeManagement />} />
                     <Route path="activity-log" element={<ActivityLog />} />
+                    <Route path="vegetables" element={<VegetableManagement />} />
                   </Route>
 
                   {/* FIXED: Smart redirect based on user role - Prevents infinite loop */}

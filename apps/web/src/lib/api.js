@@ -120,6 +120,10 @@ export const api = {
       body: JSON.stringify({ official_qty: weight })
     }),
 
+    // --- Token Methods ---
+    searchByToken: (token) => apiRequest(`/api/records/search-by-token?token=${token}`, { method: 'GET' }),
+    myToken: () => apiRequest('/api/records/my-token', { method: 'GET' }),
+
     // --- NEW Farmer Dashboard Methods ---
     myRecords: (params = {}) => {
       const query = new URLSearchParams(params).toString();
@@ -183,6 +187,13 @@ export const api = {
       },
       summary: () => apiRequest('/api/admin/audit-logs/summary', { method: 'GET' }),
     },
+    settings: {
+      list: () => apiRequest('/api/admin/settings', { method: 'GET' }),
+      update: (key, value, description) => apiRequest(`/api/admin/settings/${key}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ value, description })
+      }),
+    },
   },
 
   // Finance
@@ -228,6 +239,18 @@ export const api = {
     deleteRecord: (id) => apiRequest(`/api/weight/record/${id}`, { method: 'DELETE' }),
     getProfile: () => apiRequest('/api/weight/profile', { method: 'GET' }),
     updateProfile: (data) => apiRequest('/api/weight/profile', { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
+  // Vegetables
+  vegetables: {
+    list: () => apiRequest('/api/vegetables', { method: 'GET' }),
+    create: (data) => apiRequest('/api/vegetables', { method: 'POST', body: JSON.stringify(data) }),
+    bulkCreate: (vegetables) => apiRequest('/api/vegetables/bulk', { method: 'POST', body: JSON.stringify({ vegetables }) }),
+    seed: () => apiRequest('/api/vegetables/seed', { method: 'POST' }),
+    update: (id, data) => apiRequest(`/api/vegetables/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    bulkUpdate: (ids, updates) => apiRequest('/api/vegetables/bulk-update', { method: 'POST', body: JSON.stringify({ ids, updates }) }),
+    delete: (id) => apiRequest(`/api/vegetables/${id}`, { method: 'DELETE' }),
+    bulkDelete: (ids) => apiRequest('/api/vegetables/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) }),
   },
 
   // Notifications
