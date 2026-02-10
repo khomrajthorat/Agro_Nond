@@ -396,6 +396,11 @@ router.get('/billing-records', async (req, res) => {
 
             if (period === 'today') {
                 query.sold_at = { $gte: today };
+            } else if (period === 'yesterday') {
+                const yesterday = new Date(today);
+                yesterday.setDate(today.getDate() - 1);
+                // end of yesterday is < today (at 00:00:00)
+                query.sold_at = { $gte: yesterday, $lt: today };
             } else if (period === 'week') {
                 const weekAgo = new Date(today);
                 weekAgo.setDate(today.getDate() - 7);
@@ -403,6 +408,24 @@ router.get('/billing-records', async (req, res) => {
             } else if (period === 'month') {
                 const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
                 query.sold_at = { $gte: monthStart };
+            } else if (period === 'year') {
+                const yearStart = new Date(today.getFullYear(), 0, 1);
+                query.sold_at = { $gte: yearStart };
+            } else if (period === 'custom') {
+                const { startDate, endDate } = req.query;
+                if (startDate || endDate) {
+                    query.sold_at = {};
+                    if (startDate) {
+                        const start = new Date(startDate);
+                        start.setHours(0, 0, 0, 0);
+                        query.sold_at.$gte = start;
+                    }
+                    if (endDate) {
+                        const end = new Date(endDate);
+                        end.setHours(23, 59, 59, 999);
+                        query.sold_at.$lte = end;
+                    }
+                }
             }
         }
 

@@ -200,10 +200,15 @@ const TransactionReport = ({ records, filters }) => {
                 {/* Filters Applied */}
                 <View style={styles.filterInfo}>
                     <Text style={styles.filterText}>
-                        Period: {filters.period === 'all' ? 'All Time' : filters.period}
+                        Period: {filters.period === 'custom' ? 'Custom Range' : (filters.period.charAt(0).toUpperCase() + filters.period.slice(1))}
                     </Text>
-                    {filters.date && (
-                        <Text style={styles.filterText}>Specific Date: {formatDate(filters.date)}</Text>
+                    {filters.period === 'custom' && (
+                        <Text style={styles.filterText}>
+                            Range: {formatDate(filters.startDate)} - {formatDate(filters.endDate)}
+                        </Text>
+                    )}
+                    {filters.period === 'today' && (
+                        <Text style={styles.filterText}>Date: {formatDate(new Date())}</Text>
                     )}
                     {filters.search && (
                         <Text style={styles.filterText}>Search: "{filters.search}"</Text>

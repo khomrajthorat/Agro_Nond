@@ -11,7 +11,13 @@ const PaymentManagement = () => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedDate, setSelectedDate] = useState('');
+
+    // Enhanced Date Filter State
+    const [dateFilter, setDateFilter] = useState({
+        type: 'all', // all, today, yesterday, week, month, year, custom
+        startDate: '',
+        endDate: ''
+    });
 
     // Payment Modal
     const [selectedRecord, setSelectedRecord] = useState(null);
@@ -40,9 +46,18 @@ const PaymentManagement = () => {
             const params = { limit: 10000 };
 
             // Apply current filters
-            if (selectedDate) params.date = selectedDate;
             if (searchTerm) params.search = searchTerm;
             if (filter === 'receivables') params.statusType = 'pending_trader'; // backend might need adjustment or handle client side?
+
+            // Date Param Logic
+            if (dateFilter.type !== 'all') {
+                params.period = dateFilter.type;
+                if (dateFilter.type === 'custom') {
+                    params.startDate = dateFilter.startDate;
+                    params.endDate = dateFilter.endDate;
+                }
+            }
+
             // Note: The backend finance.billingRecords.list supports 'period' but maybe not flexible search?
             // Let's check api usage: api.finance.billingRecords.list({ limit: 100 })
             // The filteredRecords logic in frontend does search/date filtering manually on the 100 records?
@@ -68,15 +83,7 @@ const PaymentManagement = () => {
                     );
                 }
 
-                // 2. Date Filter (if not handled by backend param)
-                if (selectedDate) {
-                    fullRecords = fullRecords.filter(record => {
-                        const recordDate = new Date(record.createdAt).toISOString().split('T')[0];
-                        return recordDate === selectedDate;
-                    });
-                }
-
-                // 3. Status Filter
+                // 2. Status Filter
                 if (filter === 'receivables') {
                     fullRecords = fullRecords.filter(r => r.trader_payment_status === 'Pending');
                 } else if (filter === 'payables') {
@@ -98,7 +105,18 @@ const PaymentManagement = () => {
     const fetchRecords = useCallback(async (showLoading = true) => {
         try {
             if (showLoading) setLoading(true);
-            const data = await api.finance.billingRecords.list({ limit: 100 });
+
+            const params = { limit: 100 };
+            // Pass date filter params to fetch initial view
+            if (dateFilter.type !== 'all') {
+                params.period = dateFilter.type;
+                if (dateFilter.type === 'custom') {
+                    params.startDate = dateFilter.startDate;
+                    params.endDate = dateFilter.endDate;
+                }
+            }
+
+            const data = await api.finance.billingRecords.list(params);
             if (data && data.records) {
                 setRecords(data.records);
                 const traders = [...new Map(data.records
@@ -112,7 +130,7 @@ const PaymentManagement = () => {
         } finally {
             if (showLoading) setLoading(false);
         }
-    }, []);
+    }, [dateFilter]); // Refetch when date filter changes
 
     useEffect(() => {
         fetchRecords();
@@ -225,12 +243,6 @@ const PaymentManagement = () => {
 
         if (!matchesSearch) return false;
 
-        // Date Filter
-        if (selectedDate) {
-            const recordDate = new Date(record.createdAt).toISOString().split('T')[0];
-            if (recordDate !== selectedDate) return false;
-        }
-
         // Type Filter
         if (filter === 'receivables') {
             return record.trader_payment_status === 'Pending';
@@ -279,8 +291,8 @@ const PaymentManagement = () => {
                     {/* PDF Download Button */}
                     {readyToDownload ? (
                         <PDFDownloadLink
-                            document={<TransactionReport records={reportData} filters={{ date: selectedDate, search: searchTerm, period: filter }} />}
-                            fileName={`AgroNond_Transaction_Report_${new Date().toISOString().split('T')[0]}.pdf`}
+                            document={<TransactionReport records={reportData} filters={{ ...dateFilter, search: searchTerm, period: dateFilter.type }} />}
+                            fileName={`AgroNond_Transaction_Report_${dateFilter.type}_${new Date().toISOString().split('T')[0]}.pdf`}
                             className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-all font-medium shadow-sm"
                             onClick={() => {
                                 // Optional: Reset state after delay?
@@ -382,22 +394,47 @@ const PaymentManagement = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                        {/* Date Filter */}
-                        <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                className="pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm transition-all w-full sm:w-auto"
-                            />
-                            {selectedDate && (
+                        {/* Enhanced Date Filter */}
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1">
+                            <select
+                                value={dateFilter.type}
+                                onChange={(e) => setDateFilter({ ...dateFilter, type: e.target.value })}
+                                className="bg-transparent text-sm font-medium text-slate-700 focus:outline-none px-3 py-1.5 cursor-pointer"
+                            >
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="year">This Year</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+
+                            {dateFilter.type === 'custom' && (
+                                <div className="flex items-center gap-1 pl-2 border-l border-slate-200">
+                                    <input
+                                        type="date"
+                                        value={dateFilter.startDate}
+                                        onChange={(e) => setDateFilter({ ...dateFilter, startDate: e.target.value })}
+                                        className="bg-transparent text-xs focus:outline-none w-28"
+                                    />
+                                    <span className="text-slate-400">-</span>
+                                    <input
+                                        type="date"
+                                        value={dateFilter.endDate}
+                                        onChange={(e) => setDateFilter({ ...dateFilter, endDate: e.target.value })}
+                                        className="bg-transparent text-xs focus:outline-none w-28"
+                                    />
+                                </div>
+                            )}
+
+                            {(dateFilter.type !== 'all') && (
                                 <button
-                                    onClick={() => setSelectedDate('')}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-300 hover:bg-slate-400 rounded-full p-0.5 transition-colors"
-                                    title="Clear Date"
+                                    onClick={() => setDateFilter({ type: 'all', startDate: '', endDate: '' })}
+                                    className="p-1 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+                                    title="Reset Date"
                                 >
-                                    <X size={12} className="text-slate-600" />
+                                    <X size={14} />
                                 </button>
                             )}
                         </div>
@@ -417,14 +454,17 @@ const PaymentManagement = () => {
                 </div>
 
                 {/* Active Filters Display */}
-                {(selectedDate || searchTerm) && (
+                {(dateFilter.type !== 'all' || searchTerm) && (
                     <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2 flex-wrap">
                         <span className="text-xs text-slate-500 font-medium">Active Filters:</span>
-                        {selectedDate && (
+                        {dateFilter.type !== 'all' && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700">
                                 <Calendar size={12} />
-                                {new Date(selectedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                <button onClick={() => setSelectedDate('')} className="ml-1 hover:text-red-500">
+                                {dateFilter.type === 'custom'
+                                    ? `${new Date(dateFilter.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - ${new Date(dateFilter.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
+                                    : dateFilter.type.charAt(0).toUpperCase() + dateFilter.type.slice(1)
+                                }
+                                <button onClick={() => setDateFilter({ type: 'all', startDate: '', endDate: '' })} className="ml-1 hover:text-red-500">
                                     <X size={12} />
                                 </button>
                             </span>
@@ -439,7 +479,7 @@ const PaymentManagement = () => {
                             </span>
                         )}
                         <button
-                            onClick={() => { setSelectedDate(''); setSearchTerm(''); }}
+                            onClick={() => { setDateFilter({ type: 'all', startDate: '', endDate: '' }); setSearchTerm(''); }}
                             className="text-xs text-emerald-600 hover:text-emerald-700 font-medium ml-2"
                         >
                             Clear All
