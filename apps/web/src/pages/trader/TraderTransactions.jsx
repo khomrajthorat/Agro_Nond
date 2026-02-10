@@ -275,21 +275,21 @@ export default function TraderTransactions() {
           <div className="absolute right-2 top-2 p-2 bg-slate-50 rounded-lg group-hover:bg-emerald-50 transition-colors">
             <ShoppingBasket className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
           </div>
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Page Quantity</p>
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Quantity</p>
           <p className="text-2xl font-bold text-slate-800">{totals.quantity.toLocaleString('en-IN')} <span className="text-sm font-normal text-slate-400">kg</span></p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-emerald-500 transition-all">
           <div className="absolute right-2 top-2 p-2 bg-slate-50 rounded-lg group-hover:bg-emerald-50 transition-colors">
             <Wallet className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
           </div>
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Page Gross Amount</p>
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Gross Amount</p>
           <p className="text-2xl font-bold text-slate-800">₹{totals.grossAmount.toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-emerald-500 transition-all">
           <div className="absolute right-2 top-2 p-2 bg-slate-50 rounded-lg group-hover:bg-emerald-50 transition-colors">
             <Wallet className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
           </div>
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Page Total Cost</p>
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Cost</p>
           <p className="text-2xl font-bold text-emerald-600">₹{totals.totalCost.toLocaleString('en-IN')}</p>
         </div>
       </motion.div>
