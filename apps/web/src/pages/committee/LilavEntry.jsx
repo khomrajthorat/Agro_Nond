@@ -32,12 +32,18 @@ export default function LilavEntry() {
     const [selectedFarmer, setSelectedFarmer] = useState(null);
     const [selectedTrader, setSelectedTrader] = useState(null);
     const [selectedCrops, setSelectedCrops] = useState([]);
+    const [selectedCrop, setSelectedCrop] = useState(null); // Single crop dropdown selection
+
+    // --- Multi-Trader Allocations ---
+    const [traderAllocations, setTraderAllocations] = useState([]);
+    // Format: [{ trader, crop, cropId, rate, baseRate, qty, unit, amount }]
 
     // --- Dropdown States ---
     const [farmerSearch, setFarmerSearch] = useState('');
     const [traderSearch, setTraderSearch] = useState('');
     const [showFarmerList, setShowFarmerList] = useState(false);
     const [showTraderList, setShowTraderList] = useState(false);
+    const [showCropDropdown, setShowCropDropdown] = useState(false);
 
     // --- Add User Modals ---
     const [showAddFarmerModal, setShowAddFarmerModal] = useState(false);
@@ -52,6 +58,7 @@ export default function LilavEntry() {
     // --- Refs for click-outside ---
     const farmerDropdownRef = useRef(null);
     const traderDropdownRef = useRef(null);
+    const cropDropdownRef = useRef(null);
 
     // --- Click outside to close dropdowns ---
     useEffect(() => {
@@ -61,6 +68,9 @@ export default function LilavEntry() {
             }
             if (traderDropdownRef.current && !traderDropdownRef.current.contains(event.target)) {
                 setShowTraderList(false);
+            }
+            if (cropDropdownRef.current && !cropDropdownRef.current.contains(event.target)) {
+                setShowCropDropdown(false);
             }
         };
 
@@ -151,13 +161,18 @@ export default function LilavEntry() {
         setFarmerSearch('');
         setShowFarmerList(false);
         setSelectedCrops([]);
+        setSelectedCrop(null);
+        setTraderAllocations([]);
     };
 
     const clearFarmer = () => {
         setSelectedFarmer(null);
         setPendingCrops([]);
         setSelectedCrops([]);
+        setSelectedCrop(null);
         setItemDetails({});
+        setTraderAllocations([]);
+        setSelectedTrader(null);
     };
 
     // --- Trader Selection ---
@@ -169,6 +184,84 @@ export default function LilavEntry() {
 
     const clearTrader = () => {
         setSelectedTrader(null);
+    };
+
+    // --- Crop Selection (Dropdown) ---
+    const handleSelectCrop = (crop) => {
+        setSelectedCrop(crop);
+        setShowCropDropdown(false);
+        // Also add to selectedCrops for table display
+        if (!selectedCrops.includes(crop._id)) {
+            setSelectedCrops([crop._id]);
+        }
+    };
+
+    // --- Add Trader Allocation (Multi-Trader Feature) ---
+    const handleAddTraderAllocation = () => {
+        if (!selectedTrader) return toast.error('Select a trader first');
+        if (!selectedCrop) return toast.error('Select a crop first');
+
+        const detail = itemDetails[selectedCrop._id];
+        if (!detail?.rate || parseFloat(detail.rate) <= 0) {
+            return toast.error('Enter rate for the item');
+        }
+        if (!detail?.qty || parseFloat(detail.qty) <= 0) {
+            return toast.error('Enter quantity for the item');
+        }
+
+        const { nagValue, qtyValue } = getEffectiveValues(selectedCrop);
+        const unit = nagValue > 0 ? 'Nag' : 'Kg';
+        const baseRate = parseFloat(detail.baseRate) || 0;
+        const calculatedRate = unit === 'Nag' ? baseRate / 100 : baseRate / 10;
+        const amount = parseFloat(detail.qty) * calculatedRate;
+
+        // Check if allocation already exists for this trader + crop combination
+        const existingIndex = traderAllocations.findIndex(
+            a => a.traderId === selectedTrader._id && a.cropId === selectedCrop._id
+        );
+
+        if (existingIndex > -1) {
+            // Update existing allocation
+            setTraderAllocations(prev => {
+                const updated = [...prev];
+                updated[existingIndex] = {
+                    traderId: selectedTrader._id,
+                    traderName: selectedTrader.full_name,
+                    traderBusiness: selectedTrader.business_name,
+                    cropId: selectedCrop._id,
+                    crop: selectedCrop.vegetable,
+                    baseRate: baseRate,
+                    rate: calculatedRate,
+                    qty: parseFloat(detail.qty),
+                    unit,
+                    amount
+                };
+                return updated;
+            });
+        } else {
+            // Add new allocation
+            setTraderAllocations(prev => [...prev, {
+                traderId: selectedTrader._id,
+                traderName: selectedTrader.full_name,
+                traderBusiness: selectedTrader.business_name,
+                cropId: selectedCrop._id,
+                crop: selectedCrop.vegetable,
+                baseRate: baseRate,
+                rate: calculatedRate,
+                qty: parseFloat(detail.qty),
+                unit,
+                amount
+            }]);
+        }
+
+        // Reset trader selection for next allocation
+        setSelectedTrader(null);
+        toast.success(`Added allocation for ${selectedTrader.full_name}`);
+    };
+
+    // --- Remove Trader Allocation ---
+    const removeTraderAllocation = (index) => {
+        setTraderAllocations(prev => prev.filter((_, i) => i !== index));
     };
 
     // --- Add Farmer ---
@@ -258,49 +351,90 @@ export default function LilavEntry() {
         setSelectedCrops(prev => prev.filter(id => id !== cropId));
     };
 
-    // --- Save Sale ---
+    // --- Save Sale (Multi-Trader Support) ---
     const handleSave = async () => {
         if (!selectedFarmer) return toast.error('Select a farmer');
-        if (!selectedTrader) return toast.error('Select a trader');
-        if (selectedCrops.length === 0) return toast.error('Select at least one crop');
 
-        for (const cropId of selectedCrops) {
-            const detail = itemDetails[cropId];
-            if (!detail?.rate || parseFloat(detail.rate) <= 0) {
-                return toast.error('Enter rate for all items');
+        // Collect all allocations: saved ones + current form if filled
+        let allAllocations = [...traderAllocations];
+
+        // Add current form values if trader and crop are selected with valid data
+        if (selectedTrader && selectedCrop) {
+            const detail = itemDetails[selectedCrop._id];
+            if (detail?.rate && parseFloat(detail.rate) > 0 && detail?.qty && parseFloat(detail.qty) > 0) {
+                const { nagValue } = getEffectiveValues(selectedCrop);
+                const unit = nagValue > 0 ? 'Nag' : 'Kg';
+                const baseRate = parseFloat(detail.baseRate) || 0;
+                const calculatedRate = unit === 'Nag' ? baseRate / 100 : baseRate / 10;
+
+                // Check if already exists and update, or add new
+                const existingIndex = allAllocations.findIndex(
+                    a => a.traderId === selectedTrader._id && a.cropId === selectedCrop._id
+                );
+
+                const currentAllocation = {
+                    traderId: selectedTrader._id,
+                    traderName: selectedTrader.full_name,
+                    cropId: selectedCrop._id,
+                    crop: selectedCrop.vegetable,
+                    baseRate: baseRate,
+                    rate: calculatedRate,
+                    qty: parseFloat(detail.qty),
+                    unit: unit.toLowerCase()
+                };
+
+                if (existingIndex > -1) {
+                    allAllocations[existingIndex] = currentAllocation;
+                } else {
+                    allAllocations.push(currentAllocation);
+                }
             }
-            if (!detail?.qty || parseFloat(detail.qty) <= 0) {
-                return toast.error('Enter quantity for all items');
-            }
+        }
+
+        if (allAllocations.length === 0) {
+            return toast.error('Add at least one trader allocation');
         }
 
         try {
             setSaving(true);
 
-            for (const cropId of selectedCrops) {
+            // Group allocations by cropId
+            const allocationsByCrop = {};
+            allAllocations.forEach(a => {
+                if (!allocationsByCrop[a.cropId]) {
+                    allocationsByCrop[a.cropId] = [];
+                }
+                allocationsByCrop[a.cropId].push({
+                    trader_id: a.traderId,
+                    quantity: a.qty,
+                    rate: a.rate
+                });
+            });
+
+            // Process each crop with its allocations
+            for (const cropId of Object.keys(allocationsByCrop)) {
                 const crop = pendingCrops.find(c => c._id === cropId);
-                const detail = itemDetails[cropId];
                 const { nagValue } = getEffectiveValues(crop);
                 const sale_unit = nagValue > 0 ? 'nag' : 'kg';
 
                 await api.patch(`/api/records/${cropId}/sell`, {
-                    allocations: [{
-                        trader_id: selectedTrader._id,
-                        quantity: parseFloat(detail.qty),
-                        rate: parseFloat(detail.rate)
-                    }],
+                    allocations: allocationsByCrop[cropId],
                     sale_unit
                 });
             }
 
-            toast.success(`${selectedCrops.length} item(s) sold!`);
+            const traderCount = new Set(allAllocations.map(a => a.traderId)).size;
+            toast.success(`Sale created for ${traderCount} trader(s)!`);
 
-            // Refetch pending crops to get updated quantities (for partial sales)
-            // or remove fully sold items as returned by backend
+            // Reset all state
             if (selectedFarmer?._id) {
                 await fetchPendingCrops(selectedFarmer._id);
             }
             setSelectedCrops([]);
+            setSelectedCrop(null);
+            setSelectedTrader(null);
+            setTraderAllocations([]);
+            setItemDetails({});
         } catch (error) {
             toast.error('Sale failed');
         } finally {
@@ -366,8 +500,8 @@ export default function LilavEntry() {
             </div>
 
             <div className="px-6 py-6">
-                {/* === SELECTION BOXES === */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* === SELECTION BOXES (Vertical Layout) === */}
+                <div className="grid grid-cols-1 gap-6 mb-8 max-w-2xl">
 
                     {/* BOX 1: Farmer */}
                     <div ref={farmerDropdownRef} className="relative group">
@@ -453,154 +587,167 @@ export default function LilavEntry() {
                             </>
                         )}
                     </div>
+                </div>
 
-                    {/* BOX 2: Trader */}
-                    <div ref={traderDropdownRef} className="relative group">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 ml-1">
-                            Trader Details <span className="text-red-400">*</span>
-                        </label>
-                        {selectedTrader ? (
-                            <div className="relative flex items-start gap-4 p-5 bg-white border-0 ring-1 ring-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                                <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-lg font-bold text-blue-600 shrink-0">
-                                    {selectedTrader.full_name?.charAt(0)}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="text-lg font-bold text-gray-900 truncate">{selectedTrader.full_name}</h4>
-                                    <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                                        <span className="font-medium">{selectedTrader.business_name || 'No Business Name'}</span>
+                {/* === TRADER & CROP ROW === */}
+                {selectedFarmer && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        {/* Trader Details */}
+                        <div ref={traderDropdownRef} className="relative group">
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 ml-1">
+                                Trader Details <span className="text-red-400">*</span>
+                            </label>
+                            {selectedTrader ? (
+                                <div className="relative flex items-start gap-4 p-5 bg-white border-0 ring-1 ring-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                                    <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-lg font-bold text-blue-600 shrink-0">
+                                        {selectedTrader.full_name?.charAt(0)}
                                     </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="text-lg font-bold text-gray-900 truncate">{selectedTrader.full_name}</h4>
+                                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                                            <span className="font-medium">{selectedTrader.business_name || 'No Business Name'}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={clearTrader}
+                                        className="absolute top-3 right-3 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <X size={18} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={clearTrader}
-                                    className="absolute top-3 right-3 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                <div
-                                    className="w-full h-[88px] bg-white border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/10 transition-all duration-200 group-hover:shadow-sm"
-                                    onClick={() => setShowTraderList(true)}
-                                >
-                                    <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Select Trader</span>
-                                    <span className="text-xs text-gray-400 mt-1">Search or add new</span>
-                                </div>
+                            ) : (
+                                <>
+                                    <div
+                                        className="w-full h-[88px] bg-white border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/10 transition-all duration-200 group-hover:shadow-sm"
+                                        onClick={() => setShowTraderList(true)}
+                                    >
+                                        <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Select Trader</span>
+                                        <span className="text-xs text-gray-400 mt-1">Search or add new</span>
+                                    </div>
 
-                                {showTraderList && (
-                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100">
-                                        <div className="p-3 border-b border-gray-100 bg-gray-50/50">
-                                            <div className="relative">
-                                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                <input
-                                                    type="text"
-                                                    autoFocus
-                                                    value={traderSearch}
-                                                    onChange={(e) => setTraderSearch(e.target.value)}
-                                                    placeholder="Search trader..."
-                                                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all"
-                                                />
+                                    {showTraderList && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100">
+                                            <div className="p-3 border-b border-gray-100 bg-gray-50/50">
+                                                <div className="relative">
+                                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        autoFocus
+                                                        value={traderSearch}
+                                                        onChange={(e) => setTraderSearch(e.target.value)}
+                                                        placeholder="Search trader..."
+                                                        className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+                                                {filteredTraders.length === 0 ? (
+                                                    <div className="px-4 py-8 text-center text-gray-400 text-sm">No traders found</div>
+                                                ) : (
+                                                    filteredTraders.slice(0, 15).map(t => (
+                                                        <button
+                                                            key={t._id}
+                                                            onClick={() => handleSelectTrader(t)}
+                                                            className="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-3 border-b border-gray-50 last:border-0 transition-colors group/item"
+                                                        >
+                                                            <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold group-hover/item:bg-white group-hover/item:text-blue-600 transition-colors">
+                                                                {t.full_name?.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-semibold text-gray-900 text-sm">{t.full_name}</p>
+                                                                <p className="text-xs text-gray-500 mt-0.5">{t.business_name || t.phone}</p>
+                                                            </div>
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                            <div className="p-2 border-t border-gray-100 bg-gray-50/50">
+                                                <button
+                                                    onClick={() => { setShowTraderList(false); setShowAddTraderModal(true); }}
+                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
+                                                >
+                                                    <Plus size={16} /> Add New Trader
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
-                                            {filteredTraders.length === 0 ? (
-                                                <div className="px-4 py-8 text-center text-gray-400 text-sm">No traders found</div>
-                                            ) : (
-                                                filteredTraders.slice(0, 15).map(t => (
-                                                    <button
-                                                        key={t._id}
-                                                        onClick={() => handleSelectTrader(t)}
-                                                        className="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-3 border-b border-gray-50 last:border-0 transition-colors group/item"
-                                                    >
-                                                        <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold group-hover/item:bg-white group-hover/item:text-blue-600 transition-colors">
-                                                            {t.full_name?.charAt(0)}
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-semibold text-gray-900 text-sm">{t.full_name}</p>
-                                                            <p className="text-xs text-gray-500 mt-0.5">{t.business_name || t.phone}</p>
-                                                        </div>
-                                                    </button>
-                                                ))
-                                            )}
-                                        </div>
-                                        <div className="p-2 border-t border-gray-100 bg-gray-50/50">
-                                            <button
-                                                onClick={() => { setShowTraderList(false); setShowAddTraderModal(true); }}
-                                                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
-                                            >
-                                                <Plus size={16} /> Add New Trader
-                                            </button>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Select Crop */}
+                        <div ref={cropDropdownRef} className="relative group">
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 ml-1">
+                                Select Crop <span className="text-red-400">*</span>
+                                <span className="text-gray-400 text-xs font-normal ml-2">({pendingCrops.length} available)</span>
+                            </label>
+                            {selectedCrop ? (
+                                <div className="relative flex items-center gap-4 p-5 bg-white border-0 ring-1 ring-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                                    <div className="w-12 h-12 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-lg font-bold text-purple-600 shrink-0">
+                                        <Package size={20} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="text-lg font-bold text-gray-900 truncate">{selectedCrop.vegetable}</h4>
+                                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                                            <span className="font-medium">
+                                                {(() => {
+                                                    const { nagValue, qtyValue } = getEffectiveValues(selectedCrop);
+                                                    const qty = nagValue > 0 ? nagValue : qtyValue;
+                                                    const unit = nagValue > 0 ? 'Nag' : 'Kg';
+                                                    return `${qty} ${unit}`;
+                                                })()}
+                                            </span>
                                         </div>
                                     </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                </div>
+                                    <button
+                                        onClick={() => { setSelectedCrop(null); setSelectedCrops([]); }}
+                                        className="absolute top-3 right-3 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div
+                                        className="w-full h-[88px] bg-white border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/10 transition-all duration-200 group-hover:shadow-sm"
+                                        onClick={() => setShowCropDropdown(true)}
+                                    >
+                                        <span className="text-sm font-medium text-gray-600 group-hover:text-purple-600 transition-colors">Select Pending Crop</span>
+                                        <span className="text-xs text-gray-400 mt-1">Choose from farmer's pending crops</span>
+                                    </div>
 
-                {/* === PENDING CROPS === */}
-                <div className="bg-white border text- border-gray-200 rounded-xl p-6 mb-8 shadow-sm">
-                    <div className="flex items-center justify-between mb-5">
-                        <div className="flex items-center gap-2">
-                            <Package size={20} className="text-gray-400" />
-                            <h3 className="text-base font-bold text-gray-700 uppercase tracking-wide">
-                                Pending Crops <span className="text-gray-400 text-sm font-normal ml-1">({pendingCrops.length})</span>
-                            </h3>
+                                    {showCropDropdown && pendingCrops.length > 0 && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100">
+                                            <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+                                                {pendingCrops.map(crop => {
+                                                    const { nagValue, qtyValue } = getEffectiveValues(crop);
+                                                    const qty = nagValue > 0 ? nagValue : qtyValue;
+                                                    const unit = nagValue > 0 ? 'Nag' : 'Kg';
+
+                                                    return (
+                                                        <button
+                                                            key={crop._id}
+                                                            onClick={() => handleSelectCrop(crop)}
+                                                            className="w-full text-left px-4 py-3 hover:bg-purple-50 flex items-center gap-3 border-b border-gray-50 last:border-0 transition-colors group/item"
+                                                        >
+                                                            <div className="w-9 h-9 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold group-hover/item:bg-white group-hover/item:text-purple-600 transition-colors">
+                                                                <Package size={16} />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-semibold text-gray-900 text-sm">{crop.vegetable}</p>
+                                                                <p className="text-xs text-gray-500 mt-0.5">{qty} {unit} available</p>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
-                        {pendingCrops.length > 0 && (
-                            <button
-                                onClick={selectAllCrops}
-                                className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                                Select All
-                            </button>
-                        )}
                     </div>
-
-                    <div className="min-h-[60px]">
-                        {pendingCrops.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-6 text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
-                                <Package className="w-8 h-8 opacity-20 mb-2" />
-                                <span className="text-sm">
-                                    {selectedFarmer ? 'No pending crops available' : 'Select a farmer to view crops'}
-                                </span>
-                            </div>
-                        ) : (
-                            <div className="flex flex-wrap gap-3">
-                                {pendingCrops.map(crop => {
-                                    const isSelected = selectedCrops.includes(crop._id);
-                                    const { nagValue, qtyValue } = getEffectiveValues(crop);
-                                    const qty = nagValue > 0 ? nagValue : qtyValue;
-                                    const unit = nagValue > 0 ? 'Nag' : 'Kg';
-
-                                    return (
-                                        <button
-                                            key={crop._id}
-                                            onClick={() => toggleCropSelection(crop._id)}
-                                            className={`
-                                                relative group flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-full text-sm font-medium transition-all duration-200 border
-                                                ${isSelected
-                                                    ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-sm ring-1 ring-emerald-500/20'
-                                                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 shadow-sm'
-                                                }
-                                            `}
-                                        >
-                                            <span className="font-bold">{crop.vegetable}</span>
-                                            <span className={`text-xs px-2 py-0.5 rounded-full ${isSelected ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                {qty} {unit}
-                                            </span>
-                                            {isSelected && (
-                                                <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center animate-in zoom-in duration-200">
-                                                    <Check size={12} strokeWidth={3} />
-                                                </div>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                </div>
+                )}
 
                 {/* === ITEM TABLE === */}
                 <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-8 shadow-sm ring-1 ring-gray-200/50">
@@ -765,11 +912,59 @@ export default function LilavEntry() {
                     </table>
                 </div>
 
-                {/* === SAVE BUTTON === */}
-                <div className="flex justify-end pt-4 pb-12">
+                {/* === SAVED ALLOCATIONS === */}
+                {traderAllocations.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-8">
+                        <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wide mb-4 flex items-center gap-2">
+                            <Users size={18} />
+                            Saved Allocations ({traderAllocations.length})
+                        </h3>
+                        <div className="space-y-3">
+                            {traderAllocations.map((allocation, index) => (
+                                <div key={index} className="flex items-center justify-between gap-4 p-4 bg-white rounded-lg border border-blue-100 shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                                            {allocation.traderName?.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-gray-900">{allocation.traderName}</p>
+                                            <p className="text-xs text-gray-500">{allocation.crop} • {allocation.qty} {allocation.unit}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-lg font-bold text-gray-900">
+                                            ₹{allocation.amount?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                        </span>
+                                        <button
+                                            onClick={() => removeTraderAllocation(index)}
+                                            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                            title="Remove allocation"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* === ACTION BUTTONS === */}
+                <div className="flex justify-end gap-4 pt-4 pb-12">
+                    {/* Add Trader Button */}
+                    <button
+                        onClick={handleAddTraderAllocation}
+                        disabled={!selectedFarmer || !selectedTrader || !selectedCrop || saving}
+                        className="px-6 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center gap-3 transition-all shadow-lg shadow-blue-600/20 active:scale-95 disabled:shadow-none"
+                    >
+                        <Plus size={20} />
+                        Add Trader
+                    </button>
+
+                    {/* Save & Create Transaction */}
                     <button
                         onClick={handleSave}
-                        disabled={saving || selectedCrops.length === 0 || !selectedFarmer || !selectedTrader}
+                        disabled={saving || (!selectedCrop && traderAllocations.length === 0) || !selectedFarmer}
                         className="px-8 py-3.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center gap-3 transition-all shadow-lg shadow-emerald-600/20 active:scale-95 disabled:shadow-none"
                     >
                         {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
