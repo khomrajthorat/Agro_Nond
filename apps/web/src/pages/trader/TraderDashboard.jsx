@@ -178,8 +178,11 @@ export default function TraderDashboard() {
 
                       <td className="px-5 py-4 text-slate-600">{item.vegetable}</td>
                       <td className="px-5 py-4 text-right font-medium text-slate-700">
-                        <div>{(item.official_qty || 0).toLocaleString('en-IN')} kg</div>
-                        {item.official_nag > 0 && <div className="text-xs text-purple-600">{item.official_nag} Nag</div>}
+                        {item.official_nag > 0 ? (
+                          <div className="text-purple-600">{item.official_nag} Nag</div>
+                        ) : (
+                          <div>{(item.official_qty || 0).toLocaleString('en-IN')} kg</div>
+                        )}
                       </td>
                       <td className="px-5 py-4 text-right text-slate-600">₹{item.sale_rate}</td>
                       <td className="px-5 py-4 text-right">
