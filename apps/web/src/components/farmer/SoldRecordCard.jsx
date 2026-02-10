@@ -1,5 +1,6 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { Download, CheckCircle, Clock, X } from 'lucide-react';
+import { getInvoiceData } from '../../lib/invoiceUtils';
 
 // Lazy load PDF components
 const PDFDownloadLink = lazy(() =>
@@ -29,8 +30,8 @@ const DownloadModal = ({ isOpen, onClose, invoiceData, recordId }) => {
             <p className="font-semibold text-gray-800">{invoiceData.crop}</p>
             <p className="text-sm text-gray-500">
               {invoiceData.qty > 0 && `${invoiceData.qty} kg`}
-              {invoiceData.qty > 0 && invoiceData.carat > 0 && ' | '}
-              {invoiceData.carat > 0 && `${invoiceData.carat} Crt`}
+              {invoiceData.qty > 0 && invoiceData.nag > 0 && ' | '}
+              {invoiceData.nag > 0 && `${invoiceData.nag} Nag`}
             </p>
             <p className="text-lg font-bold text-emerald-600 mt-2">
               ₹{invoiceData.finalAmount?.toLocaleString()}
@@ -70,10 +71,10 @@ const SoldRecordCard = ({ record, farmerName }) => {
   // --- LOGIC PORTED FROM DASHBOARD ---
   const isParent = record.is_parent === true;
   const hasQuantity = record.quantity > 0;
-  const unit = hasQuantity ? 'kg' : 'Crt';
+  const unit = hasQuantity ? 'kg' : 'Nag';
 
-  const totalQty = hasQuantity ? record.quantity : record.carat;
-  const officialQty = hasQuantity ? (record.official_qty || 0) : (record.official_carat || 0);
+  const totalQty = hasQuantity ? record.quantity : record.nag;
+  const officialQty = hasQuantity ? (record.official_qty || 0) : (record.official_nag || 0);
 
   let soldQty = 0;
   let awaitingQty = 0;
@@ -81,8 +82,8 @@ const SoldRecordCard = ({ record, farmerName }) => {
   let splits = record.splits || [];
 
   if (isParent) {
-    soldQty = hasQuantity ? (record.aggregated_sold_qty || 0) : (record.aggregated_sold_carat || 0);
-    awaitingQty = hasQuantity ? (record.awaiting_qty || 0) : (record.awaiting_carat || 0);
+    soldQty = hasQuantity ? (record.aggregated_sold_qty || 0) : (record.aggregated_sold_nag || 0);
+    awaitingQty = hasQuantity ? (record.awaiting_qty || 0) : (record.awaiting_nag || 0);
     totalSaleAmount = record.aggregated_sale_amount || 0;
   } else {
     // Legacy or single record logic
@@ -128,9 +129,27 @@ const SoldRecordCard = ({ record, farmerName }) => {
   // Avg Rate
   const avgRate = soldQty > 0 ? (totalSaleAmount / soldQty).toFixed(1) : 0;
 
-  // Commission (Est. 4% of total sale amount)
-  const estimatedCommission = record.farmer_commission || (totalSaleAmount * 0.04);
-  const netPayable = Math.max(0, totalSaleAmount - estimatedCommission);
+  // Commission Calculation
+  // Priority: 1. Stored Amount, 2. Stored Rate, 3. Hardcoded Fallback
+  let commissionRate = 0.04; // Default fallback
+  if (record.farmer_commission_rate !== undefined && record.farmer_commission_rate > 0) {
+    commissionRate = record.farmer_commission_rate;
+  }
+
+  const estimatedCommission = isParent
+    ? (record.aggregated_farmer_commission || 0)
+    : (record.farmer_commission !== undefined && record.farmer_commission > 0
+      ? record.farmer_commission
+      : (totalSaleAmount * commissionRate));
+
+  // If we have a definitive commission amount (e.g. from parent aggregation) but no stored rate, derive it
+  if (isParent && totalSaleAmount > 0 && estimatedCommission > 0) {
+    commissionRate = estimatedCommission / totalSaleAmount;
+  }
+
+  const netPayable = isParent
+    ? (totalSaleAmount - estimatedCommission)
+    : (record.net_payable_to_farmer || Math.max(0, totalSaleAmount - estimatedCommission));
 
   const date = record.sold_at ? new Date(record.sold_at) : new Date(record.createdAt);
   const isPaid = computedStatus === 'Sold' && !isPaymentPending; // Strictly used for UI color toggling if needed
@@ -138,31 +157,8 @@ const SoldRecordCard = ({ record, farmerName }) => {
   // Get farmer name from record or prop
   const actualFarmerName = record.farmer_id?.full_name || farmerName || 'Farmer';
 
-  // Invoice Data
-  const invoiceData = {
-    id: record._id || record.id || 'N/A',
-    date: date.toISOString(),
-    name: actualFarmerName,
-    crop: record.vegetable,
-    // Use actual sold quantities
-    qty: hasQuantity ? soldQty : 0,
-    carat: !hasQuantity ? soldQty : 0,
-    rate: parseFloat(avgRate) || 0,
-    splits: splits || [], // Pass splits for multi-row PDF display
-    baseAmount: totalSaleAmount,
-    commission: estimatedCommission,
-    finalAmount: netPayable,
-    // Invoice status logic:
-    // If Payment Pending -> Payment Pending
-    // If Sold -> Full (entire lot sold)
-    // If Partial -> Partial (some remaining)
-    // If Pending -> Pending
-    status: isPaymentPending ? 'Payment Pending' :
-      (computedStatus === 'Sold' ? 'Full' :
-        (computedStatus === 'Partial' ? 'Partial' :
-          (computedStatus === 'WeightPending' ? 'WeightPending' : 'Pending'))),
-    type: 'pay'
-  };
+  // Invoice Data - Use shared helper to ensure PDF consistency (includes address, phone, token, etc.)
+  const invoiceData = getInvoiceData(record, actualFarmerName);
 
 
 

@@ -33,12 +33,27 @@ router.get('/stats', requireAuth, requireTrader, async (req, res) => {
                 $group: {
                     _id: null,
                     totalQuantity: { $sum: '$official_qty' },
-                    totalCarats: { $sum: '$official_carat' },
+                    totalNag: { $sum: '$official_nag' },
                     // Use net_receivable_from_trader if available (new logic), else fallback
                     // We need to be careful with summing calculated fields if they are 0 in old records
                     // Better approach: sum(sale_amount) + sum(commission) is generally safer if net_receivable isn't populated on old records
                     totalBaseSpend: { $sum: '$sale_amount' },
                     totalCommission: { $sum: '$commission' },
+                    totalPaid: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$trader_payment_status', ['Paid', 'paid']] },
+                                {
+                                    $cond: {
+                                        if: { $gt: ['$net_receivable_from_trader', 0] },
+                                        then: '$net_receivable_from_trader',
+                                        else: { $add: ['$sale_amount', '$commission'] }
+                                    }
+                                },
+                                0
+                            ]
+                        }
+                    }
                 }
             }
         ]);
@@ -80,10 +95,11 @@ router.get('/stats', requireAuth, requireTrader, async (req, res) => {
 
         const result = {
             totalQuantity: stats[0]?.totalQuantity || 0,
-            totalCarats: stats[0]?.totalCarats || 0,
+            totalNag: stats[0]?.totalNag || 0,
             totalBaseSpend: totalBase,
             totalCommission: totalComm,
             totalSpend: totalBase + totalComm,
+            totalPaid: stats[0]?.totalPaid || 0,
             pendingPayments: pendingStats[0]?.totalPending || 0
         };
 
@@ -180,7 +196,7 @@ router.get('/download-report', requireAuth, requireTrader, async (req, res) => {
                 time: date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
                 crop: record.vegetable,
                 qty: record.official_qty || 0,
-                carat: record.official_carat || 0,
+                nag: record.official_nag || 0,
                 rate: record.sale_rate || 0,
                 amount: record.net_receivable_from_trader || ((record.sale_amount || 0) + (record.trader_commission || 0)),
                 commission: record.trader_commission || 0,
@@ -197,7 +213,7 @@ router.get('/download-report', requireAuth, requireTrader, async (req, res) => {
             { label: 'Time', value: 'time' },
             { label: 'Crop', value: 'crop' },
             { label: 'Quantity (kg)', value: 'qty' },
-            { label: 'Carat', value: 'carat' },
+            { label: 'Nag', value: 'nag' },
             { label: 'Rate/kg', value: 'rate' },
             { label: 'Total Amount', value: 'amount' },
             { label: 'Commission', value: 'commission' },

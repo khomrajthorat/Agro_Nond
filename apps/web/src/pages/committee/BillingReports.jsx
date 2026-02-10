@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import api from '../../lib/api';
 import { exportToCSV } from '../../lib/csvExport';
-import { FileText, Download, Calendar, Users, ShoppingBag, X, CheckCircle, Clock, RefreshCw, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Download, Calendar, Users, ShoppingBag, X, CheckCircle, Clock, RefreshCw, Search, ChevronLeft, ChevronRight, Edit, Save, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import InvoiceDownloadModal from '../../components/committee/InvoiceDownloadModal';
 
@@ -88,14 +88,14 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, type, amount, name, isProcess
 };
 
 // Helper function to format quantity display
-const formatQtyDisplay = (qty, carat) => {
+const formatQtyDisplay = (qty, nag) => {
   const hasQty = qty && qty > 0;
-  const hasCarat = carat && carat > 0;
+  const hasNag = nag && nag > 0;
 
-  if (hasQty && hasCarat) {
-    return `${qty}kg | ${carat}Crt`;
-  } else if (hasCarat) {
-    return `${carat}Crt`;
+  if (hasQty && hasNag) {
+    return `${qty}kg | ${nag}Nag`;
+  } else if (hasNag) {
+    return `${nag}Nag`;
   } else {
     return `${qty || 0}kg`;
   }
@@ -154,6 +154,9 @@ export default function BillingReports() {
   const [invoiceRecord, setInvoiceRecord] = useState(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
+
+
+
   const fetchCommissionRates = useCallback(async () => {
     try {
       const rules = await api.finance.commissionRates.list();
@@ -201,27 +204,37 @@ export default function BillingReports() {
 
   // Process Record
   const processRecord = useCallback((record) => {
-    const hasNewFields = record.net_payable_to_farmer !== undefined;
     const baseAmount = record.sale_amount || 0;
+
+    // Get rates (default to 4% / 9% if not set)
+    const farmerRate = commissionRates.farmer ? (commissionRates.farmer / 100) : 0.04;
+    const traderRate = commissionRates.trader ? (commissionRates.trader / 100) : 0.09;
 
     let farmerComm, traderComm, netFarmer, netTrader;
 
-    if (hasNewFields) {
+    // Logic aligned with SoldRecordCard:
+    // 1. Use explicit field if available
+    // 2. Else calculate based on rate * baseAmount
+    // 3. Fallback to legacy split only if absolutely needed (omitted here for consistency with Farmer Dashboard)
+
+    if (record.farmer_commission !== undefined) {
       farmerComm = record.farmer_commission;
-      traderComm = record.trader_commission;
-      netFarmer = record.net_payable_to_farmer;
-      netTrader = record.net_receivable_from_trader;
     } else {
-      const totalCommission = record.commission || 0;
-      farmerComm = Math.round(totalCommission * (4 / 13));
-      traderComm = Math.round(totalCommission * (9 / 13));
-      netFarmer = baseAmount - farmerComm;
-      netTrader = baseAmount + traderComm;
+      farmerComm = Math.round(baseAmount * farmerRate);
     }
 
-    const caratValue = (record.official_carat && record.official_carat > 0)
-      ? record.official_carat
-      : (record.carat || 0);
+    if (record.trader_commission !== undefined) {
+      traderComm = record.trader_commission;
+    } else {
+      traderComm = Math.round(baseAmount * traderRate);
+    }
+    // Net amounts
+    netFarmer = record.net_payable_to_farmer || (baseAmount - farmerComm);
+    netTrader = record.net_receivable_from_trader || (baseAmount + traderComm);
+
+    const nagValue = (record.official_nag && record.official_nag > 0)
+      ? record.official_nag
+      : (record.nag || 0);
     const qtyValue = record.qtySold || record.official_qty || record.quantity || 0;
 
     if (activeTab === 'farmers') {
@@ -229,31 +242,39 @@ export default function BillingReports() {
         id: record._id,
         date: record.sold_at || record.createdAt,
         name: record.farmer_id?.full_name || 'Unknown Farmer',
+        address: record.farmer_id?.location || record.farmer_id?.address,
+        phone: record.farmer_id?.phone,
         crop: record.vegetable,
         qty: qtyValue,
-        carat: caratValue,
+        nag: nagValue,
         baseAmount: baseAmount,
         commission: farmerComm,
+        commissionRate: farmerRate, // Pass explicit rate
         finalAmount: netFarmer,
         status: record.farmer_payment_status || (record.payment_status === 'paid' ? 'Paid' : 'Pending'),
-        type: 'pay'
+        type: 'pay',
+        token: record.token || null
       };
     } else {
       return {
         id: record._id,
         date: record.sold_at || record.createdAt,
         name: record.trader_id?.business_name || record.trader_id?.full_name || 'Unknown Trader',
+        phone: record.trader_id?.phone,
+        address: record.trader_id?.business_address || record.trader_id?.address,
         crop: record.vegetable,
         qty: qtyValue,
-        carat: caratValue,
+        nag: nagValue,
         baseAmount: baseAmount,
         commission: traderComm,
+        commissionRate: traderRate, // Pass explicit rate
         finalAmount: netTrader,
         status: record.trader_payment_status || (record.payment_status === 'paid' ? 'Paid' : 'Pending'),
-        type: 'receive'
+        type: 'receive',
+        token: record.token || null
       };
     }
-  }, [activeTab]);
+  }, [activeTab, commissionRates]);
 
   // Processed & Filtered Data
   const currentData = useMemo(() => {
@@ -300,6 +321,8 @@ export default function BillingReports() {
     setShowInvoiceModal(true);
   };
 
+
+
   const confirmPayment = async ({ mode, ref }) => {
     if (!selectedRecord) return;
 
@@ -330,7 +353,7 @@ export default function BillingReports() {
       new Date(item.date).toLocaleDateString('en-IN'),
       item.name,
       item.crop,
-      formatQtyDisplay(item.qty, item.carat),
+      formatQtyDisplay(item.qty, item.nag),
       item.baseAmount,
       item.commission,
       item.finalAmount,
@@ -610,7 +633,7 @@ export default function BillingReports() {
                     </td>
                     <td className="px-6 py-5">
                       <span className="inline-flex px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold">
-                        {item.crop} • {formatQtyDisplay(item.qty, item.carat)}
+                        {item.crop} • {formatQtyDisplay(item.qty, item.nag)}
                       </span>
                     </td>
                     <td className="px-6 py-5 text-right">
@@ -702,7 +725,7 @@ export default function BillingReports() {
                       <h3 className="font-bold text-slate-900">{item.name}</h3>
                     </div>
                     <span className="inline-flex px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium mt-2">
-                      {item.crop} • {formatQtyDisplay(item.qty, item.carat)}
+                      {item.crop} • {formatQtyDisplay(item.qty, item.nag)}
                     </span>
                   </div>
                   <StatusBadge status={item.status} />
@@ -749,6 +772,13 @@ export default function BillingReports() {
                   >
                     <Download size={18} />
                   </button>
+                  <button
+                    onClick={(e) => handleEditClick(e, item)}
+                    className="px-4 py-2.5 bg-slate-100 text-slate-500 rounded-lg hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    title="Edit Record"
+                  >
+                    <Edit size={18} />
+                  </button>
                 </div>
               </div>
             ))
@@ -789,6 +819,8 @@ export default function BillingReports() {
           </div>
         )}
       </div>
+
+
     </div>
   );
 }

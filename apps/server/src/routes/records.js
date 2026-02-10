@@ -1,6 +1,8 @@
 import express from 'express';
 import Record from '../models/Record.js';
 import User from '../models/User.js';
+import DailyToken from '../models/DailyToken.js';
+import FarmerToken from '../models/FarmerToken.js';
 import { requireAuth } from '../middleware/auth.js';
 import { createAuditLog, getClientIp, AuditDescriptions } from '../utils/auditLogger.js';
 
@@ -51,32 +53,57 @@ router.get('/my-records', requireAuth, async (req, res) => {
                     const pId = child.parent_record_id.toString();
                     if (!parentMap[pId]) {
                         parentMap[pId] = {
-                            splits: [], soldQty: 0, soldCarat: 0, totalSaleAmount: 0,
-                            childCount: 0, soldCount: 0, weightPendingQty: 0, weightPendingCarat: 0, weightPendingCount: 0
+                            splits: [], soldQty: 0, soldNag: 0,
+                            allocatedQty: 0, allocatedNag: 0, // Track allocated vs sold separately
+                            totalSaleAmount: 0,
+                            childCount: 0, soldCount: 0, weightPendingQty: 0, weightPendingNag: 0, weightPendingCount: 0,
+                            totalFarmerCommission: 0, totalTraderCommission: 0
                         };
                     }
                     // Weight Pending Logic
                     const isWeightPending = child.status === 'RateAssigned' &&
-                        (child.official_qty || 0) === 0 && (child.official_carat || 0) === 0;
+                        (child.official_qty || 0) === 0 && (child.official_nag || 0) === 0;
 
                     const childQty = isWeightPending ? (child.allocated_qty || child.quantity || 0) : (child.official_qty || child.quantity || 0);
-                    const childCarat = isWeightPending ? (child.allocated_carat || child.carat || 0) : (child.official_carat || child.carat || 0);
+                    const childNag = isWeightPending ? (child.allocated_nag || child.nag || 0) : (child.official_nag || child.nag || 0);
                     const amount = child.sale_amount || child.total_amount || 0;
+
+                    // Accumulate Commissions
+                    const fComm = child.farmer_commission || 0;
+                    const tComm = child.trader_commission || 0;
 
                     if (isWeightPending) {
                         parentMap[pId].weightPendingQty += childQty;
-                        parentMap[pId].weightPendingCarat += childCarat;
+                        parentMap[pId].weightPendingNag += childNag;
                         parentMap[pId].weightPendingCount += 1;
                     } else {
                         parentMap[pId].soldQty += childQty;
-                        parentMap[pId].soldCarat += childCarat;
+                        parentMap[pId].soldNag += childNag;
                         parentMap[pId].totalSaleAmount += amount;
+                        // Only add commission for valid sales
+                        if (['Sold', 'Completed'].includes(child.status)) {
+                            parentMap[pId].totalFarmerCommission += fComm;
+                            parentMap[pId].totalTraderCommission += tComm;
+                        }
                     }
+
+                    // Live Update Logic:
+                    // Inventory used is max(allocated, weighed).
+                    // If allocated 5kg, weighed 6kg -> Used 6kg.
+                    // If allocated 5kg, weighed 4kg -> Used 5kg (Phantom stock prevention).
+                    const allocQty = child.allocated_qty || child.quantity || 0;
+                    const officialQty = child.official_qty || 0;
+                    parentMap[pId].allocatedQty += Math.max(allocQty, officialQty);
+
+                    const allocNag = child.allocated_nag || child.nag || 0;
+                    const officialNag = child.official_nag || 0;
+                    parentMap[pId].allocatedNag += Math.max(allocNag, officialNag);
+
                     parentMap[pId].childCount += 1;
                     if (['Sold', 'Completed'].includes(child.status)) parentMap[pId].soldCount += 1;
 
                     parentMap[pId].splits.push({
-                        _id: child._id, qty: childQty, carat: childCarat, rate: child.sale_rate || 0,
+                        _id: child._id, qty: childQty, nag: childNag, rate: child.sale_rate || 0,
                         amount: amount, date: child.sold_at || child.createdAt, status: child.status,
                         isWeightPending: isWeightPending, payment_status: child.farmer_payment_status || 'Pending'
                     });
@@ -86,25 +113,29 @@ router.get('/my-records', requireAuth, async (req, res) => {
             return records.map(record => {
                 if (record.is_parent) {
                     const data = parentMap[record._id.toString()] || {
-                        splits: [], soldQty: 0, soldCarat: 0, totalSaleAmount: 0,
-                        childCount: 0, soldCount: 0, weightPendingQty: 0, weightPendingCarat: 0, weightPendingCount: 0
+                        splits: [], soldQty: 0, soldNag: 0, totalSaleAmount: 0,
+                        childCount: 0, soldCount: 0, weightPendingQty: 0, weightPendingNag: 0, weightPendingCount: 0
                     };
 
                     record.aggregated_sold_qty = data.soldQty;
-                    record.aggregated_sold_carat = data.soldCarat;
+                    record.aggregated_sold_nag = data.soldNag;
                     record.aggregated_sale_amount = data.totalSaleAmount;
+                    // ✅ Map Aggregated Commissions
+                    record.aggregated_farmer_commission = data.totalFarmerCommission;
+                    record.aggregated_trader_commission = data.totalTraderCommission;
+
                     record.child_count = data.childCount;
                     record.sold_count = data.soldCount;
                     record.splits = data.splits;
 
-                    const totalSold = record.sale_unit === 'carat' ? data.soldCarat : data.soldQty;
+                    const totalSold = record.sale_unit === 'nag' ? data.soldNag : data.soldQty;
                     record.aggregated_avg_rate = totalSold > 0 ? (data.totalSaleAmount / totalSold) : 0;
 
                     record.awaiting_qty = (record.quantity || 0) - data.soldQty;
-                    record.awaiting_carat = (record.carat || 0) - data.soldCarat;
+                    record.awaiting_nag = (record.nag || 0) - data.soldNag;
 
                     record.weight_pending_qty = data.weightPendingQty;
-                    record.weight_pending_carat = data.weightPendingCarat;
+                    record.weight_pending_nag = data.weightPendingNag;
 
                     const soldSplits = data.splits.filter(s => ['Sold', 'Completed'].includes(s.status));
                     const hasUnpaid = soldSplits.some(s => s.payment_status === 'Pending');
@@ -112,11 +143,12 @@ router.get('/my-records', requireAuth, async (req, res) => {
 
                     // Compute Status
                     const totalQty = record.quantity || 0;
-                    const totalCarat = record.carat || 0;
-                    const hasWeightPending = data.weightPendingQty > 0.01 || data.weightPendingCarat > 0.01;
-                    const hasSoldSomething = data.soldQty > 0.01 || data.soldCarat > 0.01;
-                    const hasRemaining = (totalQty > 0 && (data.soldQty + data.weightPendingQty) < totalQty - 0.01) ||
-                        (totalCarat > 0 && (data.soldCarat + data.weightPendingCarat) < totalCarat - 0.01);
+                    const totalNag = record.nag || 0;
+                    const hasWeightPending = data.weightPendingQty > 0.01 || data.weightPendingNag > 0.01;
+                    const hasSoldSomething = data.soldQty > 0.01 || data.soldNag > 0.01;
+                    // Fix: Use allocatedQty for remaining check to avoid phantom stock if weight < allocation
+                    const hasRemaining = (totalQty > 0 && data.allocatedQty < totalQty - 0.01) ||
+                        (totalNag > 0 && data.allocatedNag < totalNag - 0.01);
 
                     if (hasWeightPending && !hasSoldSomething) record.display_status = 'WeightPending';
                     else if (hasWeightPending && hasSoldSomething) record.display_status = 'WeightPending';
@@ -139,7 +171,7 @@ router.get('/my-records', requireAuth, async (req, res) => {
         if (!status || status === 'All') {
             const totalRecords = await Record.countDocuments(baseQuery);
             const rawRecords = await Record.find(baseQuery)
-                .populate('farmer_id', 'full_name phone farmerId')
+                .populate('farmer_id', 'full_name phone farmerId location')
                 .select('-trader_id -trader_payment_ref -trader_payment_mode -trader_payment_status -net_receivable_from_trader -trader_commission')
                 .sort({ createdAt: -1 })
                 .skip(skip)
@@ -172,7 +204,7 @@ router.get('/my-records', requireAuth, async (req, res) => {
 
         // We fetch ALL matching candidates (without pagination limit) to filter correctly in memory
         const candidateRecords = await Record.find({ ...baseQuery, ...dbStatusQuery })
-            .populate('farmer_id', 'full_name phone farmerId')
+            .populate('farmer_id', 'full_name phone farmerId location')
             .select('-trader_id -trader_payment_ref -trader_payment_mode -trader_payment_status -net_receivable_from_trader -trader_commission')
             .sort({ createdAt: -1 })
             .lean();
@@ -237,11 +269,35 @@ router.get('/my-stats', requireAuth, async (req, res) => {
                             ]
                         }
                     },
-                    totalVolume: { $sum: '$quantity' },
+                    // Sum volume from top-level records only to avoid double-counting split lots
+                    totalVolumeKg: {
+                        $sum: {
+                            $cond: [
+                                { $eq: [{ $ifNull: ['$parent_record_id', null] }, null] },
+                                '$quantity',
+                                0
+                            ]
+                        }
+                    },
+                    totalVolumeNag: {
+                        $sum: {
+                            $cond: [
+                                { $eq: [{ $ifNull: ['$parent_record_id', null] }, null] },
+                                '$nag',
+                                0
+                            ]
+                        }
+                    },
+                    // Count actual sales (excluding parent lot records)
                     totalSalesCount: {
                         $sum: {
                             $cond: [
-                                { $in: ['$status', ['Sold', 'Completed']] },
+                                {
+                                    $and: [
+                                        { $in: ['$status', ['Sold', 'Completed']] },
+                                        { $ne: ['$is_parent', true] }
+                                    ]
+                                },
                                 1,
                                 0
                             ]
@@ -263,7 +319,7 @@ router.get('/my-stats', requireAuth, async (req, res) => {
             }
         ]);
 
-        const result = stats.length > 0 ? stats[0] : { totalEarnings: 0, totalVolume: 0, totalSalesCount: 0, pendingLotsCount: 0 };
+        const result = stats.length > 0 ? stats[0] : { totalEarnings: 0, totalVolumeKg: 0, totalVolumeNag: 0, totalSalesCount: 0, pendingLotsCount: 0 };
 
         res.json(result);
     } catch (error) {
@@ -301,7 +357,7 @@ router.get('/download-report', requireAuth, async (req, res) => {
                 time: date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
                 crop: record.vegetable,
                 qty: record.official_qty || record.quantity || 0,
-                carat: record.official_carat || record.carat || 0,
+                nag: record.official_nag || record.nag || 0,
                 rate: record.sale_rate || 0,
                 amount: record.sale_amount || 0,
                 commission: record.farmer_commission || 0,
@@ -319,7 +375,7 @@ router.get('/download-report', requireAuth, async (req, res) => {
             { label: 'Time', value: 'time' },
             { label: 'Crop', value: 'crop' },
             { label: 'Quantity (kg)', value: 'qty' },
-            { label: 'Carat', value: 'carat' },
+            { label: 'Nag', value: 'nag' },
             { label: 'Rate/kg', value: 'rate' },
             { label: 'Sale Amount', value: 'amount' },
             { label: 'Commission', value: 'commission' },
@@ -464,6 +520,89 @@ router.get('/search-farmer', requireAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/records/search-by-token
+ * Search farmer and their records by today's token number (for Lilav/Weight staff)
+ */
+router.get('/search-by-token', requireAuth, async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) {
+            return res.status(400).json({ error: 'Token number required' });
+        }
+
+        const tokenNum = parseInt(token);
+        if (isNaN(tokenNum) || tokenNum <= 0) {
+            return res.status(400).json({ error: 'Invalid token number' });
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+
+        // Find the farmer with this token for today
+        const farmerToken = await FarmerToken.findOne({ date: today, token_number: tokenNum });
+
+        if (!farmerToken) {
+            return res.status(404).json({ error: 'No farmer found with this token for today' });
+        }
+
+        // Get farmer details
+        const farmer = await User.findById(farmerToken.farmer_id).select('full_name phone farmerId location');
+
+        if (!farmer) {
+            return res.status(404).json({ error: 'Farmer not found' });
+        }
+
+        // Get today's pending records for this farmer
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const pendingRecords = await Record.find({
+            farmer_id: farmerToken.farmer_id,
+            status: { $in: ['Pending', 'RateAssigned', 'Weighed'] },
+            createdAt: { $gte: todayStart, $lte: todayEnd }
+        }).sort({ createdAt: -1 });
+
+        res.json({
+            farmer: {
+                _id: farmer._id,
+                full_name: farmer.full_name,
+                phone: farmer.phone,
+                farmerId: farmer.farmerId,
+                location: farmer.location,
+                token: tokenNum
+            },
+            records: pendingRecords
+        });
+    } catch (error) {
+        console.error('Search by token error:', error);
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+/**
+ * GET /api/records/my-token
+ * Get the logged-in farmer's token for today
+ */
+router.get('/my-token', requireAuth, async (req, res) => {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const farmerId = req.user._id;
+
+        const farmerToken = await FarmerToken.findOne({ date: today, farmer_id: farmerId });
+
+        if (!farmerToken) {
+            return res.json({ token: null, message: 'No token assigned yet. Add a record to get your token.' });
+        }
+
+        res.json({ token: farmerToken.token_number, date: today });
+    } catch (error) {
+        console.error('Get my token error:', error);
+        res.status(500).json({ error: 'Failed to fetch token' });
+    }
+});
+
+/**
  * GET /api/records/pending/:farmerId
  * Get pending records for a farmer (Specific param route)
  * Also includes parent records that have remaining quantity to sell (partial sales)
@@ -494,7 +633,7 @@ router.get('/pending/:farmerId', requireAuth, async (req, res) => {
             // Calculate sold quantity and find previous rate
             // Calculate sold quantity and find previous rate
             let soldQty = 0;
-            let soldCarat = 0;
+            let soldNag = 0;
             let prevRate = 0;
             const splits = []; // New: Collect split details
             let totalAmountSum = 0; // New: Sum of all amounts
@@ -503,10 +642,25 @@ router.get('/pending/:farmerId', requireAuth, async (req, res) => {
                 // Include RateAssigned and Weighed as 'sold'/allocated so they don't show up as pending
                 if (['Sold', 'Completed', 'RateAssigned', 'Weighed'].includes(child.status)) {
                     const childQty = child.official_qty || child.quantity || 0;
-                    const childCarat = child.official_carat || child.carat || 0;
+                    const childNag = child.official_nag || child.nag || 0;
+
 
                     soldQty += childQty;
-                    soldCarat += childCarat;
+                    soldNag += childNag;
+
+                    // New: Calculate allocated qty for remaining check
+                    // child.quantity IS the allocated/estimated quantity
+                    const allocQty = child.allocated_qty || child.quantity || 0;
+                    const allocNag = child.allocated_nag || child.nag || 0;
+
+                    // We reuse the variables above but need separate tracking for pending logic?
+                    // The pending logic uses soldQty to calculate remaining.
+                    // Let's Override soldQty logic for the remaining calculation purpose within this loop?
+                    // No, soldQty is sent to frontend as 'sold_qty'. We should keep that accurate (official).
+                    // But we should use allocated for 'remaining_qty' calc.
+
+                    child.allocated_qty_temp = allocQty; // Store temp for reduction
+                    child.allocated_nag_temp = allocNag;
 
                     // Capture rate from first sold child to lock it for subsequent splits (legacy behavior, kept for reference)
                     if (!prevRate && child.sale_rate) {
@@ -517,7 +671,7 @@ router.get('/pending/:farmerId', requireAuth, async (req, res) => {
                     splits.push({
                         _id: child._id,
                         qty: childQty,
-                        carat: childCarat,
+                        nag: childNag,
                         rate: child.sale_rate || 0,
                         amount: child.sale_amount || child.total_amount || 0, // Fallback
                         date: child.sold_at || child.createdAt,
@@ -529,18 +683,33 @@ router.get('/pending/:farmerId', requireAuth, async (req, res) => {
                 }
             }
 
-            // Calculate remaining
-            const remainingQty = (parent.quantity || 0) - soldQty;
-            const remainingCarat = (parent.carat || 0) - soldCarat;
+
+            // Calculate remaining using MAX(allocated, official) quantity
+            // This ensures live updates (if 6kg weighed vs 5kg allocated -> deduct 6kg)
+            // And prevents phantom stock (if 4kg weighed vs 5kg allocated -> deduct 5kg)
+            const totalUsedQty = children.reduce((sum, c) => {
+                const alloc = c.allocated_qty || c.quantity || 0;
+                const official = c.official_qty || 0;
+                return sum + Math.max(alloc, official);
+            }, 0);
+
+            const totalUsedNag = children.reduce((sum, c) => {
+                const alloc = c.allocated_nag || c.nag || 0;
+                const official = c.official_nag || 0;
+                return sum + Math.max(alloc, official);
+            }, 0);
+
+            const remainingQty = (parent.quantity || 0) - totalUsedQty;
+            const remainingNag = (parent.nag || 0) - totalUsedNag;
 
             // Only include if there's remaining quantity to sell
-            if (remainingQty > 0.01 || remainingCarat > 0.01) {
+            if (remainingQty > 0.01 || remainingNag > 0.01) {
                 enrichedParentRecords.push({
                     ...parent,
                     remaining_qty: parseFloat(remainingQty.toFixed(2)),
-                    remaining_carat: parseFloat(remainingCarat.toFixed(2)),
+                    remaining_nag: parseFloat(remainingNag.toFixed(2)),
                     sold_qty: parseFloat(soldQty.toFixed(2)),
-                    sold_carat: parseFloat(soldCarat.toFixed(2)),
+                    sold_nag: parseFloat(soldNag.toFixed(2)),
                     has_remaining: true,
                     prev_rate: prevRate, // Send previous rate to frontend
                     splits: splits, // New: Send split details
@@ -575,18 +744,47 @@ router.post('/add', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'No items provided' });
         }
 
+        // --- DAILY TOKEN LOGIC ---
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const farmerId = req.user._id;
+        let tokenNumber;
+
+        // Check if farmer already has a token for today
+        let existingToken = await FarmerToken.findOne({ date: today, farmer_id: farmerId });
+
+        if (existingToken) {
+            tokenNumber = existingToken.token_number;
+        } else {
+            // Atomically increment the daily counter and get next token
+            const dailyCounter = await DailyToken.findOneAndUpdate(
+                { date: today },
+                { $inc: { count: 1 } },
+                { upsert: true, new: true }
+            );
+            tokenNumber = dailyCounter.count;
+
+            // Create the FarmerToken record
+            await FarmerToken.create({
+                date: today,
+                farmer_id: farmerId,
+                token_number: tokenNumber
+            });
+        }
+        // --- END TOKEN LOGIC ---
+
         const recordsToCreate = items.map(item => ({
-            farmer_id: req.user._id,
+            farmer_id: farmerId,
             market: market,
             vegetable: item.vegetable,
             quantity: item.quantity,
-            carat: item.carat || 0,
-            sale_unit: (item.carat && item.carat > 0) ? 'carat' : 'kg',
+            nag: item.nag || 0,
+            sale_unit: (item.nag && item.nag > 0) ? 'nag' : 'kg',
             status: 'Pending',
             qtySold: 0,
             rate: 0,
             totalAmount: 0,
-            trader: '-'
+            trader: '-',
+            token: tokenNumber // Assign daily token
         }));
 
         const savedRecords = await Record.insertMany(recordsToCreate);
@@ -598,21 +796,13 @@ router.post('/add', requireAuth, async (req, res) => {
     }
 });
 
-// ==========================================
-//  3. DYNAMIC ID ROUTES (Must come last)
-// ==========================================
-
-/**
- * PUT /api/records/:id
- * Update a record (Edit Quantity/Market)
- */
 router.put('/:id', requireAuth, async (req, res) => {
     try {
-        const { market, quantity, carat } = req.body;
+        const { market, quantity, nag } = req.body;
 
         const record = await Record.findOneAndUpdate(
             { _id: req.params.id, farmer_id: req.user._id },
-            { market, quantity, carat: carat || 0 },
+            { market, quantity, nag: nag || 0 },
             { new: true }
         );
 
@@ -650,19 +840,19 @@ router.delete('/:id', requireAuth, async (req, res) => {
 router.patch('/:id/weight', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const { official_qty, official_carat } = req.body;
+        const { official_qty, official_nag } = req.body;
         // Import notification service dynamically to avoid circular dependencies if any
         const { createNotification } = await import('../services/notificationService.js');
 
-        if (official_qty == null && official_carat == null) {
-            return res.status(400).json({ error: 'Weight or Carat required' });
+        if (official_qty == null && official_nag == null) {
+            return res.status(400).json({ error: 'Weight or Nag required' });
         }
 
         const record = await Record.findByIdAndUpdate(
             id,
             {
                 official_qty,
-                official_carat: official_carat || 0,
+                official_nag: official_nag || 0,
                 status: 'Weighed',
                 weighed_by: req.user._id,
                 weighed_at: new Date()
@@ -680,7 +870,7 @@ router.patch('/:id/weight', requireAuth, async (req, res) => {
                 recipient: record.farmer_id,
                 type: 'info',
                 title: 'Weight Recorded',
-                message: `Your produce (${record.vegetable}) has been weighed: ${record.official_qty} kg / ${record.official_carat} carat.`,
+                message: `Your produce (${record.vegetable}) has been weighed: ${record.official_qty} kg / ${record.official_nag} nag.`,
                 data: { recordId: record._id, type: 'weight' }
             });
         }
@@ -712,6 +902,7 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
         // Calculate Stats
         let totalRevenue = 0;
         let totalQuantity = 0;
+        let totalNag = 0;
         let pendingPayment = 0;
         const vegetableStats = {};
 
@@ -728,18 +919,22 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
 
             // Count quantity (official weight preferred, else estimated)
             const qty = record.official_qty || record.quantity || 0;
+            const nag = record.official_nag || record.nag || 0;
             totalQuantity += qty;
+            totalNag += nag;
 
             // Vegetable stats
             if (!vegetableStats[record.vegetable]) {
                 vegetableStats[record.vegetable] = {
                     name: record.vegetable,
                     quantity: 0,
+                    nag: 0,
                     count: 0,
                     revenue: 0
                 };
             }
             vegetableStats[record.vegetable].quantity += qty;
+            vegetableStats[record.vegetable].nag += nag;
             vegetableStats[record.vegetable].count += 1;
             if (record.status === 'Sold') {
                 vegetableStats[record.vegetable].revenue += record.total_amount || 0;
@@ -751,6 +946,7 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
             stats: {
                 totalRevenue,
                 totalQuantity,
+                totalNag,
                 pendingPayment,
                 vegetableSummary: Object.values(vegetableStats)
             }
@@ -852,15 +1048,15 @@ router.patch('/:id/sell', requireAuth, async (req, res) => {
 
             let alreadySold = 0;
             // If it's already a parent record, subtract what's already been sold to child records
+            // This `alreadySold` is a bit ambiguous as it doesn't specify unit.
+            // It's used in the `availableKg` and `availableNag` calculations below
+            // with an `approx check`. This might need refinement if `alreadySold`
+            // needs to be unit-specific. For now, keeping it as is from the original context.
             if (record.is_parent) {
                 const existingChildren = await Record.find({ parent_record_id: record._id });
                 for (const child of existingChildren) {
                     if (['Sold', 'Completed', 'RateAssigned', 'Weighed'].includes(child.status)) {
-                        // This `alreadySold` is a bit ambiguous as it doesn't specify unit.
-                        // It's used in the `availableKg` and `availableCarat` calculations below
-                        // with an `approx check`. This might need refinement if `alreadySold`
-                        // needs to be unit-specific. For now, keeping it as is from the original context.
-                        const childQty = (child.official_qty || child.quantity || child.official_carat || child.carat || 0);
+                        const childQty = (child.official_qty || child.quantity || child.official_nag || child.nag || 0);
                         alreadySold += childQty;
                     }
                 }
@@ -870,22 +1066,22 @@ router.patch('/:id/sell', requireAuth, async (req, res) => {
             const availableKg = (record.official_qty || record.quantity || 0) -
                 (record.sale_unit === 'kg' && record.is_parent ? alreadySold : 0); // Approx check for alreadySold
 
-            const availableCarat = (record.official_carat || record.carat || 0) -
-                (record.sale_unit === 'carat' && record.is_parent ? alreadySold : 0);
+            const availableNag = (record.official_nag || record.nag || 0) -
+                (record.sale_unit === 'nag' && record.is_parent ? alreadySold : 0);
 
             // Determine intention
             const totalAllocated = allocations.reduce((sum, a) => sum + parseFloat(a.quantity || 0), 0);
 
             // Initial assumption from request or record
-            let targetUnit = sale_unit || (availableCarat > 0 ? 'carat' : 'kg');
-            let totalAvailable = targetUnit === 'carat' ? availableCarat : availableKg;
+            let targetUnit = sale_unit || (availableNag > 0 ? 'nag' : 'kg');
+            let totalAvailable = targetUnit === 'nag' ? availableNag : availableKg;
 
             // SMART FIX: If selected unit has 0 availability (or less than allocated) BUT other unit has enough
             // explicitly switch to the other unit.
-            // This handles mismatch where frontend sends 'carat' but we only have 'kg', or vice versa.
+            // This handles mismatch where frontend sends 'nag' but we only have 'kg', or vice versa.
             if (totalAvailable < totalAllocated) {
-                const otherUnit = targetUnit === 'carat' ? 'kg' : 'carat';
-                const otherAvailable = targetUnit === 'carat' ? availableKg : availableCarat;
+                const otherUnit = targetUnit === 'nag' ? 'kg' : 'nag';
+                const otherAvailable = targetUnit === 'nag' ? availableKg : availableNag;
 
                 console.log(`Mismatch detected! Requested ${targetUnit} (${totalAvailable}) < Allocated (${totalAllocated}). Checking ${otherUnit} (${otherAvailable})...`);
 
@@ -896,7 +1092,7 @@ router.patch('/:id/sell', requireAuth, async (req, res) => {
                 }
             }
 
-            const isCarat = targetUnit === 'carat';
+            const isNag = targetUnit === 'nag';
 
             // Use small epsilon for floating point comparison
             if (totalAllocated > totalAvailable + 0.01) {
@@ -918,7 +1114,7 @@ router.patch('/:id/sell', requireAuth, async (req, res) => {
 
             // Create child records for each allocation
             const createdRecords = [];
-            // isCarat is already determined above
+            // isNag is already determined above
 
             for (let i = 0; i < allocations.length; i++) {
                 const allocation = allocations[i];
@@ -931,23 +1127,24 @@ router.patch('/:id/sell', requireAuth, async (req, res) => {
                 console.log(`Creating child record ${i}: lot_id=${childLotId}, trader=${allocation.trader_id}, qty=${allocation.quantity}`);
 
                 // Create a new child record for this trader
-                // NOTE: official_qty and official_carat are left as 0 - weight staff will fill them
+                // NOTE: official_qty and official_nag are left as 0 - weight staff will fill them
                 const childRecord = new Record({
                     farmer_id: record.farmer_id,
                     vegetable: record.vegetable,
                     market: record.market,
-                    quantity: isCarat ? 0 : parseFloat(allocation.quantity), // Estimated/allocated qty
-                    carat: isCarat ? parseFloat(allocation.quantity) : 0,
-                    // official_qty/official_carat left as default 0 - to be filled by weight staff
-                    allocated_qty: isCarat ? 0 : parseFloat(allocation.quantity),
-                    allocated_carat: isCarat ? parseFloat(allocation.quantity) : 0,
+                    quantity: isNag ? 0 : parseFloat(allocation.quantity), // Estimated/allocated qty
+                    nag: isNag ? parseFloat(allocation.quantity) : 0,
+                    // official_qty/official_nag left as default 0 - to be filled by weight staff
+                    allocated_qty: isNag ? 0 : parseFloat(allocation.quantity),
+                    allocated_nag: isNag ? parseFloat(allocation.quantity) : 0,
                     trader_id: allocation.trader_id,
                     sale_rate: parseFloat(allocation.rate),
                     sale_unit: targetUnit,
                     status: 'RateAssigned',
                     parent_record_id: record._id,
                     is_parent: false,
-                    lot_id: childLotId // Set lot_id here so pre-save hook skips
+                    lot_id: childLotId, // Set lot_id here so pre-save hook skips
+                    token: record.token // Propagate daily token to child record
                 });
 
                 try {
@@ -1114,9 +1311,9 @@ router.get('/completed', requireAuth, async (req, res) => {
                     sold_by: { _id: 1, full_name: 1 },
                     vegetable: 1,
                     quantity: 1,
-                    carat: 1,
+                    nag: 1,
                     official_qty: 1,
-                    official_carat: 1,
+                    official_nag: 1,
                     sale_rate: 1,
                     sale_amount: 1,
                     farmer_commission: 1,

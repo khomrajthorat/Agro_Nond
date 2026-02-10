@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 export default function TraderDashboard() {
   const [stats, setStats] = useState({
     totalQuantity: 0,
+    totalNag: 0,
     totalBaseSpend: 0,
     totalCommission: 0,
     totalSpend: 0,
@@ -43,7 +44,8 @@ export default function TraderDashboard() {
   // ✅ Auto-refresh data every 30 seconds
   useAutoRefresh(() => fetchData(false), { interval: 30000 });
 
-  // Calculate Average Rate
+  // Calculate Average Rate: (Total Spend / Total Quantity). Note: This is rough for mixed units. 
+  // Ideally should separate rate per unit but for now keeping as is or using quantity only.
   const avgRate = stats.totalQuantity > 0 ? (stats.totalSpend / stats.totalQuantity) : 0;
 
   const handleDownloadReport = async () => {
@@ -67,8 +69,14 @@ export default function TraderDashboard() {
 
   // Single Color Theme - Emerald / Slate Icons
   const statCards = [
-    { label: 'Total Purchased', value: stats.totalQuantity, unit: 'kg', icon: <ShoppingBasket className="w-6 h-6 text-emerald-600" /> },
-    { label: 'Total Spend', value: stats.totalSpend, unit: '₹', icon: <Wallet className="w-6 h-6 text-emerald-600" />, isCurrency: true },
+    {
+      label: 'Total Purchased',
+      value: stats.totalQuantity,
+      unit: 'kg',
+      nagValue: stats.totalNag, // Added for dual display
+      icon: <ShoppingBasket className="w-6 h-6 text-emerald-600" />
+    },
+    { label: 'Completed Payment', value: stats.totalPaid || 0, unit: '₹', icon: <Wallet className="w-6 h-6 text-emerald-600" />, isCurrency: true },
     { label: 'Average Rate', value: Math.round(avgRate), unit: '₹/kg', icon: <TrendingUp className="w-6 h-6 text-emerald-600" />, isCurrency: true },
     { label: 'Pending Payments', value: stats.pendingPayments, unit: '₹', icon: <Clock className="w-6 h-6 text-emerald-600" />, isCurrency: true },
   ];
@@ -107,12 +115,25 @@ export default function TraderDashboard() {
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{stat.label}</p>
-              <div className="flex items-baseline gap-1 mt-1">
+              <div className="flex flex-wrap items-baseline gap-1 mt-1">
                 {stat.isCurrency && <span className="text-lg font-bold text-slate-900">₹</span>}
+
+                {/* Primary Value (kg or Currency) */}
                 <span className="text-2xl font-bold text-slate-900">
                   <AnimatedCounter value={stat.value} duration={1500} />
                 </span>
                 {!stat.isCurrency && <span className="text-sm font-medium text-slate-400 ml-1">{stat.unit}</span>}
+
+                {/* Secondary Value (Nag) if present */}
+                {stat.nagValue > 0 && (
+                  <>
+                    <span className="text-slate-300 text-lg font-light mx-2">|</span>
+                    <span className="text-2xl font-bold text-slate-900">
+                      <AnimatedCounter value={stat.nagValue} duration={1500} />
+                    </span>
+                    <span className="text-sm font-medium text-slate-400 ml-1">Nag</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -149,7 +170,7 @@ export default function TraderDashboard() {
                 <th className="px-5 py-3 text-left font-semibold text-slate-600">Date & Time</th>
 
                 <th className="px-5 py-3 text-left font-semibold text-slate-600">Crop</th>
-                <th className="px-5 py-3 text-right font-semibold text-slate-600">Qty / Carat</th>
+                <th className="px-5 py-3 text-right font-semibold text-slate-600">Qty / Nag</th>
                 <th className="px-5 py-3 text-right font-semibold text-slate-600">Rate/kg</th>
                 <th className="px-5 py-3 text-right font-semibold text-slate-600">Total Amount</th>
                 <th className="px-5 py-3 text-center font-semibold text-slate-600">Status</th>
@@ -178,8 +199,11 @@ export default function TraderDashboard() {
 
                       <td className="px-5 py-4 text-slate-600">{item.vegetable}</td>
                       <td className="px-5 py-4 text-right font-medium text-slate-700">
-                        <div>{(item.official_qty || 0).toLocaleString('en-IN')} kg</div>
-                        {item.official_carat > 0 && <div className="text-xs text-purple-600">{item.official_carat} Crt</div>}
+                        {item.official_nag > 0 ? (
+                          <div className="text-purple-600">{item.official_nag} Nag</div>
+                        ) : (
+                          <div>{(item.official_qty || 0).toLocaleString('en-IN')} kg</div>
+                        )}
                       </td>
                       <td className="px-5 py-4 text-right text-slate-600">₹{item.sale_rate}</td>
                       <td className="px-5 py-4 text-right">

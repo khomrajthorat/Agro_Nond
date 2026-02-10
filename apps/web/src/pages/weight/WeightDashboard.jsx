@@ -34,8 +34,8 @@ const InlineWeightInput = ({ record, onWeightSave, disabled }) => {
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef(null);
 
-  const isCaratBased = record.est_carat > 0;
-  const unit = isCaratBased ? 'Crt' : 'kg';
+  const isNagBased = record.est_nag > 0;
+  const unit = isNagBased ? 'Nag' : 'kg';
 
   const handleSave = async () => {
     const value = parseFloat(weight);
@@ -43,7 +43,7 @@ const InlineWeightInput = ({ record, onWeightSave, disabled }) => {
 
     setIsSaving(true);
     try {
-      await onWeightSave(record.id, value, isCaratBased);
+      await onWeightSave(record.id, value, isNagBased);
       setWeight('');
     } catch (err) {
       // Error handled in parent
@@ -81,7 +81,7 @@ const InlineWeightInput = ({ record, onWeightSave, disabled }) => {
           className={`w-24 sm:w-28 px-3 py-2 text-center font-semibold rounded-lg border-2 transition-all outline-none
             ${isSaving
               ? 'bg-gray-50 border-gray-200 text-gray-400'
-              : isCaratBased
+              : isNagBased
                 ? 'border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 text-purple-700'
                 : 'border-green-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 text-green-700'
             }`}
@@ -92,7 +92,7 @@ const InlineWeightInput = ({ record, onWeightSave, disabled }) => {
           </div>
         )}
       </div>
-      <span className={`text-sm font-medium ${isCaratBased ? 'text-purple-600' : 'text-green-600'}`}>
+      <span className={`text-sm font-medium w-10 shrink-0 ${isNagBased ? 'text-purple-600' : 'text-green-600'}`}>
         {unit}
       </span>
     </div>
@@ -128,6 +128,10 @@ const WeightDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedDate, setSelectedDate] = useState('');
   const [profileForm, setProfileForm] = useState({ ...profile });
+  const [tokenSearch, setTokenSearch] = useState('');
+  const [tokenSearchResult, setTokenSearchResult] = useState(null);
+  const [isSearchingToken, setIsSearchingToken] = useState(false);
+  const [tokenFilterFarmerId, setTokenFilterFarmerId] = useState(null);
 
   // --- DATA FETCHING ---
   const loadProfile = async () => {
@@ -165,11 +169,12 @@ const WeightDashboard = () => {
         id: r._id,
         date: r.createdAt,
         farmer_id: r.farmer_id?.farmerId || r.farmer_id || 'Unknown',
+        farmer_ref_id: r.farmer_id?._id || r.farmer_id,
         item: r.vegetable,
         est_weight: r.quantity,
-        est_carat: r.carat,
+        est_nag: r.nag,
         updated_weight: r.official_qty,
-        updated_carat: r.official_carat,
+        updated_nag: r.official_nag,
         status: r.status,
         record_ref_id: r._id
       });
@@ -230,15 +235,15 @@ const WeightDashboard = () => {
   // --- HANDLERS ---
 
   // Auto-save weight handler
-  const handleWeightSave = async (recordId, value, isCaratBased) => {
+  const handleWeightSave = async (recordId, value, isNagBased) => {
     // Optimistic update
     setPendingRecords(prev => prev.filter(r => r.id !== recordId));
 
     try {
       await api.weight.createRecord({
         recordRefId: recordId,
-        updatedWeight: isCaratBased ? null : value,
-        updatedCarat: isCaratBased ? value : null
+        updatedWeight: isNagBased ? null : value,
+        updatedNag: isNagBased ? value : null
       });
 
       toast.success('Weight saved!', { duration: 2000, position: 'bottom-center' });
@@ -268,6 +273,33 @@ const WeightDashboard = () => {
     } catch (err) {
       toast.error('Delete failed');
     }
+  };
+
+  const handleTokenSearch = async () => {
+    if (!tokenSearch) return;
+    setIsSearchingToken(true);
+    setTokenSearchResult(null);
+    try {
+      const result = await api.records.searchByToken(tokenSearch);
+      setTokenSearchResult(result);
+      // Auto-filter pending records to this farmer
+      if (result?.farmer?._id) {
+        setTokenFilterFarmerId(result.farmer._id);
+      }
+      toast.success(`Found farmer: ${result.farmer?.full_name}`, { duration: 2000 });
+    } catch (err) {
+      toast.error(err.message || 'No farmer found with this token today');
+      setTokenSearchResult(null);
+      setTokenFilterFarmerId(null);
+    } finally {
+      setIsSearchingToken(false);
+    }
+  };
+
+  const clearTokenFilter = () => {
+    setTokenSearchResult(null);
+    setTokenFilterFarmerId(null);
+    setTokenSearch('');
   };
 
   const saveProfile = async () => {
@@ -348,91 +380,151 @@ const WeightDashboard = () => {
           </div>
         </div>
 
-        {/* SECTION 1: Ready to Weigh (Pending Records with Inline Input) */}
-        {pendingRecords.length > 0 && (
-          <div className="bg-white border border-orange-100 rounded-xl mb-6 overflow-hidden">
-            <div className="px-4 py-3 bg-orange-50 border-b border-orange-100">
-              <div className="flex items-center gap-2">
-                <Scale size={18} className="text-orange-600" />
-                <h2 className="font-semibold text-gray-900">Ready to Weigh</h2>
-                <span className="ml-auto text-xs font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
-                  {pendingRecords.length} pending
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Enter weight and press Enter or click outside to auto-save</p>
+        {/* Token Quick Search */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900 mb-1">Quick Token Search</p>
+              <p className="text-xs text-gray-500">Enter farmer's token number to find their records</p>
             </div>
-
-            {/* Mobile View */}
-            <div className="block sm:hidden divide-y divide-gray-50">
-              {pendingRecords.map((record) => (
-                <div key={record.id} className="p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <span className="text-xs text-gray-400">{formatDate(record.date)}</span>
-                      <p className="font-semibold text-gray-900">{record.farmer_id}</p>
-                      <p className="text-sm text-gray-600">{record.item}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-400">Estimated</p>
-                      <p className="font-medium text-gray-600">
-                        {record.est_weight > 0 ? `${record.est_weight} kg` : `${record.est_carat} Crt`}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <span className="text-xs font-medium text-gray-500">Enter Official Weight:</span>
-                    <InlineWeightInput record={record} onWeightSave={handleWeightSave} />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop View */}
-            <div className="hidden sm:block">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">Date</th>
-                    <th className="px-4 py-3 text-left font-medium">Farmer</th>
-                    <th className="px-4 py-3 text-left font-medium">Item</th>
-                    <th className="px-4 py-3 text-left font-medium">Estimated</th>
-                    <th className="px-4 py-3 text-center font-medium">Enter Weight</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {pendingRecords.map((record) => (
-                    <tr key={record.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3">
-                        <span className="text-gray-900">{formatDate(record.date)}</span>
-                        <span className="block text-xs text-gray-400">{formatTime(record.date)}</span>
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-gray-900">{record.farmer_id}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-1 bg-gray-100 rounded text-gray-700 text-xs font-medium">
-                          {record.item}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {record.est_weight > 0 ? `${record.est_weight} kg` : `${record.est_carat} Crt`}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-center">
-                          <InlineWeightInput record={record} onWeightSave={handleWeightSave} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <input
+                type="number"
+                value={tokenSearch}
+                onChange={(e) => setTokenSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleTokenSearch();
+                }}
+                placeholder="Token #"
+                className="w-24 px-3 py-2 rounded-lg border border-green-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none text-center font-bold text-lg"
+              />
+              <button
+                onClick={handleTokenSearch}
+                disabled={!tokenSearch || isSearchingToken}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSearchingToken ? 'Searching...' : 'Find'}
+              </button>
             </div>
           </div>
-        )}
+          {tokenSearchResult && (
+            <div className="mt-3 p-3 bg-white rounded-lg border border-green-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-bold text-gray-900">{tokenSearchResult.farmer?.full_name}</p>
+                  <p className="text-xs text-gray-500">{tokenSearchResult.farmer?.farmerId} • Token #{tokenSearchResult.farmer?.token}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                    {tokenSearchResult.records?.length || 0} Records Today
+                  </span>
+                  <button
+                    onClick={clearTokenFilter}
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                    title="Clear Filter"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 1: Ready to Weigh (Pending Records with Inline Input) */}
+        {(() => {
+          const displayPending = tokenFilterFarmerId
+            ? pendingRecords.filter(r => r.farmer_ref_id === tokenFilterFarmerId)
+            : pendingRecords;
+          return displayPending.length > 0 && (
+            <div className="bg-white border border-green-100 rounded-xl mb-6 overflow-hidden">
+              <div className="px-4 py-3 bg-green-50 border-b border-green-100">
+                <div className="flex items-center gap-2">
+                  <Scale size={40} className="text-green-600" />
+                  <h2 className="font-semibold text-gray-900">Ready to Weight</h2>
+                  {tokenFilterFarmerId && (
+                    <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                      Filtered by Token
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                    {displayPending.length} pending
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Enter weight and press Enter or click outside to auto-save</p>
+              </div>
+
+              {/* Mobile View */}
+              <div className="block sm:hidden divide-y divide-gray-50">
+                {displayPending.map((record) => (
+                  <div key={record.id} className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <span className="text-xs text-gray-400">{formatDate(record.date)}</span>
+                        <p className="font-semibold text-gray-900">{record.farmer_id}</p>
+                        <p className="text-sm text-gray-600">{record.item}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">Estimated</p>
+                        <p className="font-medium text-gray-600">
+                          {record.est_weight > 0 ? `${record.est_weight} kg` : `${record.est_nag} Nag`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <span className="text-xs font-medium text-gray-500">Enter Official Weight:</span>
+                      <InlineWeightInput record={record} onWeightSave={handleWeightSave} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop View */}
+              <div className="hidden sm:block">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium">Date</th>
+                      <th className="px-4 py-3 text-left font-medium">Farmer</th>
+                      <th className="px-4 py-3 text-left font-medium">Item</th>
+                      <th className="px-4 py-3 text-left font-medium">Estimated</th>
+                      <th className="px-4 py-3 text-center font-medium">Enter Weight</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {displayPending.map((record) => (
+                      <tr key={record.id} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <span className="text-gray-900">{formatDate(record.date)}</span>
+                          <span className="block text-xs text-gray-400">{formatTime(record.date)}</span>
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-gray-900">{record.farmer_id}</td>
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-1 bg-gray-100 rounded text-gray-700 text-xs font-medium">
+                            {record.item}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {record.est_weight > 0 ? `${record.est_weight} kg` : `${record.est_nag} Nag`}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-center">
+                            <InlineWeightInput record={record} onWeightSave={handleWeightSave} />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div >
+          );
+        })()}
 
         {/* SECTION 2: Completed Records */}
         <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div className="flex items-center gap-2">
-              <CheckCircle size={18} className="text-green-600" />
+              <CheckCircle size={40} className="text-green-600" />
               <h2 className="font-semibold text-gray-900">Completed Records</h2>
             </div>
 
@@ -496,8 +588,8 @@ const WeightDashboard = () => {
                           <p className="font-semibold text-gray-900">{record.farmer_id}</p>
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${['Done', 'Sold', 'Weighed'].includes(record.status)
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-orange-100 text-orange-700'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-orange-100 text-orange-700'
                           }`}>
                           {record.status}
                         </span>
@@ -511,10 +603,10 @@ const WeightDashboard = () => {
                         <div className="text-right">
                           <span className="text-xs text-gray-400 block">Official</span>
                           <span className={`text-lg font-bold ${record.updated_weight ? 'text-green-600' :
-                              record.updated_carat ? 'text-purple-600' : 'text-gray-400'
+                            record.updated_nag ? 'text-purple-600' : 'text-gray-400'
                             }`}>
                             {record.updated_weight ? `${record.updated_weight} kg` :
-                              record.updated_carat ? `${record.updated_carat} Crt` : '-'}
+                              record.updated_nag ? `${record.updated_nag} Nag` : '-'}
                           </span>
                         </div>
                       </div>
@@ -572,20 +664,20 @@ const WeightDashboard = () => {
                           </td>
                           <td className="px-4 py-3 text-gray-500">
                             {record.est_weight > 0 ? `${record.est_weight} kg` :
-                              record.est_carat > 0 ? `${record.est_carat} Crt` : '-'}
+                              record.est_nag > 0 ? `${record.est_nag} Nag` : '-'}
                           </td>
                           <td className="px-4 py-3">
                             <span className={`font-bold ${record.updated_weight ? 'text-green-600' :
-                                record.updated_carat ? 'text-purple-600' : 'text-gray-400'
+                              record.updated_nag ? 'text-purple-600' : 'text-gray-400'
                               }`}>
                               {record.updated_weight ? `${record.updated_weight} kg` :
-                                record.updated_carat ? `${record.updated_carat} Crt` : '-'}
+                                record.updated_nag ? `${record.updated_nag} Nag` : '-'}
                             </span>
                           </td>
                           <td className="px-4 py-3">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${['Done', 'Sold', 'Weighed'].includes(record.status)
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-orange-100 text-orange-700'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-orange-100 text-orange-700'
                               }`}>
                               {['Done', 'Sold', 'Weighed'].includes(record.status)
                                 ? <CheckCircle size={12} />
@@ -629,7 +721,7 @@ const WeightDashboard = () => {
             <strong>Note:</strong> Weight edits are disabled at this level. For corrections, please contact the Committee Office.
           </p>
         </div>
-      </main>
+      </main >
 
       {/* --- MODALS --- */}
 
@@ -676,8 +768,8 @@ const WeightDashboard = () => {
               <div>
                 <p className="text-xs text-gray-500 mb-1">Status</p>
                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5 ${['Done', 'Sold', 'Weighed'].includes(selectedRecord.status)
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-orange-100 text-orange-700'
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-orange-100 text-orange-700'
                   }`}>
                   {['Done', 'Sold', 'Weighed'].includes(selectedRecord.status)
                     ? <CheckCircle size={14} />
@@ -697,14 +789,14 @@ const WeightDashboard = () => {
               <div className="p-3 rounded-xl border border-gray-100">
                 <p className="text-xs text-gray-400 mb-1">Estimated</p>
                 <p className="text-xl font-bold text-gray-400">
-                  {selectedRecord.est_weight > 0 ? `${selectedRecord.est_weight} kg` : `${selectedRecord.est_carat} Crt`}
+                  {selectedRecord.est_weight > 0 ? `${selectedRecord.est_weight} kg` : `${selectedRecord.est_nag} Nag`}
                 </p>
               </div>
               <div className="p-3 rounded-xl border border-green-100 bg-green-50">
                 <p className="text-xs text-green-600 mb-1">Official</p>
                 <p className="text-xl font-bold text-green-700">
                   {selectedRecord.updated_weight ? `${selectedRecord.updated_weight} kg` :
-                    selectedRecord.updated_carat ? `${selectedRecord.updated_carat} Crt` : '-'}
+                    selectedRecord.updated_nag ? `${selectedRecord.updated_nag} Nag` : '-'}
                 </p>
               </div>
             </div>
@@ -718,18 +810,18 @@ const WeightDashboard = () => {
                 <span className="text-gray-500">Item</span>
                 <span className="font-semibold text-gray-900">{selectedRecord.item}</span>
               </div>
-              {(selectedRecord.updated_weight || selectedRecord.updated_carat) && (
+              {(selectedRecord.updated_weight || selectedRecord.updated_nag) && (
                 <div className="flex justify-between py-2">
                   <span className="text-gray-500">Difference</span>
-                  <span className={`font-semibold ${(selectedRecord.updated_weight || selectedRecord.updated_carat) >=
-                      (selectedRecord.est_weight || selectedRecord.est_carat)
-                      ? 'text-green-600'
-                      : 'text-red-500'
+                  <span className={`font-semibold ${(selectedRecord.updated_weight || selectedRecord.updated_nag) >=
+                    (selectedRecord.est_weight || selectedRecord.est_nag)
+                    ? 'text-green-600'
+                    : 'text-red-500'
                     }`}>
                     {(
-                      (selectedRecord.updated_weight || selectedRecord.updated_carat) -
-                      (selectedRecord.est_weight || selectedRecord.est_carat)
-                    ).toFixed(2)} {selectedRecord.updated_weight ? 'kg' : 'Crt'}
+                      (selectedRecord.updated_weight || selectedRecord.updated_nag) -
+                      (selectedRecord.est_weight || selectedRecord.est_nag)
+                    ).toFixed(2)} {selectedRecord.updated_weight ? 'kg' : 'Nag'}
                   </span>
                 </div>
               )}
@@ -801,7 +893,7 @@ const WeightDashboard = () => {
           </button>
         </div>
       </Modal>
-    </div>
+    </div >
   );
 };
 

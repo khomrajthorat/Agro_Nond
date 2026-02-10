@@ -7,16 +7,16 @@ import api from '../../lib/api';
 import toast from 'react-hot-toast';
 
 // Helper function for clean quantity display
-const formatQtyDisplay = (qty, carat) => {
+const formatQtyDisplay = (qty, nag) => {
   const hasQty = qty && qty > 0;
-  const hasCarat = carat && carat > 0;
+  const hasNag = nag && nag > 0;
 
-  if (hasQty && hasCarat) {
+  if (hasQty && hasNag) {
     // Both have values - show both
-    return <>{qty} kg <span className="text-purple-600 font-medium">| {carat} Crt</span></>;
-  } else if (hasCarat) {
-    // Only carat - show carat only (no "0 kg")
-    return <span className="text-purple-600 font-medium">{carat} Crt</span>;
+    return <>{qty} kg <span className="text-purple-600 font-medium">| {nag} Nag</span></>;
+  } else if (hasNag) {
+    // Only nag - show nag only (no "0 kg")
+    return <span className="text-purple-600 font-medium">{nag} Nag</span>;
   } else {
     // Only kg or default - show kg
     return <>{qty || 0} kg</>;
@@ -155,19 +155,19 @@ export default function CommitteeDashboard() {
                 {recentTransactions.length > 0 ? (
                   recentTransactions.map((txn) => {
                     const hasQty = txn.qty && txn.qty > 0;
-                    const hasCarat = txn.carat && txn.carat > 0;
-                    const rateUnit = hasCarat ? 'Crt' : 'kg';
+                    const hasNag = txn.nag && txn.nag > 0;
+                    const rateUnit = hasNag ? 'Nag' : 'kg';
 
                     return (
                       <tr key={txn.id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-5 py-3.5 text-slate-600">{new Date(txn.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
                         <td className="px-5 py-3.5 font-medium text-slate-900">{txn.farmer}</td>
                         <td className="px-5 py-3.5 text-slate-600">{txn.trader}</td>
-                        {/* CLEAN DISPLAY: Show only kg OR carat based on which has value */}
+                        {/* CLEAN DISPLAY: Show only kg OR nag based on which has value */}
                         <td className="px-5 py-3.5 text-slate-500">
                           {txn.crop}
                           <span className="block text-xs">
-                            {formatQtyDisplay(txn.qty, txn.carat)}
+                            {formatQtyDisplay(txn.qty, txn.nag)}
                           </span>
                         </td>
                         <td className="px-5 py-3.5 text-right text-slate-600">₹{txn.rate}/{rateUnit}</td>

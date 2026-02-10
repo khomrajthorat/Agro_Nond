@@ -31,6 +31,9 @@ const notificationSchema = new mongoose.Schema({
         type: Object, // For any extra metadata like recordId, link, etc.
         default: {}
     },
+    readAt: {
+        type: Date
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -39,6 +42,9 @@ const notificationSchema = new mongoose.Schema({
 
 // Index for faster queries by recipient and date
 notificationSchema.index({ recipient: 1, createdAt: -1 });
+
+// TTL Index: Delete documents 5 days (432000 seconds) after 'readAt' is set
+notificationSchema.index({ readAt: 1 }, { expireAfterSeconds: 432000 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 

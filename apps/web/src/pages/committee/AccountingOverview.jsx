@@ -28,16 +28,16 @@ export default function AccountingOverview() {
 
         setSummary(statsResponse);
 
-        // UPDATED: Include carat and sale_unit in transformation
+        // UPDATED: Include nag and sale_unit in transformation
         const formattedTransactions = billingData.records.map(t => {
           // Get effective values (official or farmer's initial)
           const qtyValue = (t.official_qty && t.official_qty > 0)
             ? t.official_qty
             : (t.quantity || 0);
-          const caratValue = (t.official_carat && t.official_carat > 0)
-            ? t.official_carat
-            : (t.carat || 0);
-          const inferredSaleUnit = t.sale_unit || (caratValue > 0 ? 'carat' : 'kg');
+          const nagValue = (t.official_nag && t.official_nag > 0)
+            ? t.official_nag
+            : (t.nag || 0);
+          const inferredSaleUnit = t.sale_unit || (nagValue > 0 ? 'nag' : 'kg');
 
           return {
             id: t._id,
@@ -46,7 +46,7 @@ export default function AccountingOverview() {
             trader: { name: t.trader_id?.business_name || t.trader_id?.full_name || 'Unknown' },
             crop: t.vegetable,
             quantity: qtyValue,
-            carat: caratValue,
+            nag: nagValue,
             sale_unit: inferredSaleUnit,
             rate: t.sale_rate,
             baseAmount: t.sale_amount,

@@ -104,7 +104,7 @@ router.get('/transactions', requireAuth, requireCommitteeAccess, async (req, res
             trader: record.trader_id?.business_name || record.trader_id?.full_name || 'Unknown Trader',
             crop: record.vegetable,
             qty: record.qtySold || record.quantity,
-            carat: record.official_carat || record.carat || 0,
+            nag: record.official_nag || record.nag || 0,
             rate: record.sale_rate || record.rate,
             amount: record.sale_amount,
             status: record.payment_status === 'paid' ? 'Paid' : 'Pending'
@@ -221,6 +221,7 @@ router.get('/traders/:id/history', requireAuth, requireCommitteeAccess, async (r
                     _id: null,
                     totalPurchaseValue: { $sum: '$sale_amount' },
                     totalQuantity: { $sum: '$official_qty' },
+                    totalNag: { $sum: '$official_nag' },
                     count: { $sum: 1 }
                 }
             }
@@ -260,6 +261,7 @@ router.get('/traders/:id/history', requireAuth, requireCommitteeAccess, async (r
                 $group: {
                     _id: '$vegetable',
                     quantity: { $sum: '$official_qty' },
+                    nag: { $sum: '$official_nag' },
                     amount: { $sum: '$sale_amount' },
                     count: { $sum: 1 }
                 }
@@ -276,10 +278,12 @@ router.get('/traders/:id/history', requireAuth, requireCommitteeAccess, async (r
         const stats = {
             totalPurchaseValue: statsAggregation[0]?.totalPurchaseValue || 0,
             totalQuantity: statsAggregation[0]?.totalQuantity || 0,
+            totalNag: statsAggregation[0]?.totalNag || 0,
             pendingPayment: pendingAggregation[0]?.totalPending || 0,
             vegetableSummary: vegetableSummary.map(v => ({
                 name: v._id,
                 quantity: v.quantity,
+                nag: v.nag,
                 amount: v.amount,
                 count: v.count
             }))
@@ -329,7 +333,7 @@ router.get('/download-user-report/:userId', requireAuth, requireCommitteeAccess,
                 { label: 'Date', value: 'date' },
                 { label: 'Vegetable', value: 'vegetable' },
                 { label: 'Quantity (kg)', value: 'qty' },
-                { label: 'Carat', value: 'carat' },
+                { label: 'Nag', value: 'nag' },
                 { label: 'Rate', value: 'rate' },
                 { label: 'Sale Amount', value: 'amount' },
                 { label: 'Farmer Commission', value: 'commission' },
@@ -351,7 +355,7 @@ router.get('/download-user-report/:userId', requireAuth, requireCommitteeAccess,
                 { label: 'Date', value: 'date' },
                 { label: 'Vegetable', value: 'vegetable' },
                 { label: 'Quantity (kg)', value: 'qty' },
-                { label: 'Carat', value: 'carat' },
+                { label: 'Nag', value: 'nag' },
                 { label: 'Rate', value: 'rate' },
                 { label: 'Sale Amount', value: 'amount' },
                 { label: 'Trader Commission', value: 'commission' },
@@ -385,7 +389,7 @@ router.get('/download-user-report/:userId', requireAuth, requireCommitteeAccess,
                 date: date.toLocaleDateString('en-IN'),
                 vegetable: record.vegetable || '',
                 qty: record.official_qty || record.quantity || 0,
-                carat: record.official_carat || record.carat || 0,
+                nag: record.official_nag || record.nag || 0,
                 rate: record.sale_rate || 0,
                 amount: record.sale_amount || 0,
                 commission: comm,

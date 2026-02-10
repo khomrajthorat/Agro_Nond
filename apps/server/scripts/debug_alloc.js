@@ -33,8 +33,8 @@ const debugRecord = async () => {
             console.log('Vegetable:', record.vegetable);
             console.log('Quantity:', record.quantity);
             console.log('Official Qty:', record.official_qty);
-            console.log('Carat:', record.carat);
-            console.log('Official Carat:', record.official_carat);
+            console.log('Nag:', record.nag);
+            console.log('Official Nag:', record.official_nag);
             console.log('Sale Unit:', record.sale_unit);
             console.log('Is Parent:', record.is_parent);
             console.log('Parent Record ID:', record.parent_record_id);
@@ -46,7 +46,7 @@ const debugRecord = async () => {
                 const children = await Record.find({ parent_record_id: record._id });
                 console.log(`Found ${children.length} children.`);
                 children.forEach((c, i) => {
-                    console.log(`Child ${i}: Status=${c.status} Qty=${c.official_qty || c.quantity} Carat=${c.official_carat || c.carat}`);
+                    console.log(`Child ${i}: Status=${c.status} Qty=${c.official_qty || c.quantity} Nag=${c.official_nag || c.nag}`);
                 });
             }
         }

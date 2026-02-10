@@ -357,57 +357,9 @@ router.post('/commission-rules', requireAuth, requireAdmin, async (req, res) => 
       created_by: req.user._id
     });
 
-    // Retroactive update for Pending records to reflect new rate
-    // User expects unpaid bills to update when rate changes
-    try {
-      const filter = {
-        status: { $in: ['Sold', 'Completed'] }
-      };
-
-      // Only update records where payment is pending for the specific role
-      if (role_type === 'farmer') {
-        filter.farmer_payment_status = 'Pending';
-      } else if (role_type === 'trader') {
-        filter.trader_payment_status = 'Pending';
-      }
-
-      const pendingRecords = await Record.find(filter);
-
-      let updatedCount = 0;
-      for (const record of pendingRecords) {
-        let needsSave = false;
-
-        if (role_type === 'farmer') {
-          const newComm = Math.round((record.sale_amount || 0) * newRate);
-          // Only update if changed (epsilon check not needed for integer math but safe)
-          if (record.farmer_commission !== newComm) {
-            record.farmer_commission = newComm;
-            record.net_payable_to_farmer = (record.sale_amount || 0) - newComm;
-            // Update total commission (sum of farmer + trader)
-            // Use existing trader_commission or calculate it? Better use existing to avoid side effects
-            record.commission = newComm + (record.trader_commission || 0);
-            needsSave = true;
-          }
-        } else if (role_type === 'trader') {
-          const newComm = Math.round((record.sale_amount || 0) * newRate);
-          if (record.trader_commission !== newComm) {
-            record.trader_commission = newComm;
-            record.net_receivable_from_trader = (record.sale_amount || 0) + newComm;
-            record.commission = (record.farmer_commission || 0) + newComm;
-            needsSave = true;
-          }
-        }
-
-        if (needsSave) {
-          await record.save();
-          updatedCount++;
-        }
-      }
-      console.log(`Updated ${updatedCount} pending records with new ${role_type} rate: ${newRate}`);
-    } catch (updateError) {
-      console.error('Failed to update pending records:', updateError);
-      // Don't fail the request, just log it
-    }
+    // Retroactive update removed to preserve historical accuracy. 
+    // Old records should retain their original commission rates.
+    console.log(`New commission rule created: ${role_type} @ ${newRate}`);
 
     res.status(201).json(newRule);
   } catch (error) {
@@ -452,7 +404,7 @@ router.get('/download-user-report/:userId', requireAuth, requireAdmin, async (re
         { label: 'Date', value: 'date' },
         { label: 'Vegetable', value: 'vegetable' },
         { label: 'Quantity (kg)', value: 'qty' },
-        { label: 'Carat', value: 'carat' },
+        { label: 'Nag', value: 'nag' },
         { label: 'Rate', value: 'rate' },
         { label: 'Sale Amount', value: 'amount' },
         { label: 'Farmer Commission', value: 'commission' },
@@ -474,7 +426,7 @@ router.get('/download-user-report/:userId', requireAuth, requireAdmin, async (re
         { label: 'Date', value: 'date' },
         { label: 'Vegetable', value: 'vegetable' },
         { label: 'Quantity (kg)', value: 'qty' },
-        { label: 'Carat', value: 'carat' },
+        { label: 'Nag', value: 'nag' },
         { label: 'Rate', value: 'rate' },
         { label: 'Sale Amount', value: 'amount' },
         { label: 'Trader Commission', value: 'commission' },
@@ -507,7 +459,7 @@ router.get('/download-user-report/:userId', requireAuth, requireAdmin, async (re
         date: date.toLocaleDateString('en-IN'),
         vegetable: record.vegetable || '',
         qty: record.official_qty || record.quantity || 0,
-        carat: record.official_carat || record.carat || 0,
+        nag: record.official_nag || record.nag || 0,
         rate: record.sale_rate || 0,
         amount: record.sale_amount || 0,
         commission: comm,
@@ -534,6 +486,50 @@ router.get('/download-user-report/:userId', requireAuth, requireAdmin, async (re
   } catch (error) {
     console.error('Admin user report error:', error);
     res.status(500).json({ error: 'Failed to generate report' });
+  }
+});
+
+/**
+ * GET /api/admin/settings
+ * Fetch all system settings
+ */
+router.get('/settings', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const settings = await import('../models/SystemSetting.js').then(m => m.default.find({}).sort({ key: 1 }));
+    res.json(settings);
+  } catch (error) {
+    console.error('Fetch settings error:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+/**
+ * PATCH /api/admin/settings/:key
+ * Update a specific setting
+ */
+router.patch('/settings/:key', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { value, description } = req.body;
+    const SystemSetting = (await import('../models/SystemSetting.js')).default;
+
+    const updates = {
+      value,
+      updated_by: req.user._id
+    };
+
+    if (description) updates.description = description;
+
+    const setting = await SystemSetting.findOneAndUpdate(
+      { key },
+      updates,
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.json(setting);
+  } catch (error) {
+    console.error('Update setting error:', error);
+    res.status(500).json({ error: 'Failed to update setting' });
   }
 });
 

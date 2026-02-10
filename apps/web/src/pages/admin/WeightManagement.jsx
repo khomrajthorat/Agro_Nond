@@ -85,8 +85,8 @@ export default function WeightManagement() {
                                                     ? `${record.quantity} kg`
                                                     : record.official_qty > 0
                                                         ? `${record.official_qty} kg`
-                                                        : record.carat > 0
-                                                            ? `${record.carat} Crt`
+                                                        : record.nag > 0
+                                                            ? `${record.nag} Nag`
                                                             : '-'}
                                             </span>
                                         </td>

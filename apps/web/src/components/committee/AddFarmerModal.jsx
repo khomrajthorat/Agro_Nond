@@ -125,7 +125,7 @@ export default function AddFarmerModal({ isOpen, onClose, onAdd }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [quantity, setQuantity] = useState('');
-  const [carat, setCarat] = useState('');
+  const [nag, setNag] = useState('');
   const [addedItems, setAddedItems] = useState([]);
 
   // Filter vegetables based on search
@@ -160,12 +160,12 @@ export default function AddFarmerModal({ isOpen, onClose, onAdd }) {
 
   const handleQuantityChange = (value) => {
     setQuantity(value);
-    if (value) setCarat(''); // Clear carat if quantity is entered
+    if (value) setNag(''); // Clear nag if quantity is entered
   };
 
-  const handleCaratChange = (value) => {
-    setCarat(value);
-    if (value) setQuantity(''); // Clear quantity if carat is entered
+  const handleNagChange = (value) => {
+    setNag(value);
+    if (value) setQuantity(''); // Clear quantity if nag is entered
   };
 
   const handleAddItem = () => {
@@ -175,10 +175,10 @@ export default function AddFarmerModal({ isOpen, onClose, onAdd }) {
     }
 
     const qtyValue = parseFloat(quantity) || 0;
-    const caratValue = parseFloat(carat) || 0;
+    const nagValue = parseFloat(nag) || 0;
 
-    if (qtyValue === 0 && caratValue === 0) {
-      toast.error('Please enter quantity or carat');
+    if (qtyValue === 0 && nagValue === 0) {
+      toast.error('Please enter quantity or nag');
       return;
     }
 
@@ -197,14 +197,14 @@ export default function AddFarmerModal({ isOpen, onClose, onAdd }) {
     setAddedItems([...addedItems, {
       vegetable: selectedVegetable,
       quantity: qtyValue,
-      carat: caratValue,
+      nag: nagValue,
     }]);
 
     // Reset fields
     setSelectedVegetable('');
     setSearchTerm('');
     setQuantity('');
-    setCarat('');
+    setNag('');
     toast.success('Item added');
   };
 
@@ -424,11 +424,11 @@ export default function AddFarmerModal({ isOpen, onClose, onAdd }) {
                     )}
                   </div>
 
-                  {/* Quantity and Carat - Side by Side */}
+                  {/* Quantity and Nag - Side by Side */}
                   <div className="grid grid-cols-2 gap-4">
                     {/* Quantity */}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">Quantity (Leave empty if using Carat)</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Quantity (Leave empty if using Nag)</label>
                       <label className="block text-xs text-slate-500 mb-2">Kilograms (Kg)</label>
                       <input
                         type="number"
@@ -442,17 +442,17 @@ export default function AddFarmerModal({ isOpen, onClose, onAdd }) {
                       />
                     </div>
 
-                    {/* Carat */}
+                    {/* Nag */}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">Carat (Leave empty if using Quantity)</label>
-                      <label className="block text-xs text-slate-500 mb-2">Carat (Crt)</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Nag (Leave empty if using Quantity)</label>
+                      <label className="block text-xs text-slate-500 mb-2">Nag (Nag)</label>
                       <input
                         type="number"
-                        value={carat}
-                        onChange={(e) => handleCaratChange(e.target.value)}
+                        value={nag}
+                        onChange={(e) => handleNagChange(e.target.value)}
                         onWheel={(e) => e.target.blur()}
-                        placeholder="Enter carat (e.g., 1, 2, 3...)"
-                        step="1"
+                        placeholder="Enter nag (e.g., 100, 200, 300...)"
+                        step="100"
                         min="0"
                         className="w-full px-4 py-3 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-0 focus:outline-none bg-emerald-50/50 text-sm font-medium"
                       />
@@ -478,7 +478,7 @@ export default function AddFarmerModal({ isOpen, onClose, onAdd }) {
                           <div>
                             <p className="font-medium text-slate-800">{item.vegetable}</p>
                             <p className="text-xs text-slate-500">
-                              {item.quantity > 0 ? `${item.quantity} kg` : `${item.carat} Crt`}
+                              {item.quantity > 0 ? `${item.quantity} kg` : `${item.nag} Nag`}
                             </p>
                           </div>
                           <button

@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
 import Button from '../../components/ui/Button';
+import Loading from '../../components/ui/Loading';
+import { Power } from 'lucide-react';
 
 // Icons
 function MarketIcon({ className }) {
@@ -39,6 +43,15 @@ export default function MarketLogin() {
 
     const { signInWithPhone, verifyOtp, user, profile, signOut } = useAuth();
     const navigate = useNavigate();
+
+    // Check system setting for access
+    const { data: setting, isLoading: settingLoading } = useQuery({
+        queryKey: ['public-setting', 'lilav_login_enabled'],
+        queryFn: () => api.settings.getPublic('lilav_login_enabled'),
+        retry: false
+    });
+
+    const isLoginEnabled = setting?.value ?? true;
 
     // Allowed roles for this portal
     const allowedRoles = ['committee', 'lilav', 'weight'];
@@ -176,6 +189,10 @@ export default function MarketLogin() {
         }
     };
 
+    if (settingLoading) {
+        return <Loading />;
+    }
+
     return (
         <main className="min-h-screen flex items-center justify-center gradient-bg-subtle py-16 sm:py-24 px-4 relative overflow-hidden bg-pattern">
             {/* Background Elements */}
@@ -203,79 +220,98 @@ export default function MarketLogin() {
 
                 <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl p-5 sm:p-8 border border-[var(--border)] animate-scale-in">
 
-                    {error && (
-                        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm text-center">
-                            {error}
-                        </div>
-                    )}
-
-                    {step === 'phone' ? (
-                        <>
-                            <div className="text-center mb-5 sm:mb-8">
-                                <h1 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Market Staff Login</h1>
-                                <p className="text-[var(--text-secondary)] text-sm sm:text-base">
-                                    For Committee, Lilav & Weight staff only
-                                </p>
+                    {!isLoginEnabled ? (
+                        <div className="text-center py-8">
+                            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Power size={32} />
                             </div>
-
-                            <form onSubmit={handlePhoneSubmit} className="space-y-4 sm:space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Mobile Number</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] text-sm sm:text-base">+91</span>
-                                        <input
-                                            type="tel"
-                                            value={phoneNumber}
-                                            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                            className="w-full pl-12 sm:pl-14 pr-4 py-3 sm:py-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all text-base sm:text-lg"
-                                            placeholder="98765 43210"
-                                            required
-                                            autoFocus
-                                        />
-                                    </div>
-                                </div>
-
-                                <Button type="submit" loading={loading} disabled={phoneNumber.length !== 10} className="w-full bg-emerald-600 border-emerald-600 hover:bg-emerald-700" size="lg">
-                                    Send OTP
+                            <h2 className="text-xl font-bold text-gray-800 mb-2">Access Temporarily Disabled</h2>
+                            <p className="text-gray-500 text-sm mb-6">
+                                The market staff login is currently turned off by the administrator. Please try again later.
+                            </p>
+                            <Link to="/">
+                                <Button className="w-full bg-slate-100 text-slate-700 hover:bg-slate-200 border-none">
+                                    Return to Home
                                 </Button>
-                            </form>
-                        </>
+                            </Link>
+                        </div>
                     ) : (
                         <>
-                            <div className="text-center mb-5 sm:mb-8">
-                                <h1 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Verify Identity</h1>
-                                <p className="text-[var(--text-secondary)] text-sm sm:text-base">
-                                    Enter the code sent to +91 {phoneNumber}
-                                </p>
-                            </div>
-
-                            <form onSubmit={handleOtpSubmit} className="space-y-4 sm:space-y-6">
-                                <div className="flex justify-center gap-1.5 sm:gap-2">
-                                    {otp.map((digit, index) => (
-                                        <input
-                                            key={index}
-                                            id={`otp-${index}`}
-                                            type="text"
-                                            maxLength={1}
-                                            value={digit}
-                                            onChange={(e) => handleOtpChange(index, e.target.value)}
-                                            onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                                            onPaste={handleOtpPaste}
-                                            className="w-10 h-12 sm:w-12 sm:h-14 rounded-lg sm:rounded-xl border border-[var(--border)] bg-[var(--surface)] focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all text-center text-lg sm:text-xl font-bold"
-                                        />
-                                    ))}
+                            {error && (
+                                <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm text-center">
+                                    {error}
                                 </div>
+                            )}
 
-                                <Button type="submit" loading={loading} disabled={otp.join('').length !== 6} className="w-full bg-emerald-600 border-emerald-600 hover:bg-emerald-700" size="lg">
-                                    Verify & Access
-                                </Button>
+                            {step === 'phone' ? (
+                                <>
+                                    <div className="text-center mb-5 sm:mb-8">
+                                        <h1 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Market Staff Login</h1>
+                                        <p className="text-[var(--text-secondary)] text-sm sm:text-base">
+                                            For Committee, Lilav & Weight staff only
+                                        </p>
+                                    </div>
 
-                                <div className="flex justify-between items-center text-sm">
-                                    <button type="button" onClick={() => setStep('phone')} className="text-emerald-600 hover:underline">
-                                        Change Number
-                                    </button>
-                                </div>
-                            </form>
+                                    <form onSubmit={handlePhoneSubmit} className="space-y-4 sm:space-y-6">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Mobile Number</label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] text-sm sm:text-base">+91</span>
+                                                <input
+                                                    type="tel"
+                                                    value={phoneNumber}
+                                                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                                    className="w-full pl-12 sm:pl-14 pr-4 py-3 sm:py-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all text-base sm:text-lg"
+                                                    placeholder="98765 43210"
+                                                    required
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <Button type="submit" loading={loading} disabled={phoneNumber.length !== 10} className="w-full bg-emerald-600 border-emerald-600 hover:bg-emerald-700" size="lg">
+                                            Send OTP
+                                        </Button>
+                                    </form>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="text-center mb-5 sm:mb-8">
+                                        <h1 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Verify Identity</h1>
+                                        <p className="text-[var(--text-secondary)] text-sm sm:text-base">
+                                            Enter the code sent to +91 {phoneNumber}
+                                        </p>
+                                    </div>
+
+                                    <form onSubmit={handleOtpSubmit} className="space-y-4 sm:space-y-6">
+                                        <div className="flex justify-center gap-1.5 sm:gap-2">
+                                            {otp.map((digit, index) => (
+                                                <input
+                                                    key={index}
+                                                    id={`otp-${index}`}
+                                                    type="text"
+                                                    maxLength={1}
+                                                    value={digit}
+                                                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                                                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                                                    onPaste={handleOtpPaste}
+                                                    className="w-10 h-12 sm:w-12 sm:h-14 rounded-lg sm:rounded-xl border border-[var(--border)] bg-[var(--surface)] focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all text-center text-lg sm:text-xl font-bold"
+                                                />
+                                            ))}
+                                        </div>
+
+                                        <Button type="submit" loading={loading} disabled={otp.join('').length !== 6} className="w-full bg-emerald-600 border-emerald-600 hover:bg-emerald-700" size="lg">
+                                            Verify & Access
+                                        </Button>
+
+                                        <div className="flex justify-between items-center text-sm">
+                                            <button type="button" onClick={() => setStep('phone')} className="text-emerald-600 hover:underline">
+                                                Change Number
+                                            </button>
+                                        </div>
+                                    </form>
+                                </>
+                            )}
                         </>
                     )}
                 </div>

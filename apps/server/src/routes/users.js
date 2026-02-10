@@ -204,8 +204,8 @@ router.post('/add', requireAuth, async (req, res) => {
             vegetable: item.vegetable,
             market: marketName, // Required field
             quantity: item.quantity || 0,
-            carat: item.carat || 0,
-            sale_unit: (item.carat && item.carat > 0) ? 'carat' : 'kg',
+            nag: item.nag || 0,
+            sale_unit: (item.nag && item.nag > 0) ? 'nag' : 'kg',
             status: 'Pending',
             qtySold: 0,
             rate: 0,

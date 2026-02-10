@@ -52,14 +52,17 @@ const WeightManagement = lazy(() => import('./pages/admin/WeightManagement'));
 const LilavManagement = lazy(() => import('./pages/admin/LilavManagement'));
 const CommitteeManagement = lazy(() => import('./pages/admin/CommitteeManagement'));
 const ActivityLog = lazy(() => import('./pages/admin/ActivityLog'));
+const VegetableManagement = lazy(() => import('./pages/admin/VegetableManagement'));
 
 // Committee Dashboard
 const CommitteeDashboard = lazy(() => import('./pages/committee/CommitteeDashboard'));
 const FarmersList = lazy(() => import('./pages/committee/FarmersList'));
 const TradersList = lazy(() => import('./pages/committee/TradersList'));
 const WeightList = lazy(() => import('./pages/committee/WeightList'));
+const WeightHistory = lazy(() => import('./pages/committee/WeightHistory'));
 const FarmerDetail = lazy(() => import('./pages/committee/FarmerDetail'));
 const MarketActivity = lazy(() => import('./pages/committee/MarketActivity'));
+
 
 const BillingReports = lazy(() => import('./pages/committee/BillingReports'));
 const PaymentManagement = lazy(() => import('./pages/committee/PaymentManagement'));
@@ -193,13 +196,18 @@ function App() {
                     <Route path="farmers/:id" element={<FarmerDetail />} />
                     <Route path="traders" element={<TradersList />} />
                     <Route path="weight" element={<WeightList />} />
+                    <Route path="weight-history" element={<WeightHistory />} />
                     <Route path="activity" element={<MarketActivity />} />
 
                     <Route path="billing" element={<BillingReports />} />
+
+
                     <Route path="payments" element={<PaymentManagement />} />
+
 
                     {/* Lilav (Auction) Section */}
                     <Route path="lilav" element={<LilavEntry />} />
+                    <Route path="vegetables" element={<VegetableManagement />} />
                   </Route>
 
                   {/* Lilav Dashboard - Replaces Accounting */}
@@ -231,6 +239,7 @@ function App() {
                     <Route path="lilav" element={<LilavManagement />} />
                     <Route path="committee" element={<CommitteeManagement />} />
                     <Route path="activity-log" element={<ActivityLog />} />
+                    <Route path="vegetables" element={<VegetableManagement />} />
                   </Route>
 
                   {/* FIXED: Smart redirect based on user role - Prevents infinite loop */}

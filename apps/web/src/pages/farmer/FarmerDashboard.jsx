@@ -11,6 +11,18 @@ import {
   Plus, TrendingUp, Clock, Package, X, Eye, ArrowLeft,
   Trash2, CheckCircle, Calendar, MapPin, ChevronRight, Edit, FileText, ChevronDown, ChevronUp, AlertTriangle, History, Download
 } from 'lucide-react';
+import { getInvoiceData as getInvoiceDataHelper } from '../../lib/invoiceUtils';
+
+
+// ✅ HELPER: Format Time from Date
+const formatTime = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
 
 // --- MODAL COMPONENT ---
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
@@ -31,132 +43,19 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   );
 };
 
-
-
-// --- VEGETABLE DATA ---
-const VEGETABLE_CATEGORIES = [
-  {
-    id: 'onion-potato',
-    name: 'Onion-Potato',
-    marathi: 'कांदा-बटाटा',
-    items: [
-      { english: 'Onion', marathi: 'कांदा ' },
-      { english: 'Potato', marathi: 'बटाटा ' },
-      { english: 'Garlic', marathi: 'लसूण ' },
-      { english: 'Ginger', marathi: 'आले / अद्रक ' },
-      { english: 'Sweet Potato', marathi: 'रताळे ' }
-    ]
-  },
-  {
-    id: 'daily-veg',
-    name: 'Daily Veg',
-    marathi: 'फळ भाज्या',
-    items: [
-      { english: 'Tomato', marathi: 'टोमॅटो ' },
-      { english: 'Brinjal / Eggplant', marathi: 'वांगी ' },
-      { english: 'Lady Finger / Okra', marathi: 'भेंडी ' },
-      { english: 'Green Chili', marathi: 'हिरवी मिरची' },
-      { english: 'Capsicum', marathi: 'ढोबळी मिरची' },
-      { english: 'Drumstick', marathi: 'शेवगा ' },
-      { english: 'Cucumber', marathi: 'काकडी ' },
-      { english: 'Lemon', marathi: 'लिंबू' }
-    ]
-  },
-  {
-    id: 'leafy-veg',
-    name: 'Leafy Veg',
-    marathi: 'पाला भाज्या',
-    items: [
-      { english: 'Coriander', marathi: 'कोथिंबीर ' },
-      { english: 'Fenugreek', marathi: 'मेथी ' },
-      { english: 'Spinach', marathi: 'पालक ' },
-      { english: 'Dill Leaves', marathi: 'शेपू ' },
-      { english: 'Amaranth', marathi: 'लाल माठ' },
-      { english: 'Mint', marathi: 'पुदिना ' },
-      { english: 'Curry Leaves', marathi: 'कढीपत्ता ' },
-      { english: 'Spring Onion', marathi: 'कांद्याची पात' }
-    ]
-  },
-  {
-    id: 'vine-veg',
-    name: 'Vine Veg / Gourds',
-    marathi: 'वेलवर्गीय',
-    items: [
-      { english: 'Bottle Gourd', marathi: 'दुधी भोपळा ' },
-      { english: 'Bitter Gourd', marathi: 'कारले' },
-      { english: 'Ridge Gourd', marathi: 'डोडका ' },
-      { english: 'Sponge Gourd', marathi: 'घोसाळे' },
-      { english: 'Snake Gourd', marathi: 'पडवळ ' },
-      { english: 'Pumpkin', marathi: 'लाल भोपळा / डांगर ' },
-      { english: 'Ash Gourd', marathi: 'कोहळा' }
-    ]
-  },
-  {
-    id: 'beans-pods',
-    name: 'Beans / Pods',
-    marathi: 'शेंगा भाज्या',
-    items: [
-      { english: 'Cluster Beans', marathi: 'गवार' },
-      { english: 'French Beans', marathi: 'फरसबी' },
-      { english: 'Green Peas', marathi: 'मटार / ओला वाटाणा' },
-      { english: 'Flat Beans', marathi: 'घेवडा / वाल ' },
-      { english: 'Double Beans', marathi: 'डबल बी ' },
-      { english: 'Cowpea', marathi: 'चवळी ' }
-    ]
-  },
-  {
-    id: 'roots-salad',
-    name: 'Roots & Salad',
-    marathi: 'कंदमुळं / कोबी',
-    items: [
-      { english: 'Cabbage', marathi: 'कोबी ' },
-      { english: 'Cauliflower', marathi: 'फ्लॉवर ' },
-      { english: 'Carrot', marathi: 'गाजर ' },
-      { english: 'Radish', marathi: 'मुळा ' },
-      { english: 'Beetroot', marathi: 'बीट ' },
-      { english: 'Elephant Foot Yam', marathi: 'सुरण' }
-    ]
-  },
-  {
-    id: 'fruits',
-    name: 'Fruits',
-    marathi: 'फळे',
-    items: [
-      { english: 'Banana', marathi: 'केळी' },
-      { english: 'Apple', marathi: 'सफरचंद' },
-      { english: 'Pomegranate', marathi: 'डाळिंब' },
-      { english: 'Guava', marathi: 'पेरू' },
-      { english: 'Orange', marathi: 'संत्री' },
-      { english: 'Sweet Lime', marathi: 'मोसंबी' },
-      { english: 'Papaya', marathi: 'पपई ' },
-      { english: 'Watermelon', marathi: 'कलिंगड' },
-      { english: 'Grapes', marathi: 'द्राक्षे' },
-      { english: 'Custard Apple', marathi: 'सीताफळ ' },
-      { english: 'Mango', marathi: 'आंबा' },
-      { english: 'Sapodilla', marathi: 'चिकू ' },
-      { english: 'Pineapple', marathi: 'अननस' }
-    ]
-  }
-];
-
-// Helper to flatten data for search, but UI will use categories
-const ALL_VEGETABLES = VEGETABLE_CATEGORIES.flatMap(category =>
-  category.items.map(item => ({
-    ...item,
-    category: category.name,
-    categoryId: category.id,
-    display: `${item.english} (${item.marathi})`
-  }))
-);
-
 // --- ADD NEW RECORD SECTION ---
 const AddNewRecordSection = ({ onBack, onSave }) => {
   const [selectedMarket, setSelectedMarket] = useState('');
   const [isLoadingMarket, setIsLoadingMarket] = useState(true);
   const [selectedVegetable, setSelectedVegetable] = useState('');
+  const [selectedVegetableData, setSelectedVegetableData] = useState(null); // Track full vegetable object
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState([]); // Track which categories are open
+
+  // Dynamic vegetables from API
+  const [vegetables, setVegetables] = useState([]);
+  const [vegetableCategories, setVegetableCategories] = useState([]);
+  const [isLoadingVegetables, setIsLoadingVegetables] = useState(true);
 
   const [quantities, setQuantities] = useState({
     kg: '',
@@ -164,24 +63,52 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
     quintal: ''
   });
 
-  // ✅ NEW: Carat field state
-  const [carat, setCarat] = useState('');
+  // Nag field state
+  const [nag, setNag] = useState('');
 
   const [addedItems, setAddedItems] = useState([]);
 
+  // Fetch vegetables from API
+  useEffect(() => {
+    const fetchVegetables = async () => {
+      try {
+        setIsLoadingVegetables(true);
+        const data = await api.vegetables.list();
+        setVegetables(data.vegetables || []);
+
+        // Transform to category format for UI
+        const grouped = data.grouped || {};
+        const categories = Object.entries(grouped).map(([categoryName, items]) => ({
+          id: categoryName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          name: categoryName,
+          items: items.map(item => ({
+            _id: item._id,
+            english: item.name,
+            marathi: item.marathiName,
+            units: item.units || ['kg']
+          }))
+        }));
+        setVegetableCategories(categories);
+      } catch (error) {
+        console.error('Failed to fetch vegetables:', error);
+        toast.error('Failed to load vegetables');
+      } finally {
+        setIsLoadingVegetables(false);
+      }
+    };
+    fetchVegetables();
+  }, []);
+
   // Use Centralized Market Configuration
-  // All users (farmers, traders, lilav, weight, committee) belong to this single market
   useEffect(() => {
     setSelectedMarket(MARKET_CONFIG.MARKET_NAME);
     setIsLoadingMarket(false);
   }, []);
 
-
   // Filter logic
   const isSearching = searchTerm.length > 0 && selectedVegetable !== searchTerm;
 
-  const filteredCategories = VEGETABLE_CATEGORIES.map(cat => {
-    // If searching, filter items inside. If not searching, keep all items.
+  const filteredCategories = vegetableCategories.map(cat => {
     const matchingItems = isSearching
       ? cat.items.filter(item =>
         item.english.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -190,46 +117,35 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
       : cat.items;
 
     return { ...cat, items: matchingItems };
-  }).filter(cat => cat.items.length > 0 || !isSearching); // Hide empty categories only when searching
-
-  // Toggle Category Accordion
-  const toggleCategory = (categoryId) => {
-    setExpandedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
-
-  // Auto-expand categories when searching
-  useEffect(() => {
-    if (isSearching) {
-      const allCategoryIds = filteredCategories.map(c => c.id);
-      setExpandedCategories(allCategoryIds);
-    } else {
-      setExpandedCategories([]); // Collapse all when clearing search
-    }
-  }, [searchTerm]);
+  }).filter(cat => cat.items.length > 0 || !isSearching);
 
   const handleVegetableSelect = (item, categoryName) => {
     const display = `${item.english} (${item.marathi})`;
     setSelectedVegetable(display);
+    setSelectedVegetableData(item); // Store full item with units
     setSearchTerm(display);
     setIsDropdownOpen(false);
+    // Clear inputs when changing vegetable
+    setQuantities({ kg: '', ton: '', quintal: '' });
+    setNag('');
   };
 
   const clearSelection = () => {
     setSelectedVegetable('');
+    setSelectedVegetableData(null);
     setSearchTerm('');
     setQuantities({ kg: '', ton: '', quintal: '' });
-    setCarat(''); // ✅ Clear carat field
+    setNag('');
     setIsDropdownOpen(false);
   };
 
+  // Check if selected vegetable allows kg or nag
+  const allowsKg = selectedVegetableData?.units?.includes('kg') ?? true;
+  const allowsNag = selectedVegetableData?.units?.includes('nag') ?? false;
+
   const handleQuantityChange = (value, type) => {
-    // ✅ NEW: If typing in Quantity, clear Carat
     if (value) {
-      setCarat('');
+      setNag('');
     }
 
     if (value === '') {
@@ -263,11 +179,8 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
     });
   };
 
-  // ✅ NEW: Handler for Carat change
-  const handleCaratChange = (value) => {
-    setCarat(value);
-
-    // If typing in Carat, clear Quantities
+  const handleNagChange = (value) => {
+    setNag(value);
     if (value) {
       setQuantities({ kg: '', ton: '', quintal: '' });
     }
@@ -279,28 +192,38 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
       return;
     }
 
-    // ✅ VALIDATION: At least one field must be filled (quantity OR carat)
     const hasQuantity = quantities.kg && parseFloat(quantities.kg) > 0;
-    const hasCarat = carat && parseFloat(carat) > 0;
+    const hasNag = nag && parseFloat(nag) > 0;
 
-    if (!hasQuantity && !hasCarat) {
-      toast.error('Please enter either Quantity (Kg) or Carat');
-      return;
-    }
-
-    // Safety check (shouldn't happen with UI logic, but good practice)
-    if (hasQuantity && hasCarat) {
-      toast.error('Please enter only Quantity OR Carat, not both.');
-      return;
-    }
-
-    // ✅ VALIDATION: Quantity must be a multiple of 10
-    if (hasQuantity) {
-      const qty = parseFloat(quantities.kg);
-      if (qty % 10 !== 0) {
-        toast.error('Quantity (Kg) must be a multiple of 10 (e.g., 10, 20, 30, 110, 150)');
+    // Validation based on allowed units
+    if (allowsKg && allowsNag) {
+      // Both allowed - user must fill one
+      if (!hasQuantity && !hasNag) {
+        toast.error('Please enter either Quantity (Kg) or Nag');
         return;
       }
+      if (hasQuantity && hasNag) {
+        toast.error('Please enter only Quantity OR Nag, not both.');
+        return;
+      }
+    } else if (allowsKg && !allowsNag) {
+      // Only kg allowed
+      if (!hasQuantity) {
+        toast.error('Please enter Quantity (Kg)');
+        return;
+      }
+    } else if (!allowsKg && allowsNag) {
+      // Only nag allowed
+      if (!hasNag) {
+        toast.error('Please enter Nag count');
+        return;
+      }
+    }
+
+    // Check for negative values
+    if ((hasQuantity && parseFloat(quantities.kg) < 0) || (hasNag && parseFloat(nag) < 0)) {
+      toast.error('Quantity cannot be negative');
+      return;
     }
 
     const isDuplicate = addedItems.some(item => item.vegetable === selectedVegetable);
@@ -312,14 +235,12 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
     const newItem = {
       id: Date.now(),
       vegetable: selectedVegetable,
-      quantity: parseFloat(quantities.kg) || 0, // Default to 0 if not filled
-      carat: parseFloat(carat) || 0 // ✅ Store carat value
+      quantity: parseFloat(quantities.kg) || 0,
+      nag: parseFloat(nag) || 0
     };
 
     setAddedItems([...addedItems, newItem]);
     toast.success('Item added to list');
-
-    // Reset fields for next entry
     clearSelection();
   };
 
@@ -344,7 +265,6 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
       items: addedItems
     });
 
-    // setSelectedMarket(''); // Keep market selected
     clearSelection();
     setAddedItems([]);
   };
@@ -402,7 +322,7 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                           {item.quantity > 0 ? (
                             <p>Qty: {item.quantity} kg</p>
                           ) : (
-                            <p>Carat: {item.carat}</p>
+                            <p>Nag: {item.nag}</p>
                           )}
                         </div>
                       </div>
@@ -419,7 +339,7 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
               </div>
             )}
 
-            {/* Vegetable Dropdown (Accordion Style) */}
+            {/* Vegetable Dropdown */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">Vegetable Name *</label>
 
@@ -433,11 +353,11 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                       setIsDropdownOpen(true);
                     }}
                     onFocus={() => setIsDropdownOpen(true)}
-                    placeholder="Search or Select Category..."
-                    className="w-full px-4 py-3 pr-10 rounded-xl border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white text-gray-900"
+                    placeholder={isLoadingVegetables ? "Loading vegetables..." : "Search or Select..."}
+                    disabled={isLoadingVegetables}
+                    className="w-full px-4 py-3 pr-10 rounded-xl border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white text-gray-900 disabled:bg-gray-100"
                   />
 
-                  {/* Clear / Dropdown Icon Logic */}
                   {searchTerm ? (
                     <button
                       onClick={clearSelection}
@@ -455,7 +375,7 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                 </div>
 
                 {/* Dropdown Menu - Flat List */}
-                {isDropdownOpen && (
+                {isDropdownOpen && !isLoadingVegetables && (
                   <>
                     <div
                       className="fixed inset-0 z-10"
@@ -463,7 +383,6 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                     />
                     <div className="absolute z-20 w-full mt-2 bg-white border border-gray-300 rounded-xl shadow-xl max-h-96 overflow-y-auto custom-scrollbar">
                       {(() => {
-                        // Flatten all vegetables for display
                         const allItems = filteredCategories.flatMap(cat =>
                           cat.items.map(item => ({ ...item, categoryName: cat.name }))
                         );
@@ -478,7 +397,7 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
 
                         return allItems.map((item, idx) => (
                           <button
-                            key={idx}
+                            key={item._id || idx}
                             onClick={() => handleVegetableSelect(item, item.categoryName)}
                             className="w-full px-4 py-3 text-left hover:bg-green-50 transition border-b border-gray-100 last:border-0 flex justify-between items-center group"
                           >
@@ -486,9 +405,20 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                               <p className="text-sm font-medium text-gray-900 group-hover:text-green-700">{item.english}</p>
                               <p className="text-xs text-gray-500 group-hover:text-green-600">{item.marathi}</p>
                             </div>
-                            {selectedVegetable.includes(item.english) && (
-                              <CheckCircle size={16} className="text-green-600" />
-                            )}
+                            <div className="flex items-center gap-2">
+                              {/* Show unit badges */}
+                              <div className="flex gap-1">
+                                {item.units?.includes('kg') && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">KG</span>
+                                )}
+                                {item.units?.includes('nag') && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded">NAG</span>
+                                )}
+                              </div>
+                              {selectedVegetable.includes(item.english) && (
+                                <CheckCircle size={16} className="text-green-600" />
+                              )}
+                            </div>
                           </button>
                         ));
                       })()}
@@ -502,6 +432,14 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
                   <div>
                     <p className="text-xs text-gray-600 mb-0.5">Currently Selected:</p>
                     <p className="font-bold text-gray-900 text-sm">{selectedVegetable}</p>
+                    <div className="flex gap-1 mt-1">
+                      {allowsKg && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">KG</span>
+                      )}
+                      {allowsNag && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded">NAG</span>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={clearSelection}
@@ -514,49 +452,71 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
               )}
             </div>
 
-            {/* Quantity and Carat Inputs - Side by Side */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Quantity Input */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Quantity (Leave empty if using Carat)</label>
-                <label className="block text-xs text-gray-500 mb-1 font-medium">Kilograms (Kg)</label>
-                <input
-                  type="number"
-                  value={quantities.kg}
-                  onChange={(e) => handleQuantityChange(e.target.value, 'kg')}
-                  onWheel={(e) => e.target.blur()}
-                  placeholder="0"
-                  step="10"
-                  min="0"
-                  className="w-full px-4 py-3 rounded-xl border border-green-300 focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none bg-green-50/50 text-gray-900 font-semibold"
-                />
-              </div>
+            {/* Quantity and Nag Inputs - Conditionally shown based on vegetable units */}
+            {selectedVegetable && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Quantity Input - Show only if kg is allowed */}
+                {allowsKg && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Quantity {allowsNag ? '(Leave empty if using Nag)' : '*'}
+                    </label>
+                    <label className="block text-xs text-gray-500 mb-1 font-medium">Kilograms (Kg)</label>
+                    <input
+                      type="number"
+                      value={quantities.kg}
+                      onChange={(e) => handleQuantityChange(e.target.value, 'kg')}
+                      onWheel={(e) => e.target.blur()}
+                      placeholder="0"
+                      step="10"
+                      min="0"
+                      className="w-full px-4 py-3 rounded-xl border border-green-300 focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none bg-green-50/50 text-gray-900 font-semibold"
+                    />
+                  </div>
+                )}
 
-              {/* Carat Input */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Carat (Leave empty if using Quantity)</label>
-                <label className="block text-xs text-gray-500 mb-1 font-medium">Carat (Crt)</label>
-                <input
-                  type="number"
-                  value={carat}
-                  onChange={(e) => handleCaratChange(e.target.value)}
-                  onWheel={(e) => e.target.blur()}
-                  placeholder="Enter carat (e.g., 1, 2, 3...)"
-                  step="1"
-                  min="0"
-                  className="w-full px-4 py-3 rounded-xl border border-green-300 focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none bg-green-50/50 text-gray-900 font-semibold"
-                />
+                {/* Nag Input - Show only if nag is allowed */}
+                {allowsNag && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Nag {allowsKg ? '(Leave empty if using Quantity)' : '*'}
+                    </label>
+                    <label className="block text-xs text-gray-500 mb-1 font-medium">Nag Count</label>
+                    <input
+                      type="number"
+                      value={nag}
+                      onChange={(e) => handleNagChange(e.target.value)}
+                      onWheel={(e) => e.target.blur()}
+                      placeholder="Enter count (e.g. 5, 50, 100)"
+                      min="0"
+                      className="w-full px-4 py-3 rounded-xl border border-purple-300 focus:border-purple-600 focus:ring-2 focus:ring-purple-100 outline-none bg-purple-50/50 text-gray-900 font-semibold"
+                    />
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-              <p><strong>Note:</strong> Enter value in <strong>either</strong> Quantity <strong>OR</strong> Carat. Filling one will automatically clear the other.</p>
-            </div>
+            {/* Info note - only show if both units are allowed */}
+            {selectedVegetable && allowsKg && allowsNag && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+                <p><strong>Note:</strong> Enter value in <strong>either</strong> Quantity <strong>OR</strong> Nag. Filling one will automatically clear the other.</p>
+              </div>
+            )}
+
+            {/* Prompt to select vegetable first */}
+            {!selectedVegetable && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600 text-center">
+                <Package size={24} className="mx-auto text-gray-400 mb-2" />
+                <p>Please select a vegetable first to see quantity options</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleAddItem}
-                className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                disabled={!selectedVegetable}
+                className={`px-4 py-3 font-semibold rounded-xl transition shadow-lg hover:shadow-xl flex items-center justify-center gap-2 ${!selectedVegetable ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
               >
                 <Plus size={20} />
                 Add Item
@@ -580,6 +540,7 @@ const AddNewRecordSection = ({ onBack, onSave }) => {
   );
 };
 
+
 // --- MAIN DASHBOARD COMPONENT ---
 const FarmerDashboard = () => {
   const [view, setView] = useState('dashboard');
@@ -592,11 +553,13 @@ const FarmerDashboard = () => {
   });
   const [stats, setStats] = useState({
     totalEarnings: 0,
-    totalVolume: 0,
+    totalVolumeKg: 0,
+    totalVolumeNag: 0,
     totalSalesCount: 0,
     pendingLotsCount: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [dailyToken, setDailyToken] = useState(null); // Daily Token for today
   const [profile, setProfile] = useState({
     name: '',
     phone: '',
@@ -624,7 +587,7 @@ const FarmerDashboard = () => {
     market: '',
     vegetable: '',
     quantities: { kg: '', ton: '', quintal: '' },
-    carat: '' // ✅ Add carat to edit form
+    nag: '' // ✅ Add nag to edit form
   });
 
   // --- FETCH DATA FROM BACKEND ---
@@ -693,10 +656,21 @@ const FarmerDashboard = () => {
     }
   };
 
+  // Fetch daily token
+  const fetchDailyToken = useCallback(async () => {
+    try {
+      const data = await api.records.myToken();
+      setDailyToken(data.token);
+    } catch (error) {
+      console.error('Failed to fetch token:', error);
+    }
+  }, []);
+
   // ✅ NEW: Fetch records on mount
   useEffect(() => {
     fetchRecords(true, 1, 'All', '');
     fetchStats();
+    fetchDailyToken();
     loadProfile();
   }, []);
 
@@ -734,15 +708,7 @@ const FarmerDashboard = () => {
   // We no longer client-side sort or filter the main list, as the backend does it.
   const displayRecords = records;
 
-  // ✅ HELPER: Format Time from Date
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
+
 
 
 
@@ -754,6 +720,7 @@ const FarmerDashboard = () => {
       setView('dashboard');
       fetchRecords(true, 1, filterStatus, selectedDate); // Refresh and go to page 1
       fetchStats();
+      fetchDailyToken(); // Refresh token after adding record
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.error || 'Failed to save record');
@@ -790,15 +757,15 @@ const FarmerDashboard = () => {
         ton: qty > 0 ? (qty / 1000).toFixed(3) : '',
         quintal: qty > 0 ? (qty / 100).toFixed(2) : ''
       },
-      carat: record.carat ? record.carat.toString() : '' // ✅ Load carat value
+      nag: record.nag ? record.nag.toString() : '' // ✅ Load nag value
     });
     setModals({ ...modals, editRecord: true });
   };
 
   const handleEditQuantityChange = (value, type) => {
-    // If typing in Quantity, clear Carat
+    // If typing in Quantity, clear Nag
     if (value) {
-      setEditFormData(prev => ({ ...prev, carat: '' }));
+      setEditFormData(prev => ({ ...prev, nag: '' }));
     }
 
     if (value === '') {
@@ -838,26 +805,26 @@ const FarmerDashboard = () => {
     }));
   };
 
-  const handleEditCaratChange = (value) => {
-    // If typing in Carat, clear Quantities
+  const handleEditNagChange = (value) => {
+    // If typing in Nag, clear Quantities
     if (value) {
       setEditFormData(prev => ({
         ...prev,
         quantities: { kg: '', ton: '', quintal: '' },
-        carat: value
+        nag: value
       }));
     } else {
-      setEditFormData(prev => ({ ...prev, carat: value }));
+      setEditFormData(prev => ({ ...prev, nag: value }));
     }
   };
 
   const handleUpdateRecord = async () => {
     const newKg = parseFloat(editFormData.quantities.kg) || 0;
-    const newCarat = parseFloat(editFormData.carat) || 0;
+    const newNag = parseFloat(editFormData.nag) || 0;
 
     // ✅ VALIDATION: At least one field must be filled
-    if (newKg <= 0 && newCarat <= 0) {
-      toast.error("Please enter either Quantity (Kg) or Carat");
+    if (newKg <= 0 && newNag <= 0) {
+      toast.error("Please enter either Quantity (Kg) or Nag");
       return;
     }
 
@@ -870,7 +837,7 @@ const FarmerDashboard = () => {
       await api.put(`/api/records/${editFormData.id}`, {
         market: editFormData.market,
         quantity: newKg,
-        carat: newCarat // ✅ Send carat to backend
+        nag: newNag // ✅ Send nag to backend
       });
 
       toast.success("Record updated successfully!");
@@ -882,87 +849,10 @@ const FarmerDashboard = () => {
     }
   };
 
-  // Helper to create invoice data for PDFDownloadLink
+
   const getInvoiceData = (record) => {
-    // Logic Scope
-    const isParent = record.is_parent === true;
-    const hasQuantity = record.quantity > 0;
-
-    const totalQty = hasQuantity ? record.quantity : record.carat;
-    const officialQty = hasQuantity ? (record.official_qty || 0) : (record.official_carat || 0);
-
-    let soldQty = 0;
-    let awaitingQty = 0;
-    let totalSaleAmount = 0;
-
-    if (isParent) {
-      soldQty = hasQuantity ? (record.aggregated_sold_qty || 0) : (record.aggregated_sold_carat || 0);
-      awaitingQty = hasQuantity ? (record.awaiting_qty || 0) : (record.awaiting_carat || 0);
-      totalSaleAmount = record.aggregated_sale_amount || 0;
-    } else {
-      const isSold = ['Sold', 'Completed'].includes(record.status);
-      if (isSold) {
-        soldQty = officialQty > 0 ? officialQty : totalQty;
-        totalSaleAmount = record.sale_amount || 0;
-      }
-      awaitingQty = Math.max(0, totalQty - soldQty);
-    }
-
-    // Status Logic - Use backend's display_status when available
-    let computedStatus = record.display_status || 'Pending';
-    // Fallback computation if display_status not provided
-    if (!record.display_status) {
-      if (soldQty > 0 && awaitingQty <= 0.01) computedStatus = 'Sold';
-      else if (soldQty > 0 && awaitingQty > 0.01) computedStatus = 'Partial';
-    }
-
-    // ✅ NEW: Payment Status Logic
-    let isPaymentPending = false;
-    if (computedStatus === 'Sold') {
-      const paymentStatus = isParent
-        ? (record.aggregated_payment_status || 'Pending')
-        : (record.farmer_payment_status || 'Pending');
-
-      if (paymentStatus === 'Pending') {
-        isPaymentPending = true;
-      }
-    }
-
-    const commission = record.farmer_commission || (totalSaleAmount * 0.04);
-    const netPayable = Math.max(0, totalSaleAmount - commission);
-
-    // Get farmer name from populated data or fallback to profile
-    const farmerName = record.farmer_id?.full_name || profile.name || 'Farmer';
-
-    // Get actual sale rate (use avg rate for parent records with splits)
-    let saleRate = 0;
-    if (isParent && record.aggregated_avg_rate) {
-      saleRate = record.aggregated_avg_rate;
-    } else if (isParent && record.splits?.length > 0 && soldQty > 0) {
-      // Calculate weighted average rate from splits
-      saleRate = totalSaleAmount / soldQty;
-    } else {
-      saleRate = record.sale_rate || 0;
-    }
-
-    return {
-      id: record._id || record.id || 'N/A',
-      date: (record.sold_at || record.createdAt),
-      name: farmerName,
-      crop: record.vegetable,
-      qty: hasQuantity ? soldQty : 0,
-      carat: !hasQuantity ? soldQty : 0,
-      rate: saleRate,
-      splits: record.splits || [], // Pass splits for multi-row PDF display
-      baseAmount: totalSaleAmount,
-      commission: commission,
-      finalAmount: netPayable,
-      status: isPaymentPending ? 'Payment Pending' :
-        (computedStatus === 'Sold' ? 'Full' :
-          (computedStatus === 'Partial' ? 'Partial' :
-            (computedStatus === 'WeightPending' ? 'WeightPending' : 'Pending'))),
-      type: 'pay'
-    };
+    // Use shared utility for consistent logic across Dashboard and History
+    return getInvoiceDataHelper(record, profile.name);
   };
 
 
@@ -1093,29 +983,39 @@ const FarmerDashboard = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 w-full sm:w-auto">
-              <button
-                onClick={handleDownloadReport}
-                className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm"
-              >
-                <Download size={20} className="text-gray-500" />
-                Download Report
-              </button>
-              <button
-                onClick={() => setView('history')}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition hover:shadow-md"
-              >
-                <History size={20} />
-                Sales History
-              </button>
-              <button
-                onClick={() => setView('addRecord')}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl sm:rounded-full shadow-lg shadow-green-200 transition hover:shadow-xl hover:-translate-y-1"
-              >
-                <Plus size={20} />
-                New Record
-              </button>
-            </div>
+            {/* Token Badge - Only show if token exists */}
+            {dailyToken && (
+              <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg shadow-green-200 animate-pulse-once">
+                <div>
+                  <p className="text-xs font-medium text-white opacity-90">Your Token Today</p>
+                  <p className="text-3xl font-black text-white">#{dailyToken}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 w-full sm:w-auto mt-4">
+            <button
+              onClick={handleDownloadReport}
+              className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm"
+            >
+              <Download size={20} className="text-gray-500" />
+              Download Report
+            </button>
+            <button
+              onClick={() => setView('history')}
+              className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition hover:shadow-md"
+            >
+              <History size={20} />
+              Sales History
+            </button>
+            <button
+              onClick={() => setView('addRecord')}
+              className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl sm:rounded-full shadow-lg shadow-green-200 transition hover:shadow-xl hover:-translate-y-1"
+            >
+              <Plus size={20} />
+              New Record
+            </button>
           </div>
         </div>
 
@@ -1180,7 +1080,20 @@ const FarmerDashboard = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">Total Volume</p>
-              <h3 className="text-2xl font-bold text-gray-900">{stats.totalVolume.toFixed(2)} kg</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex flex-wrap gap-x-2 gap-y-1 items-baseline">
+                {stats.totalVolumeKg > 0 && (
+                  <span>{stats.totalVolumeKg.toFixed(2)} <span className="text-xs font-semibold text-gray-400">kg</span></span>
+                )}
+                {stats.totalVolumeKg > 0 && stats.totalVolumeNag > 0 && (
+                  <span className="text-gray-300 text-lg font-light">|</span>
+                )}
+                {stats.totalVolumeNag > 0 && (
+                  <span>{stats.totalVolumeNag} <span className="text-xs font-semibold text-gray-400">Nag</span></span>
+                )}
+                {!(stats.totalVolumeKg > 0) && !(stats.totalVolumeNag > 0) && (
+                  <span>0.00 <span className="text-xs font-semibold text-gray-400">kg</span></span>
+                )}
+              </h3>
               <p className="text-xs text-gray-400 mt-1">Lifetime quantity</p>
             </div>
           </div>
@@ -1262,6 +1175,7 @@ const FarmerDashboard = () => {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
+                      <th className="px-3 py-4 text-center font-semibold text-gray-600 uppercase tracking-wider text-xs w-16">Token</th>
                       <th className="px-4 py-4 text-center font-semibold text-gray-600 uppercase tracking-wider text-xs w-24">Date</th>
                       <th className="px-4 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs w-40">Item</th>
                       <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs w-48">Sales Progress</th>
@@ -1274,7 +1188,7 @@ const FarmerDashboard = () => {
                   <tbody className="divide-y divide-gray-100">
                     {displayRecords.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="px-8 py-16 text-center">
+                        <td colSpan="8" className="px-8 py-16 text-center">
                           <Clock size={48} className="mx-auto text-gray-300 mb-3" />
                           <p className="text-gray-600 font-medium">No records found</p>
                           <p className="text-gray-500 text-sm mt-1">Click "New Record" to add your first entry</p>
@@ -1365,8 +1279,8 @@ const FarmerDashboard = () => {
               <p className="font-bold text-gray-900">
                 {selectedRecord.quantity > 0
                   ? `${selectedRecord.quantity} kg`
-                  : selectedRecord.carat > 0
-                    ? `${selectedRecord.carat} Crt`
+                  : selectedRecord.nag > 0
+                    ? `${selectedRecord.nag} Nag`
                     : '-'}
               </p>
             </div>
@@ -1482,16 +1396,16 @@ const FarmerDashboard = () => {
               </div>
             </div>
 
-            {/* ✅ NEW: Carat Edit Field */}
+            {/* ✅ NEW: Nag Edit Field */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1 font-medium">Carat</label>
+              <label className="block text-xs text-gray-500 mb-1 font-medium">Nag (multiples of 100)</label>
               <input
                 type="number"
-                value={editFormData.carat}
-                onChange={(e) => setEditFormData({ ...editFormData, carat: e.target.value })}
+                value={editFormData.nag}
+                onChange={(e) => handleEditNagChange(e.target.value)}
                 onWheel={(e) => e.target.blur()}
-                placeholder="0"
-                step="1"
+                placeholder="100, 200, 300..."
+                step="100"
                 min="0"
                 className="w-full px-4 py-3 rounded-xl border border-purple-300 focus:border-green-600 focus:ring-2 focus:ring-purple-100 outline-none bg-purple-50/30 text-gray-900 font-semibold"
               />
@@ -1611,7 +1525,8 @@ const FarmerDashboard = () => {
 };
 
 // --- HELPER --
-const formatTime = (date) => new Date(date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+// formatTime is already defined above or imported
+
 
 // --- MEMOIZED COMPONENTS ---
 const DownloadInvoiceButton = memo(({ record, getInvoiceData }) => {
@@ -1653,67 +1568,56 @@ const DownloadInvoiceButton = memo(({ record, getInvoiceData }) => {
 });
 
 const RecordRow = memo(({ record, handleEditClick, initiateDelete, getInvoiceData }) => {
-  // Logic Scope
-  const isParent = record.is_parent === true;
+  // Logic Scope via Shared Helper
+  const invoiceData = getInvoiceData(record);
+
   const hasQuantity = record.quantity > 0;
-  const unit = hasQuantity ? 'kg' : 'Crt';
 
-  const totalQty = hasQuantity ? record.quantity : record.carat;
-  const officialQty = hasQuantity ? (record.official_qty || 0) : (record.official_carat || 0);
+  const unit = hasQuantity ? 'kg' : 'Nag';
+  const totalQty = (hasQuantity ? record.quantity : record.nag) || 0;
 
-  let soldQty = 0;
-  let awaitingQty = 0;
-  let totalSaleAmount = 0;
-  let splits = record.splits || [];
+  // Extract values for UI display from the unified data
+  const soldQty = (invoiceData.qty > 0 ? invoiceData.qty : invoiceData.nag) || 0;
+  const avgRate = invoiceData.rate;
+  const netPayable = invoiceData.finalAmount;
+  const totalSaleAmount = invoiceData.baseAmount;
+  const splits = invoiceData.splits || [];
 
-  if (isParent) {
-    soldQty = hasQuantity ? (record.aggregated_sold_qty || 0) : (record.aggregated_sold_carat || 0);
-    awaitingQty = hasQuantity ? (record.awaiting_qty || 0) : (record.awaiting_carat || 0);
-    totalSaleAmount = record.aggregated_sale_amount || 0;
-  } else {
-    // Legacy or single record logic
-    const isSold = ['Sold', 'Completed'].includes(record.status);
-    if (isSold) {
-      soldQty = officialQty > 0 ? officialQty : totalQty;
-      totalSaleAmount = record.sale_amount || 0;
-      if (splits.length === 0) {
-        splits = [{
-          qty: soldQty,
-          rate: record.sale_rate,
-          amount: record.sale_amount,
-          date: record.sold_at || record.createdAt
-        }];
-      }
-    }
-    awaitingQty = Math.max(0, totalQty - soldQty);
-  }
+  // Computed status for UI rendering (Sold/Partial/Pending)
+  // We can rely on invoiceData.status mostly, but invoiceData.status has 'Full' instead of 'Sold'
+  // Let's re-map or keep basic logic if simpler
 
-  // Correct Status Logic - Use backend's display_status when available
   let computedStatus = record.display_status || 'Pending';
-  // Fallback computation if display_status not provided
   if (!record.display_status) {
-    if (soldQty > 0 && awaitingQty <= 0.01) computedStatus = 'Sold';
-    else if (soldQty > 0 && awaitingQty > 0.01) computedStatus = 'Partial';
+    if (soldQty > 0 && totalQty - soldQty <= 0.01) computedStatus = 'Sold';
+    else if (soldQty > 0) computedStatus = 'Partial';
   }
 
-  // ✅ NEW: Payment Status Logic
-  // Check if fully sold but payment is pending
+  // Payment Status Logic
   let isPaymentPending = false;
-
   if (computedStatus === 'Sold') {
-    const paymentStatus = isParent
+    const paymentStatus = record.is_parent
       ? (record.aggregated_payment_status || 'Pending')
       : (record.farmer_payment_status || 'Pending');
-
-    if (paymentStatus === 'Pending') {
-      isPaymentPending = true;
-    }
+    if (paymentStatus === 'Pending') isPaymentPending = true;
   }
 
+  const awaitingQty = Math.max(0, totalQty - soldQty);
   const progressPercent = Math.min(100, (soldQty / totalQty) * 100);
 
   return (
     <tr className="hover:bg-gray-50 transition-colors group">
+      {/* Token */}
+      <td className="px-3 py-4 align-top text-center">
+        {record.token ? (
+          <span className="text-green-700 font-bold text-sm">
+            #{record.token}
+          </span>
+        ) : (
+          <span className="text-gray-300">-</span>
+        )}
+      </td>
+
       {/* Date */}
       <td className="px-6 py-4 align-top">
         <div className="text-gray-900 font-medium">{new Date(record.createdAt).toLocaleDateString('en-GB')}</div>
@@ -1730,10 +1634,10 @@ const RecordRow = memo(({ record, handleEditClick, initiateDelete, getInvoiceDat
         <div className="w-full min-w-[160px]">
           <div className="flex justify-between text-xs mb-1.5 font-semibold">
             <span className={soldQty > 0 ? "text-green-600" : "text-gray-400"}>
-              Sold: {parseFloat(soldQty.toFixed(2))} {unit}
+              Sold: {parseFloat((soldQty || 0).toFixed(2))} {unit}
             </span>
             <span className="text-gray-600">
-              / {parseFloat(totalQty.toFixed(2))} {unit}
+              / {parseFloat((totalQty || 0).toFixed(2))} {unit}
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden mb-1.5">
@@ -1758,7 +1662,7 @@ const RecordRow = memo(({ record, handleEditClick, initiateDelete, getInvoiceDat
           )}
           {awaitingQty > 0.01 && computedStatus !== 'WeightPending' && (
             <p className="text-xs text-amber-600 font-medium">
-              {parseFloat(awaitingQty.toFixed(2))} {unit} remaining
+              {parseFloat((awaitingQty || 0).toFixed(2))} {unit} remaining
             </p>
           )}
         </div>
@@ -1773,7 +1677,7 @@ const RecordRow = memo(({ record, handleEditClick, initiateDelete, getInvoiceDat
                 <span className="font-bold text-gray-800">₹{s.rate}</span>
                 <span className="text-gray-400 mx-1">/</span>
                 <span className="text-gray-600">
-                  {unit === 'Crt' ? (s.carat || s.qty) : parseFloat(s.qty.toFixed(1))}
+                  {unit === 'Nag' ? (s.nag || s.qty) : parseFloat((s.qty || 0).toFixed(1))}
                   {unit}
                 </span>
               </div>
@@ -1850,70 +1754,52 @@ const RecordRow = memo(({ record, handleEditClick, initiateDelete, getInvoiceDat
 });
 
 const MobileRecordCard = memo(({ record, handleEditClick, initiateDelete, getInvoiceData }) => {
-  // Logic Scope
-  const isParent = record.is_parent === true;
+  // Logic Scope via Shared Helper
+  const invoiceData = getInvoiceData(record);
+
   const hasQuantity = record.quantity > 0;
-  const unit = hasQuantity ? 'kg' : 'Crt';
+  const unit = hasQuantity ? 'kg' : 'Nag';
+  const totalQty = (hasQuantity ? record.quantity : record.nag) || 0;
 
-  const totalQty = hasQuantity ? record.quantity : record.carat;
-  const officialQty = hasQuantity ? (record.official_qty || 0) : (record.official_carat || 0);
+  // Extract values for UI display
+  const soldQty = (invoiceData.qty > 0 ? invoiceData.qty : invoiceData.nag) || 0;
+  const totalSaleAmount = invoiceData.baseAmount;
+  const splits = invoiceData.splits || [];
 
-  let soldQty = 0;
-  let awaitingQty = 0;
-  let totalSaleAmount = 0;
-  let splits = record.splits || [];
-
-  if (isParent) {
-    soldQty = hasQuantity ? (record.aggregated_sold_qty || 0) : (record.aggregated_sold_carat || 0);
-    awaitingQty = hasQuantity ? (record.awaiting_qty || 0) : (record.awaiting_carat || 0);
-    totalSaleAmount = record.aggregated_sale_amount || 0;
-  } else {
-    // Legacy or single record logic
-    const isSold = ['Sold', 'Completed'].includes(record.status);
-    if (isSold) {
-      soldQty = officialQty > 0 ? officialQty : totalQty;
-      totalSaleAmount = record.sale_amount || 0;
-      if (splits.length === 0) {
-        splits = [{
-          qty: soldQty,
-          rate: record.sale_rate,
-          amount: record.sale_amount,
-          date: record.sold_at || record.createdAt
-        }];
-      }
-    }
-    awaitingQty = Math.max(0, totalQty - soldQty);
-  }
-
-  // Correct Status Logic - Use backend's display_status when available
+  // Status Logic
   let computedStatus = record.display_status || 'Pending';
-  // Fallback computation if display_status not provided
   if (!record.display_status) {
-    if (soldQty > 0 && awaitingQty <= 0.01) computedStatus = 'Sold';
-    else if (soldQty > 0 && awaitingQty > 0.01) computedStatus = 'Partial';
+    if (soldQty > 0 && totalQty - soldQty <= 0.01) computedStatus = 'Sold';
+    else if (soldQty > 0) computedStatus = 'Partial';
   }
 
-  // ✅ NEW: Payment Status Logic (Mobile)
+  // Payment Status Logic
   let isPaymentPending = false;
-
   if (computedStatus === 'Sold') {
-    const paymentStatus = isParent
+    const paymentStatus = record.is_parent
       ? (record.aggregated_payment_status || 'Pending')
       : (record.farmer_payment_status || 'Pending');
-
-    if (paymentStatus === 'Pending') {
-      isPaymentPending = true;
-    }
+    if (paymentStatus === 'Pending') isPaymentPending = true;
   }
 
+  const awaitingQty = Math.max(0, totalQty - soldQty);
   const progressPercent = Math.min(100, (soldQty / totalQty) * 100);
 
   return (
     <div className="p-4 hover:bg-gray-50 transition-colors group">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <div className="font-bold text-gray-900 text-lg">{record.vegetable}</div>
-          <div className="text-xs text-gray-500 mt-0.5">{new Date(record.createdAt).toLocaleDateString('en-GB')} at {formatTime(record.createdAt)}</div>
+          <div className="font-bold text-gray-900 text-lg">
+            {record.token && (
+              <span className="mr-2 text-green-700 font-bold text-sm">
+                #{record.token}
+              </span>
+            )}
+            {record.vegetable}
+          </div>
+          <div className="text-xs text-gray-500 mt-0.5">
+            {new Date(record.createdAt).toLocaleDateString('en-GB')} at {formatTime(record.createdAt)}
+          </div>
         </div>
         <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 border ${isPaymentPending
           ? 'bg-orange-100 text-orange-700 border-orange-200'
@@ -1939,10 +1825,10 @@ const MobileRecordCard = memo(({ record, handleEditClick, initiateDelete, getInv
       <div className="mb-4">
         <div className="flex justify-between text-xs mb-1.5 font-medium">
           <span className={soldQty > 0 ? "text-green-700" : "text-gray-500"}>
-            Sold: {parseFloat(soldQty.toFixed(2))} {unit}
+            Sold: {parseFloat((soldQty || 0).toFixed(2))} {unit}
           </span>
           <span className="text-gray-900">
-            Total: {parseFloat(totalQty.toFixed(2))} {unit}
+            Total: {parseFloat((totalQty || 0).toFixed(2))} {unit}
           </span>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
@@ -1967,7 +1853,7 @@ const MobileRecordCard = memo(({ record, handleEditClick, initiateDelete, getInv
         )}
         {awaitingQty > 0.01 && computedStatus !== 'WeightPending' && (
           <p className="text-[10px] text-amber-600 mt-1 font-medium text-right">
-            {parseFloat(awaitingQty.toFixed(2))} {unit} remaining
+            {parseFloat((awaitingQty || 0).toFixed(2))} {unit} remaining
           </p>
         )}
       </div>
@@ -1984,7 +1870,7 @@ const MobileRecordCard = memo(({ record, handleEditClick, initiateDelete, getInv
             {splits.map((split, idx) => (
               <div key={idx} className="flex justify-between text-xs text-gray-600">
                 <span>
-                  {unit === 'Crt' ? (split.carat || split.qty) : parseFloat(split.qty.toFixed(2))} {unit}
+                  {unit === 'Nag' ? (split.nag || split.qty) : parseFloat(split.qty.toFixed(2))} {unit}
                   <span className="text-gray-400 mx-1">×</span>
                   ₹{split.rate}
                 </span>
@@ -2032,5 +1918,9 @@ const MobileRecordCard = memo(({ record, handleEditClick, initiateDelete, getInv
     </div>
   );
 });
+
+
+
+
 
 export default FarmerDashboard;

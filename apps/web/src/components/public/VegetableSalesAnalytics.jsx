@@ -94,14 +94,14 @@ export default function VegetableSalesAnalytics() {
         if (active && payload && payload.length) {
             const item = payload[0].payload;
             const ratePerKg = item.avgRatePerKg || 0;
-            const ratePerCarat = item.avgRatePerCarat || 0;
+            const ratePerNag = item.avgRatePerNag || 0;
             return (
                 <div className="bg-white/95 backdrop-blur-sm px-4 py-3 rounded-xl shadow-lg border border-[var(--border)]">
                     <p className="font-semibold text-[var(--text-primary)] mb-1">{item.vegetable}</p>
                     <p className="text-sm text-[var(--text-secondary)]">
                         Avg Rate: <span className="font-medium text-[var(--primary)]">₹{ratePerKg}/kg</span>
                         <span className="mx-1 text-[var(--text-muted)]">|</span>
-                        <span className="font-medium text-[var(--primary)]">₹{ratePerCarat}/Crt</span>
+                        <span className="font-medium text-[var(--primary)]">₹{ratePerNag}/Nag</span>
                     </p>
                 </div>
             );
@@ -223,7 +223,7 @@ export default function VegetableSalesAnalytics() {
                                         <p className="text-sm text-emerald-600 mt-1">
                                             Avg Rate: <span className="font-semibold">₹{data.highest?.avgRatePerKg || 0}/kg</span>
                                             <span className="mx-1">|</span>
-                                            <span className="font-semibold">₹{data.highest?.avgRatePerCarat || 0}/Crt</span>
+                                            <span className="font-semibold">₹{data.highest?.avgRatePerNag || 0}/Nag</span>
                                         </p>
                                         <p className="text-sm text-emerald-600/70 mt-1">
                                             {data.highest?.transactionCount} sales
@@ -243,7 +243,7 @@ export default function VegetableSalesAnalytics() {
                                         <p className="text-sm text-amber-600 mt-1">
                                             Avg Rate: <span className="font-semibold">₹{data.lowest?.avgRatePerKg || 0}/kg</span>
                                             <span className="mx-1">|</span>
-                                            <span className="font-semibold">₹{data.lowest?.avgRatePerCarat || 0}/Crt</span>
+                                            <span className="font-semibold">₹{data.lowest?.avgRatePerNag || 0}/Nag</span>
                                         </p>
                                         <p className="text-sm text-amber-600/70 mt-1">
                                             {data.lowest?.transactionCount} sales

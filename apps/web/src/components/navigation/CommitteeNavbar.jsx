@@ -16,7 +16,7 @@ const PAGE_TITLES = {
   '/dashboard/committee/lilav': 'Lilav Entry',
   '/dashboard/committee/payments': 'Payments',
   '/dashboard/committee/billing': 'Reports',
-
+  '/dashboard/committee/vegetables': 'Vegetables',
 };
 
 export default function CommitteeNavbar({ onMenuClick }) {

@@ -74,7 +74,7 @@ export default function TransactionHistory() {
         traderName: t.trader_id?.business_name || t.trader_id?.full_name || 'Unknown Trader',
         crop: t.vegetable,
         quantity: t.official_qty || t.quantity || 0,
-        carat: t.carat || 0,
+        nag: t.nag || 0,
         rate: t.sale_rate || t.rate || 0,
         grossAmount: t.sale_amount || t.amount || 0,
         commission: (t.farmer_commission || 0) + (t.trader_commission || 0),
@@ -163,7 +163,7 @@ export default function TransactionHistory() {
       txn.farmerName,
       txn.traderName,
       txn.crop,
-      txn.quantity > 0 ? `${txn.quantity} kg` : (txn.carat > 0 ? `${txn.carat} Crt` : '-'),
+      txn.quantity > 0 ? `${txn.quantity} kg` : (txn.nag > 0 ? `${txn.nag} Nag` : '-'),
       txn.rate,
       txn.grossAmount,
       txn.commission,
@@ -353,7 +353,7 @@ export default function TransactionHistory() {
                       </span>
                     </td>
                     <td className="text-right text-slate-800 font-medium text-sm px-6 py-4">
-                      {txn.quantity > 0 ? `${txn.quantity.toLocaleString()} kg` : (txn.carat > 0 ? `${txn.carat} Crt` : '-')}
+                      {txn.quantity > 0 ? `${txn.quantity.toLocaleString()} kg` : (txn.nag > 0 ? `${txn.nag} Nag` : '-')}
                     </td>
                     <td className="px-6 py-4 text-right text-slate-600 text-sm">
                       ₹{txn.rate}
@@ -411,8 +411,8 @@ export default function TransactionHistory() {
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
                     className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
-                        ? 'bg-emerald-600 text-white'
-                        : 'hover:bg-slate-100 text-slate-600'
+                      ? 'bg-emerald-600 text-white'
+                      : 'hover:bg-slate-100 text-slate-600'
                       }`}
                   >
                     {pageNum}

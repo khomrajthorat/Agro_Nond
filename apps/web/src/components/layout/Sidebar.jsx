@@ -17,7 +17,8 @@ import {
     Gavel,
     Scale,
     Building2,
-    Activity
+    Activity,
+    Leaf
 } from 'lucide-react';
 
 const NAV_ITEMS = {
@@ -26,9 +27,11 @@ const NAV_ITEMS = {
         { label: 'Farmers', path: '/dashboard/committee/farmers', icon: Users },
         { label: 'Traders', path: '/dashboard/committee/traders', icon: Store },
         { label: 'Weight', path: '/dashboard/committee/weight', icon: Scale },
+        { label: 'Weight History', path: '/dashboard/committee/weight-history', icon: Receipt },
         { label: 'Lilav Entry', path: '/dashboard/committee/lilav', icon: Gavel },
         { label: 'Payments', path: '/dashboard/committee/payments', icon: IndianRupee },
         { label: 'Reports', path: '/dashboard/committee/billing', icon: FileText },
+        { label: 'Vegetables', path: '/dashboard/committee/vegetables', icon: Leaf },
     ],
     trader: [
         { label: 'Dashboard', path: '/dashboard/trader', icon: LayoutDashboard },
@@ -46,6 +49,7 @@ const NAV_ITEMS = {
         { label: 'Transactions', path: '/dashboard/admin/transactions', icon: Receipt },
         { label: 'Users', path: '/dashboard/admin/users', icon: Users },
         { label: 'Activity Log', path: '/dashboard/admin/activity-log', icon: Activity },
+        { label: 'Vegetables', path: '/dashboard/admin/vegetables', icon: Leaf },
     ],
     lilav: [
         { label: 'Auction Entry', path: '/dashboard/lilav', icon: Gavel },

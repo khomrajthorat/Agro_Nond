@@ -35,7 +35,7 @@ router.patch('/:id/read', async (req, res) => {
     try {
         const notification = await Notification.findOneAndUpdate(
             { _id: req.params.id, recipient: req.user._id },
-            { isRead: true },
+            { isRead: true, readAt: new Date() },
             { new: true }
         );
         if (!notification) return res.status(404).json({ error: 'Notification not found' });
@@ -51,7 +51,7 @@ router.patch('/read-all', async (req, res) => {
     try {
         await Notification.updateMany(
             { recipient: req.user._id, isRead: false },
-            { isRead: true }
+            { isRead: true, readAt: new Date() }
         );
         res.json({ message: 'All marked as read' });
     } catch (error) {

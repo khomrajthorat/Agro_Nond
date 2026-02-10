@@ -14,28 +14,24 @@ Font.register({
     ],
 });
 
-
+// Professional Color Palette - Clean Business Document Style
 const colors = {
-    primary: '#059669',
-    primaryDark: '#047857',
-    primaryLight: '#d1fae5',
-    primaryLighter: '#ecfdf5',
-    textDark: '#1f2937',
-    textMedium: '#4b5563',
-    textLight: '#9ca3af',
-    border: '#e5e7eb',
-    borderLight: '#f3f4f6',
+    brand: '#059669',           // AgroNond brand green
+    accent: '#2980B9',          // Blue accent for links
+    textDark: '#1a1a1a',        // Deep black for headings
+    textMedium: '#4a4a4a',      // Dark gray for body text
+    textLight: '#808080',       // Light gray for labels
+    border: '#c0c0c0',          // Subtle gray borders
+    borderLight: '#e0e0e0',
+    tableHeader: '#f5f5f5',     // Light gray table header
     white: '#ffffff',
+    // Payment status colors
     paidBg: '#dcfce7',
     paidText: '#166534',
     pendingBg: '#fef3c7',
     pendingText: '#92400e',
-    red: '#dc2626',
-    redBg: '#fee2e2',
-    // Blue colors for Partial status (matching Sales Records UI)
     partialBg: '#dbeafe',
     partialText: '#1d4ed8',
-    partialBorder: '#bfdbfe',
 };
 
 const styles = StyleSheet.create({
@@ -47,340 +43,302 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
     },
 
-    // Header Section
+    // Payment Status Badge
+    paymentStatusBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 4,
+        marginTop: 10,
+        alignSelf: 'flex-end',
+    },
+    paymentStatusText: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+
+    // Header Section - Clean Professional Layout
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
+        marginTop: 8,
         marginBottom: 20,
-        paddingBottom: 12,
-        borderBottomWidth: 3,
-        borderBottomColor: colors.primary,
+        paddingBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
     },
-    brand: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    logoBox: {
-        width: 48,
-        height: 48,
-        backgroundColor: colors.primary,
-        borderRadius: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    logoText: {
-        color: colors.white,
-        fontSize: 24,
-        fontWeight: 'bold',
-    },
-    brandText: {
-        marginLeft: 12,
-    },
-    brandName: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: colors.textDark,
-        marginBottom: 2,
-    },
-    brandSubtitle: {
-        fontSize: 8,
-        color: colors.textLight,
-        textTransform: 'uppercase',
-        letterSpacing: 1.2,
-    },
-    receiptTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: colors.primary,
-        textTransform: 'uppercase',
-        letterSpacing: 2.5,
-        textAlign: 'right',
-    },
-
-    // Info Grid Section
-    infoGrid: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 18,
-        gap: 15,
-    },
-    infoSection: {
-        flex: 1,
-    },
-    infoSectionRight: {
-        flex: 1,
-        backgroundColor: colors.primaryLighter,
-        padding: 14,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.primaryLight,
-    },
-    sectionLabel: {
-        marginBottom: 8,
-        fontSize: 8,
-        color: colors.textLight,
-        textTransform: 'uppercase',
-        fontWeight: 'bold',
-        letterSpacing: 1.2,
+    companyInfo: {
+        maxWidth: '55%',
     },
     companyName: {
-        marginBottom: 5,
+        fontSize: 16,
         fontWeight: 'bold',
-        fontSize: 13,
         color: colors.textDark,
+        marginBottom: 4,
     },
-    companyDetail: {
-        marginBottom: 3,
-        color: colors.textMedium,
-        fontSize: 9,
-        lineHeight: 1.4,
-    },
-
-    // Transaction Details
-    detailsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 5,
-        paddingVertical: 2,
-    },
-    detailLabel: {
-        color: colors.textMedium,
-        fontSize: 9,
-        textAlign: 'left',
-    },
-    detailValue: {
-        color: colors.textDark,
-        fontSize: 9,
-        fontWeight: 'bold',
-        textAlign: 'right',
-    },
-
-    // Recipient Section
-    recipientSection: {
-        marginBottom: 18,
-        padding: 14,
-        backgroundColor: colors.primaryLight,
-        borderRadius: 8,
-        borderLeftWidth: 4,
-        borderLeftColor: colors.primary,
-    },
-    recipientLabel: {
+    companyAddress: {
         fontSize: 8,
-        color: colors.primaryDark,
-        textTransform: 'uppercase',
+        color: colors.textMedium,
+        lineHeight: 1.5,
+        marginBottom: 2,
+    },
+    companyContact: {
+        fontSize: 8,
+        color: colors.accent,
+        marginTop: 4,
+    },
+    invoiceTitle: {
+        fontSize: 28,
         fontWeight: 'bold',
-        marginBottom: 6,
+        color: colors.textMedium,
+        textAlign: 'right',
         letterSpacing: 1,
     },
-    recipientName: {
-        fontSize: 15,
+
+    // Invoice Details Grid
+    detailsGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    detailsColumn: {
+        width: '48%',
+    },
+    detailsRow: {
+        flexDirection: 'row',
+        marginBottom: 4,
+    },
+    detailsLabel: {
+        width: 80,
+        fontSize: 9,
+        color: colors.textLight,
+    },
+    detailsValue: {
+        fontSize: 9,
+        color: colors.textDark,
+        fontWeight: 'bold',
+    },
+
+    // Bill To Section
+    billToSection: {
+        marginBottom: 20,
+    },
+    billToLabel: {
+        fontSize: 9,
+        color: colors.textLight,
+        marginBottom: 4,
+        textTransform: 'uppercase',
+    },
+    billToName: {
+        fontSize: 12,
         fontWeight: 'bold',
         color: colors.textDark,
         fontFamily: 'NotoSansDevanagari',
+        marginBottom: 2,
+    },
+    billToAddress: {
+        fontSize: 9,
+        color: colors.textMedium,
     },
 
-    // Table Styles — 4 columns: Crop | Qty | Rate | Total Amount
+    // Table Styles - Professional Grid
     table: {
-        marginTop: 5,
         width: '100%',
-        marginBottom: 18,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 8,
-        overflow: 'hidden',
+        marginBottom: 20,
     },
     tableHeader: {
         flexDirection: 'row',
-        backgroundColor: colors.primary,
-        paddingVertical: 10,
-        paddingHorizontal: 10,
+        backgroundColor: colors.tableHeader,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: colors.border,
+        paddingVertical: 8,
+        paddingHorizontal: 8,
     },
     th: {
-        color: colors.white,
         fontSize: 8,
-        textTransform: 'uppercase',
         fontWeight: 'bold',
-        letterSpacing: 0.6,
+        color: colors.textDark,
+        textTransform: 'uppercase',
     },
-    // Column flex weights tuned for 4-col layout
-    thCrop: { textAlign: 'left', flex: 2.5 },
-    thQty: { textAlign: 'center', flex: 1.5 },
-    thRateDetails: { textAlign: 'center', flex: 1.5 },
-    thTotalAmount: { textAlign: 'right', flex: 1.5 },
+    thSerial: { width: 25, textAlign: 'center' },
+    thDescription: { flex: 3, textAlign: 'left', paddingLeft: 8 },
+    thQty: { flex: 1, textAlign: 'center' },
+    thRate: { flex: 1.2, textAlign: 'right' },
+    thAmount: { flex: 1.2, textAlign: 'right' },
 
     tableRow: {
         flexDirection: 'row',
         borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        paddingVertical: 12,
-        paddingHorizontal: 10,
-        backgroundColor: colors.white,
-        alignItems: 'center',
+        borderBottomColor: colors.borderLight,
+        paddingVertical: 10,
+        paddingHorizontal: 8,
+        minHeight: 35,
     },
     td: {
-        fontSize: 9.5,
+        fontSize: 9,
         color: colors.textDark,
     },
-    tdCrop: {
-        textAlign: 'left',
-        flex: 2.5,
-        fontWeight: 'bold',
-        fontFamily: 'NotoSansDevanagari',
-        fontSize: 10.5,
-    },
-    tdQty: {
-        textAlign: 'center',
-        flex: 1.5,
-        color: colors.textMedium,
-        fontSize: 9.5,
-    },
-    tdRateDetails: {
-        textAlign: 'center',
-        flex: 1.5,
-        fontSize: 9.5,
-        color: colors.textMedium,
-    },
-    tdTotalAmount: {
-        textAlign: 'right',
-        flex: 1.5,
-        fontWeight: 'bold',
+    tdSerial: { width: 25, textAlign: 'center', color: colors.textLight },
+    tdDescription: { flex: 3, textAlign: 'left', paddingLeft: 8 },
+    tdDescriptionMain: {
         fontSize: 10,
-    },
-
-    // Inline status badge inside the table row
-    statusBadgeInline: {
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 12,
-        alignSelf: 'center',
-    },
-    statusTextInline: {
-        fontSize: 7.5,
         fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: 0.8,
+        color: colors.textDark,
+        fontFamily: 'NotoSansDevanagari',
     },
+    tdDescriptionSub: {
+        fontSize: 8,
+        color: colors.textLight,
+        marginTop: 2,
+    },
+    tdQty: { flex: 1, textAlign: 'center' },
+    tdRate: { flex: 1.2, textAlign: 'right' },
+    tdAmount: { flex: 1.2, textAlign: 'right', fontWeight: 'bold' },
 
-    // Totals Section
+    // Totals Section - Aligned Right
+    totalsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginBottom: 20,
+    },
     totalsSection: {
-        alignSelf: 'flex-end',
-        width: '58%',
-        marginTop: 12,
-        backgroundColor: colors.borderLight,
-        borderRadius: 8,
-        padding: 14,
-        borderWidth: 1,
-        borderColor: colors.border,
+        width: '45%',
     },
     totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 7,
+        paddingVertical: 6,
         borderBottomWidth: 1,
-        borderBottomStyle: 'dashed',
-        borderBottomColor: colors.border,
+        borderBottomColor: colors.borderLight,
+    },
+    totalLabel: {
+        fontSize: 9,
+        color: colors.textMedium,
+    },
+    totalValue: {
+        fontSize: 9,
+        color: colors.textDark,
+        fontWeight: 'bold',
+        textAlign: 'right',
     },
     grandTotalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 12,
-        marginTop: 8,
+        paddingVertical: 10,
+        marginTop: 4,
         borderTopWidth: 2,
-        borderTopColor: colors.primary,
-        backgroundColor: colors.primaryLighter,
-        marginHorizontal: -14,
-        paddingHorizontal: 14,
-        borderRadius: 6,
-    },
-    totalLabel: {
-        color: colors.textMedium,
-        fontSize: 9.5,
-    },
-    totalValue: {
-        fontWeight: 'bold',
-        color: colors.textDark,
-        fontSize: 9.5,
+        borderTopColor: colors.textDark,
+        backgroundColor: colors.tableHeader,
+        marginHorizontal: -8,
+        paddingHorizontal: 8,
     },
     grandTotalLabel: {
+        fontSize: 11,
         fontWeight: 'bold',
         color: colors.textDark,
-        fontSize: 12,
-        textTransform: 'uppercase',
     },
     grandTotalValue: {
+        fontSize: 14,
         fontWeight: 'bold',
-        color: colors.primary,
-        fontSize: 16,
+        color: colors.textDark,
     },
 
-    // Bottom Status Badge (below totals)
-    statusBadge: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 6,
-        marginTop: 12,
-        alignSelf: 'flex-end',
+    // Amount In Words Section
+    amountInWords: {
+        marginBottom: 20,
+        paddingBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.borderLight,
     },
-    statusText: {
+    amountInWordsLabel: {
+        fontSize: 8,
+        color: colors.textLight,
+        marginBottom: 3,
+    },
+    amountInWordsText: {
         fontSize: 10,
+        color: colors.textDark,
         fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: 1.2,
+    },
+
+    // Notes Section
+    notesSection: {
+        marginBottom: 20,
+    },
+    notesLabel: {
+        fontSize: 9,
+        fontWeight: 'bold',
+        color: colors.textDark,
+        marginBottom: 4,
+    },
+    notesText: {
+        fontSize: 8,
+        color: colors.textMedium,
+        lineHeight: 1.5,
+    },
+
+    // Terms & Signature Row
+    bottomRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 'auto',
+    },
+    termsSection: {
+        width: '55%',
+    },
+    termsLabel: {
+        fontSize: 9,
+        fontWeight: 'bold',
+        color: colors.textDark,
+        marginBottom: 6,
+    },
+    termsText: {
+        fontSize: 7,
+        color: colors.textLight,
+        lineHeight: 1.6,
+    },
+
+    // Signature Section
+    signatureSection: {
+        width: '35%',
+        alignItems: 'center',
+    },
+    signatureLine: {
+        width: '100%',
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+        marginBottom: 6,
+        height: 50,
+    },
+    signatureLabel: {
+        fontSize: 9,
+        color: colors.textMedium,
+        textAlign: 'center',
     },
 
     // Footer
     footer: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 15,
         left: 40,
         right: 40,
         borderTopWidth: 1,
-        borderTopColor: colors.border,
-        paddingTop: 12,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
+        borderTopColor: colors.borderLight,
+        paddingTop: 10,
+        alignItems: 'center',
     },
-    termsSection: {
-        width: '62%',
+    footerText: {
+        fontSize: 8,
+        color: colors.textLight,
+        textAlign: 'center',
     },
-    termsTitle: {
-        marginBottom: 5,
+    footerBrand: {
         fontSize: 9,
         fontWeight: 'bold',
-        color: colors.textDark,
-    },
-    termsText: {
-        fontSize: 7.5,
-        color: colors.textLight,
-        lineHeight: 1.5,
-    },
-    poweredBySection: {
-        textAlign: 'right',
-    },
-    poweredBy: {
-        fontSize: 7.5,
-        color: colors.textLight,
-        textAlign: 'right',
-        marginBottom: 2,
-    },
-    poweredByBrand: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        color: colors.primary,
-        textAlign: 'right',
-    },
-
-    // Watermark
-    watermark: {
-        position: 'absolute',
-        fontSize: 60,
-        color: colors.border,
-        opacity: 0.05,
-        transform: 'rotate(-45deg)',
-        top: '40%',
-        left: '25%',
+        color: colors.brand,
     },
 });
 
@@ -388,55 +346,69 @@ const styles = StyleSheet.create({
 
 const formatNumber = (num) => {
     if (num === undefined || num === null || isNaN(num)) return '0';
-    return Number(num).toLocaleString('en-IN');
+    return Number(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
 const formatCurrency = (num) => {
-    if (num === undefined || num === null || isNaN(num)) return 'Rs. 0';
-    return `Rs. ${Number(num).toLocaleString('en-IN')}`;
+    if (num === undefined || num === null || isNaN(num)) return '₹0.00';
+    return `₹${Number(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-IN', {
+    return date.toLocaleString('en-IN', {
         day: '2-digit',
-        month: 'short',
+        month: '2-digit',
         year: 'numeric',
-    });
-};
-
-const formatTime = (dateStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('en-IN', {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true,
+        hour12: true
     });
 };
 
-/**
- * Returns { bg, text, border } colour set for a given status string.
- * "Partial" → blue  |  "Sold" / "Paid" / "Full" → green  |  "WeightPending" → amber  |  anything else → amber
- */
-const getStatusColors = (status) => {
-    const s = (status || '').toLowerCase();
-    if (s === 'partial') {
-        return { bg: colors.partialBg, text: colors.partialText, border: colors.partialBorder };
+// Convert number to words (Indian format)
+const numberToWords = (num) => {
+    if (num === 0) return 'Zero';
+
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+        'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    const convertLessThanHundred = (n) => {
+        if (n < 20) return ones[n];
+        return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + ones[n % 10] : '');
+    };
+
+    const convertLessThanThousand = (n) => {
+        if (n < 100) return convertLessThanHundred(n);
+        return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convertLessThanHundred(n % 100) : '');
+    };
+
+    let result = '';
+    const crore = Math.floor(num / 10000000);
+    const lakh = Math.floor((num % 10000000) / 100000);
+    const thousand = Math.floor((num % 100000) / 1000);
+    const hundred = Math.floor(num % 1000);
+
+    if (crore > 0) result += convertLessThanHundred(crore) + ' Crore ';
+    if (lakh > 0) result += convertLessThanHundred(lakh) + ' Lakh ';
+    if (thousand > 0) result += convertLessThanHundred(thousand) + ' Thousand ';
+    if (hundred > 0) result += convertLessThanThousand(hundred);
+
+    return result.trim() || 'Zero';
+};
+
+const getAmountInWords = (amount) => {
+    const rupees = Math.floor(amount);
+    const paise = Math.round((amount - rupees) * 100);
+
+    let result = 'Indian Rupee ' + numberToWords(rupees);
+    if (paise > 0) {
+        result += ' and ' + numberToWords(paise) + ' Paise';
     }
-    if (s === 'sold' || s === 'paid' || s === 'full') {
-        return { bg: colors.paidBg, text: colors.paidText, border: colors.primaryLight };
-    }
-    if (s === 'weightpending') {
-        return { bg: colors.pendingBg, text: colors.pendingText, border: '#fcd34d' };
-    }
-    // Payment Pending -> Orange/Amber (similar to WeightPending but maybe distinct if needed)
-    if (s === 'payment pending') {
-        return { bg: '#ffedd5', text: '#c2410c', border: '#fdba74' }; // Orange-100 bg, Orange-700 text, Orange-300 border
-    }
-    // Pending / default → amber
-    return { bg: colors.pendingBg, text: colors.pendingText, border: '#fcd34d' };
+    result += ' Only';
+    return result;
 };
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -445,45 +417,45 @@ const BillingInvoice = ({ data, type = 'farmer' }) => {
     if (!data) return null;
 
     const isFarmer = type === 'farmer';
-    const title = isFarmer ? 'PAYMENT ADVICE' : 'RECEIPT';
-
-    // ── status: use the status already computed & passed from SoldRecordCard ──
-    const status = data.status || 'Pending';   // "Paid" | "Partial" | "Pending"
-    const statusColors = getStatusColors(status);
+    const title = isFarmer ? 'Invoice' : 'Receipt';
 
     // ── Committee info ──
     const committee = {
-        name: 'APMC Market Committee',
-        location: 'Tasgaon, Sangli, Maharashtra - 416312',
+        name: 'AgroNond',
+        address1: 'Devcode',
+        address2: 'Kothrud, Pune',
+        address3: 'Maharashtra',
         phone: '+91 94205 30466',
-        email: 'committee@agronond.com',
+        email: 'Support@agronond.com',
+        website: 'http://agronond.khomrajthorat.com',
     };
 
     // ── Quantities ──
     const quantity = data.qty || data.quantity || 0;
-    const carat = data.carat || data.crt || 0;
+    const nag = data.nag || 0;
     const hasQuantity = quantity > 0;
-    const hasCarat = carat > 0;
-    const unit = hasQuantity ? 'kg' : 'Crt';
-    const displayQty = hasQuantity ? quantity : carat;
+    const hasNag = nag > 0;
+    const unit = hasQuantity ? 'kg' : 'Nag';
+    const displayQty = hasQuantity ? quantity : nag;
 
-    // ── Amounts — driven by what has ACTUALLY been received/sold ──
-    //    SoldRecordCard already computes soldQty-based baseAmount & commission
-    //    and passes them in invoiceData.  We honour those directly.
+    // ── Amounts ──
     const baseAmount = data.baseAmount || data.amount || data.grossAmount || 0;
     const commission = data.commission || 0;
     const finalAmount = data.finalAmount || data.netAmount || baseAmount;
 
-    // Calculate rate - use provided rate or calculate as fallback
+    // Calculate rate
     let rate = data.rate || 0;
-    let rateUnit = hasQuantity ? 'kg' : 'Crt';
+    let rateUnit = hasQuantity ? 'kg' : 'Nag';
 
     // Fallback calculation if rate not provided
     if (rate === 0 && baseAmount > 0) {
         if (hasQuantity && quantity > 0) {
             rate = baseAmount / quantity;
-        } else if (hasCarat && carat > 0) {
-            rate = baseAmount / carat;
+        } else if (hasNag && nag > 0) {
+            rate = baseAmount / nag;
+        } else if (displayQty > 0) {
+            // Original dev/bhargav fallback
+            rate = baseAmount / displayQty;
         }
     }
 
@@ -493,7 +465,7 @@ const BillingInvoice = ({ data, type = 'farmer' }) => {
     const rateDetailsLines = (() => {
         if (splits.length > 0) {
             return splits.map((s, i) => {
-                const sUnit = hasQuantity ? 'kg' : 'Crt';
+                const sUnit = hasQuantity ? 'kg' : 'Nag';
                 return `₹${formatNumber(s.rate)} for ${formatNumber(s.qty)} ${sUnit}`;
             });
         }
@@ -506,118 +478,134 @@ const BillingInvoice = ({ data, type = 'farmer' }) => {
     })();
 
     // ── Commission percentage ──
-    const commissionPercent = baseAmount > 0 ? ((commission / baseAmount) * 100).toFixed(1) : '4.0';
+    // ── Commission percentage ──
+    const commissionPercent = data.commissionRate
+        ? (data.commissionRate * 100).toFixed(1)
+        : (baseAmount > 0 ? ((commission / baseAmount) * 100).toFixed(1) : '4.0');
 
-    // ── Quantity display string ──
     const getQuantityDisplay = () => {
-        if (hasQuantity && hasCarat) return `${formatNumber(quantity)} kg / ${formatNumber(carat)} Crt`;
+        if (hasQuantity && hasNag) return `${formatNumber(quantity)} kg / ${formatNumber(nag)} Nag`;
         if (hasQuantity) return `${formatNumber(quantity)} kg`;
-        if (hasCarat) return `${formatNumber(carat)} Crt`;
+        if (hasNag) return `${formatNumber(nag)} Nag`;
         return '-';
     };
+
+    // ── Generate Invoice Number ──
+    const invoiceNumber = (data.id || data._id || 'INV').slice(-6).toUpperCase();
+
+    // ── Payment Status ──
+    const status = data.status || 'Pending';
+    const getPaymentStatusStyle = () => {
+        const s = (status || '').toLowerCase();
+        if (s === 'paid' || s === 'full' || s === 'payment completed') {
+            return { bg: colors.paidBg, text: colors.paidText, label: 'Payment Completed' };
+        }
+        if (s === 'partial') {
+            return { bg: colors.partialBg, text: colors.partialText, label: 'Partial Payment' };
+        }
+        return { bg: colors.pendingBg, text: colors.pendingText, label: 'Payment Pending' };
+    };
+    const paymentStatus = getPaymentStatusStyle();
 
     return (
         <Document>
             <Page size="A4" style={styles.page}>
-                {/* Watermark */}
-                <Text style={styles.watermark}>AgroNond</Text>
 
                 {/* ─── Header ─── */}
                 <View style={styles.header}>
-                    <View style={styles.brand}>
-                        <View style={styles.logoBox}>
-                            <Text style={styles.logoText}>A</Text>
-                        </View>
-                        <View style={styles.brandText}>
-                            <Text style={styles.brandName}>AgroNond</Text>
-                            <Text style={styles.brandSubtitle}>Digital Mandi Platform</Text>
-                        </View>
+                    <View style={styles.companyInfo}>
+                        <Text style={styles.companyName}>{committee.name}</Text>
+                        <Text style={styles.companyAddress}>{committee.address1}</Text>
+                        <Text style={styles.companyAddress}>{committee.address2}</Text>
+                        <Text style={styles.companyAddress}>{committee.address3}</Text>
+                        <Text style={styles.companyAddress}>Phone: {committee.phone}</Text>
+                        <Text style={styles.companyContact}>{committee.email}</Text>
+                        <Text style={styles.companyContact}>{committee.website}</Text>
                     </View>
-                    <Text style={styles.receiptTitle}>{title}</Text>
+                    <Text style={styles.invoiceTitle}>{title}</Text>
                 </View>
 
-                {/* ─── Info Grid ─── */}
-                <View style={styles.infoGrid}>
-                    {/* Issuer */}
-                    <View style={styles.infoSection}>
-                        <Text style={styles.sectionLabel}>Issued By</Text>
-                        <Text style={styles.companyName}>{committee.name}</Text>
-                        <Text style={styles.companyDetail}>{committee.location}</Text>
-                        <Text style={styles.companyDetail}>{committee.email}</Text>
-                        <Text style={styles.companyDetail}>{committee.phone}</Text>
-                    </View>
-
-                    {/* Transaction Details */}
-                    <View style={styles.infoSectionRight}>
-                        <Text style={styles.sectionLabel}>Transaction Details</Text>
+                {/* ─── Invoice Details Grid ─── */}
+                <View style={styles.detailsGrid}>
+                    <View style={styles.detailsColumn}>
                         <View style={styles.detailsRow}>
-                            <Text style={styles.detailLabel}>Date:</Text>
-                            <Text style={styles.detailValue}>{formatDate(data.date)}</Text>
+                            <Text style={styles.detailsLabel}>#</Text>
+                            <Text style={styles.detailsValue}>QT-{invoiceNumber}</Text>
                         </View>
                         <View style={styles.detailsRow}>
-                            <Text style={styles.detailLabel}>Time:</Text>
-                            <Text style={styles.detailValue}>{formatTime(data.date)}</Text>
+                            <Text style={styles.detailsLabel}>Invoice Date</Text>
+                            <Text style={styles.detailsValue}>{formatDate(data.date)}</Text>
                         </View>
-                        {(data.id || data._id) && (
+                        {data.token && (
                             <View style={styles.detailsRow}>
-                                <Text style={styles.detailLabel}>Transaction ID:</Text>
-                                <Text style={styles.detailValue}>
-                                    #{(data.id || data._id).slice(-6).toUpperCase()}
-                                </Text>
+                                <Text style={styles.detailsLabel}>Token No</Text>
+                                <Text style={[styles.detailsValue, { color: colors.brand }]}>#{data.token}</Text>
                             </View>
                         )}
-                        <View style={styles.detailsRow}>
-                            <Text style={styles.detailLabel}>Type:</Text>
-                            <Text style={styles.detailValue}>
-                                {isFarmer ? 'Farmer Payment' : 'Trader Bill'}
-                            </Text>
-                        </View>
                     </View>
                 </View>
 
-                {/* ─── PAY TO / BILL TO  ─── farmer name from backend via data.name ─── */}
-                <View style={styles.recipientSection}>
-                    <Text style={styles.recipientLabel}>
-                        {isFarmer ? 'PAY TO' : 'BILL TO'}
-                    </Text>
-                    {/* data.name is populated from farmerName prop fetched from backend */}
-                    <Text style={styles.recipientName}>{data.name || 'Unknown Farmer'}</Text>
+                {/* ─── Bill To Section ─── */}
+                <View style={styles.billToSection}>
+                    <Text style={styles.billToLabel}>{isFarmer ? 'Pay To' : 'Bill To'}</Text>
+                    <Text style={styles.billToName}>{data.name || 'Unknown'}</Text>
+                    {data.phone && (
+                        <Text style={styles.billToAddress}>Phone: {data.phone}</Text>
+                    )}
+                    {data.address && (
+                        <Text style={styles.billToAddress}>{data.address}</Text>
+                    )}
+                    {data.village && (
+                        <Text style={styles.billToAddress}>{data.village}, Maharashtra</Text>
+                    )}
+                    {!data.phone && !data.address && !data.village && (
+                        <Text style={styles.billToAddress}>Maharashtra, India</Text>
+                    )}
                 </View>
 
-                {/* ─── Items Table  ── 4 columns: Crop | Qty | Rate | Total Amount ─── */}
+                {/* ─── Items Table ─── */}
                 <View style={styles.table}>
-                    {/* Header row */}
+                    {/* Table Header */}
                     <View style={styles.tableHeader}>
-                        <Text style={[styles.th, styles.thCrop]}>Description / Crop</Text>
-                        <Text style={[styles.th, styles.thQty]}>Quantity</Text>
-                        <Text style={[styles.th, styles.thRateDetails]}>Rate</Text>
-                        <Text style={[styles.th, styles.thTotalAmount]}>Total Amount</Text>
+                        <Text style={[styles.th, styles.thSerial]}>#</Text>
+                        <Text style={[styles.th, styles.thDescription]}>Item & Description</Text>
+                        <Text style={[styles.th, styles.thQty]}>Qty</Text>
+                        <Text style={[styles.th, styles.thRate]}>Rate</Text>
+                        <Text style={[styles.th, styles.thAmount]}>Amount</Text>
                     </View>
 
-                    {/* Check if we have splits data for multiple rows */}
+                    {/* Table Rows */}
                     {data.splits && data.splits.length > 1 ? (
                         // Render individual rows for each split
                         data.splits.map((split, index) => {
                             const splitQty = split.qty || split.quantity || 0;
-                            const splitCarat = split.carat || 0;
+                            const splitNag = split.nag || 0;
                             const splitRate = split.rate || 0;
                             const splitAmount = split.amount || (splitQty * splitRate);
-                            const splitUnit = splitQty > 0 ? 'kg' : 'Crt';
-                            const displaySplitQty = splitQty > 0 ? splitQty : splitCarat;
+                            const splitUnit = splitQty > 0 ? 'kg' : 'Nag';
+                            const displaySplitQty = splitQty > 0 ? splitQty : splitNag;
 
                             return (
                                 <View style={styles.tableRow} key={index}>
-                                    <Text style={[styles.td, styles.tdCrop]}>
-                                        {index === 0 ? (data.crop || 'Unknown Crop') : ''}
-                                    </Text>
+                                    <Text style={[styles.td, styles.tdSerial]}>{index + 1}</Text>
+                                    <View style={styles.tdDescription}>
+                                        <Text style={styles.tdDescriptionMain}>
+                                            {index === 0 ? (data.crop || 'Agricultural Produce') : ''}
+                                        </Text>
+                                        {index === 0 && (
+                                            <Text style={styles.tdDescriptionSub}>
+                                                Sale transaction - Split {index + 1}
+                                            </Text>
+                                        )}
+                                    </View>
                                     <Text style={[styles.td, styles.tdQty]}>
-                                        {formatNumber(displaySplitQty)} {splitUnit}
+                                        {displaySplitQty.toFixed(2)}
                                     </Text>
-                                    <Text style={[styles.td, styles.tdRateDetails]}>
-                                        Rs. {formatNumber(splitRate)}/{splitUnit}
+                                    <Text style={[styles.td, styles.tdRate]}>
+                                        {formatNumber(splitRate)}
                                     </Text>
-                                    <Text style={[styles.td, styles.tdTotalAmount]}>
-                                        {formatCurrency(splitAmount)}
+                                    <Text style={[styles.td, styles.tdAmount]}>
+                                        {formatNumber(splitAmount)}
                                     </Text>
                                 </View>
                             );
@@ -625,77 +613,90 @@ const BillingInvoice = ({ data, type = 'farmer' }) => {
                     ) : (
                         // Single row for non-split records
                         <View style={styles.tableRow}>
-                            <Text style={[styles.td, styles.tdCrop]}>
-                                {data.crop || 'Unknown Crop'}
-                            </Text>
+                            <Text style={[styles.td, styles.tdSerial]}>1</Text>
+                            <View style={styles.tdDescription}>
+                                <Text style={styles.tdDescriptionMain}>
+                                    {data.crop || 'Agricultural Produce'}
+                                </Text>
+                                <Text style={styles.tdDescriptionSub}>
+                                    {isFarmer ? 'Farmer sale transaction' : 'Trader purchase transaction'}
+                                </Text>
+                            </View>
                             <Text style={[styles.td, styles.tdQty]}>
                                 {getQuantityDisplay()}
                             </Text>
-                            <Text style={[styles.td, styles.tdRateDetails]}>
-                                Rs. {formatNumber(rate.toFixed(2))}/{rateUnit}
+                            <Text style={[styles.td, styles.tdRate]}>
+                                {formatNumber(rate)}
                             </Text>
-                            <Text style={[styles.td, styles.tdTotalAmount]}>
-                                {formatCurrency(baseAmount)}
+                            <Text style={[styles.td, styles.tdAmount]}>
+                                {formatNumber(baseAmount)}
                             </Text>
                         </View>
                     )}
                 </View>
 
+                {/* ─── Totals Section ─── */}
+                <View style={styles.totalsContainer}>
+                    <View style={styles.totalsSection}>
+                        <View style={styles.totalRow}>
+                            <Text style={styles.totalLabel}>Sub Total</Text>
+                            <Text style={styles.totalValue}>{formatNumber(baseAmount)}</Text>
+                        </View>
+                        <View style={styles.totalRow}>
+                            <Text style={styles.totalLabel}>
+                                {isFarmer
+                                    ? `Commission (${commissionPercent}%)`
+                                    : `Market Fee (${commissionPercent}%)`}
+                            </Text>
+                            <Text style={styles.totalValue}>
+                                {isFarmer ? '-' : '+'}{formatNumber(commission)}
+                            </Text>
+                        </View>
+                        <View style={styles.grandTotalRow}>
+                            <Text style={styles.grandTotalLabel}>Total</Text>
+                            <Text style={styles.grandTotalValue}>
+                                ₹{formatNumber(finalAmount)}
+                            </Text>
+                        </View>
 
-                {/* Totals Section */}
-                <View style={styles.totalsSection}>
-                    <View style={styles.totalRow}>
-                        <Text style={styles.totalLabel}>Subtotal (Base Amount)</Text>
-                        <Text style={styles.totalValue}>{formatCurrency(baseAmount)}</Text>
-                    </View>
-                    <View style={styles.totalRow}>
-                        <Text style={styles.totalLabel}>
-                            {isFarmer
-                                ? `Less: Commission (${commissionPercent}%)`
-                                : `Add: Market Fee (${commissionPercent}%)`}
-                        </Text>
-                        <Text style={[
-                            styles.totalValue,
-                            { color: isFarmer ? colors.red : colors.textDark }
+                        {/* Payment Status Badge */}
+                        <View style={[
+                            styles.paymentStatusBadge,
+                            { backgroundColor: paymentStatus.bg }
                         ]}>
-                            {isFarmer ? '- ' : '+ '}{formatCurrency(commission)}
-                        </Text>
+                            <Text style={[
+                                styles.paymentStatusText,
+                                { color: paymentStatus.text }
+                            ]}>
+                                {paymentStatus.label}
+                            </Text>
+                        </View>
                     </View>
+                </View>
 
-                    {/* NET PAYABLE → renamed to TOTAL AMOUNT */}
-                    <View style={styles.grandTotalRow}>
-                        <Text style={styles.grandTotalLabel}>Total Amount</Text>
-                        <Text style={styles.grandTotalValue}>
-                            {formatCurrency(finalAmount)}
-                        </Text>
-                    </View>
+                {/* ─── Amount In Words ─── */}
+                <View style={styles.amountInWords}>
+                    <Text style={styles.amountInWordsLabel}>Total In Words</Text>
+                    <Text style={styles.amountInWordsText}>
+                        {getAmountInWords(finalAmount)}
+                    </Text>
+                </View>
 
-                    {/* Bottom status badge — colour-matched: blue for Partial */}
-                    <View style={[
-                        styles.statusBadge,
-                        { backgroundColor: statusColors.bg, borderWidth: 1, borderColor: statusColors.border }
-                    ]}>
-                        <Text style={[styles.statusText, { color: statusColors.text }]}>
-                            {status.toUpperCase()}
-                        </Text>
-                    </View>
+                {/* ─── Terms Section ─── */}
+                <View style={styles.termsSection}>
+                    <Text style={styles.termsLabel}>Terms & Conditions</Text>
+                    <Text style={styles.termsText}>
+                        Payment Terms: As per APMC regulations{'\n'}
+                        All disputes subject to Pune jurisdiction.{'\n'}
+                        This is a computer generated invoice.
+                    </Text>
                 </View>
 
                 {/* ─── Footer ─── */}
                 <View style={styles.footer}>
-                    <View style={styles.termsSection}>
-                        <Text style={styles.termsTitle}>Terms & Conditions</Text>
-                        <Text style={styles.termsText}>
-                            This document serves as an official proof of payment/billing within
-                            the AgroNond platform. Any disputes must be reported to the market
-                            committee within 24 hours. All transactions are subject to APMC rules
-                            and regulations.
-                        </Text>
-                    </View>
-                    <View style={styles.poweredBySection}>
-                        <Text style={styles.poweredBy}>Powered by</Text>
-                        <Text style={styles.poweredByBrand}>AgroNond Platform</Text>
-                    </View>
+                    <Text style={styles.footerText}>
+                        Crafted with ease using <Text style={styles.footerBrand}>AgroNond</Text>
+                    </Text>
                 </View>
             </Page>
         </Document>

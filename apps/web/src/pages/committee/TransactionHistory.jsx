@@ -14,7 +14,9 @@ import {
     Download,
     IndianRupee,
     Loader2,
-    X
+    X,
+    Edit,
+    Save
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../lib/api';
@@ -29,16 +31,36 @@ export default function TransactionHistory() {
         return today.toISOString().split('T')[0];
     });
     const [selectedTransaction, setSelectedTransaction] = useState(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        weight: '',
+        nag: '',
+        rate: ''
+    });
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const fetchTransactions = useCallback(async (showLoading = true) => {
         try {
             if (showLoading) setLoading(true);
             const params = dateFilter ? `?date=${dateFilter}` : '';
             const response = await api.get(`/api/records/completed${params}`);
-            setTransactions(response || []);
+
+            // Safe extraction of records array, handling various potential API formats
+            let data = [];
+            if (Array.isArray(response)) {
+                data = response;
+            } else if (response && Array.isArray(response.records)) {
+                data = response.records;
+            } else if (response && Array.isArray(response.data)) {
+                data = response.data;
+            }
+
+            setTransactions(data);
         } catch (error) {
             console.error('Error fetching transactions:', error);
             if (showLoading) toast.error('Failed to load transactions');
+            // Ensure transactions is always an array on error
+            setTransactions([]);
         } finally {
             if (showLoading) setLoading(false);
         }
@@ -52,6 +74,7 @@ export default function TransactionHistory() {
     useAutoRefresh(() => fetchTransactions(false), { interval: 30000 });
 
     const filteredTransactions = useMemo(() => {
+        if (!Array.isArray(transactions)) return [];
         if (!searchTerm.trim()) return transactions;
         return transactions.filter(t =>
             t.vegetable?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -63,6 +86,8 @@ export default function TransactionHistory() {
 
     // Stats calculations
     const stats = useMemo(() => {
+        if (!Array.isArray(transactions)) return { count: 0, totalAmount: 0, totalQty: 0, avgRate: 0 };
+
         const total = transactions.reduce((sum, t) => sum + (t.sale_amount || 0), 0);
         const totalQty = transactions.reduce((sum, t) => sum + (t.official_qty || 0), 0);
         return {
@@ -90,6 +115,41 @@ export default function TransactionHistory() {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const handleEditClick = (e, tx) => {
+        e.stopPropagation();
+        setEditFormData({
+            weight: tx.official_qty || '',
+            nag: tx.nag || '',
+            rate: tx.sale_rate || ''
+        });
+        setSelectedTransaction(tx);
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateRecord = async () => {
+        if (!selectedTransaction) return;
+
+        setIsUpdating(true);
+        try {
+            const updates = {
+                official_qty: parseFloat(editFormData.weight),
+                nag: parseFloat(editFormData.nag),
+                sale_rate: parseFloat(editFormData.rate)
+            };
+
+            await api.records.update(selectedTransaction._id, updates);
+
+            toast.success('Record updated successfully');
+            setIsEditModalOpen(false);
+            fetchTransactions(false); // Refresh list
+        } catch (error) {
+            console.error('Update failed:', error);
+            toast.error('Failed to update record');
+        } finally {
+            setIsUpdating(false);
+        }
     };
 
     return (
@@ -227,6 +287,7 @@ export default function TransactionHistory() {
                                 <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-4">Rate</th>
                                 <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-4">Amount</th>
                                 <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-4">Time</th>
+                                <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-4">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -262,6 +323,15 @@ export default function TransactionHistory() {
                                     <td className="px-6 py-4 text-right text-sm text-slate-500">
                                         {formatTime(tx.sold_at)}
                                     </td>
+                                    <td className="px-6 py-4 text-right text-sm">
+                                        <button
+                                            onClick={(e) => handleEditClick(e, tx)}
+                                            className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-emerald-600 transition-colors"
+                                            title="Edit Record"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -282,7 +352,15 @@ export default function TransactionHistory() {
                             className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm cursor-pointer hover:border-emerald-200 transition-colors"
                         >
                             <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center gap-3">
+                                <div className="absolute top-4 right-4 flex gap-2">
+                                    <button
+                                        onClick={(e) => handleEditClick(e, tx)}
+                                        className="p-2 bg-slate-50 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="flex items-center gap-3 pr-12">
                                     <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                                         <Package className="w-5 h-5" />
                                     </div>
@@ -400,6 +478,86 @@ export default function TransactionHistory() {
                                     className="w-full px-5 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition-colors"
                                 >
                                     Close
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Edit Modal */}
+            <AnimatePresence>
+                {isEditModalOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-gray-50">
+                                <h3 className="font-bold text-lg text-slate-900">Edit Record</h3>
+                                <button
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-slate-500" />
+                                </button>
+                            </div>
+
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
+                                    <input
+                                        type="number"
+                                        value={editFormData.weight}
+                                        onChange={(e) => setEditFormData({ ...editFormData, weight: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Nag</label>
+                                    <input
+                                        type="number"
+                                        value={editFormData.nag}
+                                        onChange={(e) => setEditFormData({ ...editFormData, nag: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Rate (₹/kg or ₹/nag)</label>
+                                    <input
+                                        type="number"
+                                        value={editFormData.rate}
+                                        onChange={(e) => setEditFormData({ ...editFormData, rate: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="p-6 border-t border-slate-100 bg-gray-50 flex gap-3">
+                                <button
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleUpdateRecord}
+                                    disabled={isUpdating}
+                                    className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                    <span>Save Changes</span>
                                 </button>
                             </div>
                         </motion.div>

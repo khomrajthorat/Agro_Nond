@@ -63,29 +63,29 @@ export default function TransactionsView({ transactions }) {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {filteredData.map((txn) => {
-                            // Determine if this transaction uses carat
-                            const hasCarat = txn.carat && txn.carat > 0;
-                            // FIX: Use hasCarat directly to determine rate unit (not relying on sale_unit field)
-                            const rateUnit = hasCarat ? 'Crt' : 'kg';
+                            // Determine if this transaction uses nag
+                            const hasNag = txn.nag && txn.nag > 0;
+                            // FIX: Use hasNag directly to determine rate unit (not relying on sale_unit field)
+                            const rateUnit = hasNag ? 'Nag' : 'kg';
 
                             return (
                                 <tr key={txn.id} className="hover:bg-emerald-50/20 transition-colors">
                                     <td className="px-4 py-3 text-slate-600">{txn.date}</td>
                                     <td className="px-4 py-3 font-medium text-slate-900">{txn.farmer.name}</td>
                                     <td className="px-4 py-3 text-slate-600">{txn.trader.name}</td>
-                                    {/* Show both kg and Carat in Details column */}
+                                    {/* Show both kg and Nag in Details column */}
                                     <td className="px-4 py-3 text-slate-600">
                                         <div className="flex flex-col">
                                             <span className="font-medium text-slate-800">{txn.crop}</span>
                                             <span className="text-xs text-slate-400">
                                                 {txn.quantity} kg
-                                                {hasCarat && (
-                                                    <span className="text-purple-600 font-medium"> | {txn.carat} Crt</span>
+                                                {hasNag && (
+                                                    <span className="text-purple-600 font-medium"> | {txn.nag} Nag</span>
                                                 )}
                                             </span>
                                         </div>
                                     </td>
-                                    {/* FIX: Rate now shows correct unit based on hasCarat */}
+                                    {/* FIX: Rate now shows correct unit based on hasNag */}
                                     <td className="px-4 py-3 text-right text-slate-600">
                                         ₹{txn.rate}/{rateUnit}
                                     </td>
@@ -105,9 +105,9 @@ export default function TransactionsView({ transactions }) {
             {/* Mobile Feed */}
             <div className="md:hidden space-y-3">
                 {filteredData.map((txn) => {
-                    const hasCarat = txn.carat && txn.carat > 0;
-                    // FIX: Use hasCarat directly to determine rate unit
-                    const rateUnit = hasCarat ? 'Crt' : 'kg';
+                    const hasNag = txn.nag && txn.nag > 0;
+                    // FIX: Use hasNag directly to determine rate unit
+                    const rateUnit = hasNag ? 'Nag' : 'kg';
 
                     return (
                         <div key={txn.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -123,10 +123,10 @@ export default function TransactionsView({ transactions }) {
                             <div className="flex justify-between items-end mt-3 pt-3 border-t border-slate-100">
                                 <div>
                                     <p className="text-xs text-slate-500">{txn.crop}</p>
-                                    {/* FIX: Show correct rate unit based on hasCarat */}
+                                    {/* FIX: Show correct rate unit based on hasNag */}
                                     <p className="text-sm text-slate-700">
                                         {txn.quantity} kg
-                                        {hasCarat && <span className="text-purple-600"> | {txn.carat} Crt</span>}
+                                        {hasNag && <span className="text-purple-600"> | {txn.nag} Nag</span>}
                                         {' '}@ ₹{txn.rate}/{rateUnit}
                                     </p>
                                 </div>

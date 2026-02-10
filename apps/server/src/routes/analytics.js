@@ -60,7 +60,7 @@ router.get('/vegetable-sales', async (req, res) => {
                     _id: '$vegetable',
                     totalSalesAmount: { $sum: '$sale_amount' },
                     totalQuantity: { $sum: { $ifNull: ['$official_qty', '$quantity'] } },
-                    totalCarat: { $sum: { $ifNull: ['$official_carat', '$carat'] } },
+                    totalNag: { $sum: { $ifNull: ['$official_nag', '$nag'] } },
                     transactionCount: { $sum: 1 },
                     // Calculate average rate for kg sales only
                     avgRatePerKg: {
@@ -72,11 +72,11 @@ router.get('/vegetable-sales', async (req, res) => {
                             ]
                         }
                     },
-                    // Calculate average rate for carat sales only
-                    avgRatePerCarat: {
+                    // Calculate average rate for nag sales only
+                    avgRatePerNag: {
                         $avg: {
                             $cond: [
-                                { $eq: ['$sale_unit', 'carat'] },
+                                { $eq: ['$sale_unit', 'nag'] },
                                 '$sale_rate',
                                 null
                             ]
@@ -90,10 +90,10 @@ router.get('/vegetable-sales', async (req, res) => {
                     vegetable: '$_id',
                     totalSalesAmount: { $round: ['$totalSalesAmount', 2] },
                     totalQuantity: { $round: ['$totalQuantity', 2] },
-                    totalCarat: { $round: ['$totalCarat', 2] },
+                    totalNag: { $round: ['$totalNag', 2] },
                     transactionCount: 1,
                     avgRatePerKg: { $round: [{ $ifNull: ['$avgRatePerKg', 0] }, 2] },
-                    avgRatePerCarat: { $round: [{ $ifNull: ['$avgRatePerCarat', 0] }, 2] }
+                    avgRatePerNag: { $round: [{ $ifNull: ['$avgRatePerNag', 0] }, 2] }
                 }
             },
             {

@@ -33,7 +33,7 @@ export default function TransactionDetailsModal({ transaction, onClose }) {
                 name: traderName,
                 crop: transaction.crop,
                 qty: transaction.quantity || 0,
-                carat: transaction.carat || transaction.official_carat || 0,
+                nag: transaction.nag || transaction.official_nag || 0,
                 baseAmount: transaction.grossAmount || 0,
                 commission: transaction.commission || 0,
                 finalAmount: transaction.totalCost || 0,

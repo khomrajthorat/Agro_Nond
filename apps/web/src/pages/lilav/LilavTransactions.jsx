@@ -52,15 +52,15 @@ export default function LilavTransactions() {
 
             const data = Array.isArray(response) ? response : (response.data || []);
 
-            // Transform data - UPDATED: Include carat values
+            // Transform data - UPDATED: Include nag values
             const formattedData = data.map(t => {
                 // Get effective values (official or farmer's initial)
                 const qtyValue = (t.official_qty && t.official_qty > 0)
                     ? t.official_qty
                     : (t.quantity || 0);
-                const caratValue = (t.official_carat && t.official_carat > 0)
-                    ? t.official_carat
-                    : (t.carat || 0);
+                const nagValue = (t.official_nag && t.official_nag > 0)
+                    ? t.official_nag
+                    : (t.nag || 0);
 
                 return {
                     id: t._id,
@@ -68,7 +68,7 @@ export default function LilavTransactions() {
                     date: t.sold_at || t.createdAt,
                     crop: t.vegetable,
                     quantity: qtyValue,
-                    carat: caratValue,
+                    nag: nagValue,
                     sale_unit: t.sale_unit || 'kg',
                     rate: t.sale_rate,
                     grossAmount: t.sale_amount,
@@ -149,11 +149,11 @@ export default function LilavTransactions() {
         setDateRange({ start: today, end: today });
     };
 
-    // Calculate totals - UPDATED: Include carat total
+    // Calculate totals - UPDATED: Include nag total
     const totals = useMemo(() => ({
         count: filteredTransactions.length,
         quantity: filteredTransactions.reduce((sum, t) => sum + (t.quantity || 0), 0),
-        carat: filteredTransactions.reduce((sum, t) => sum + (t.carat || 0), 0),
+        nag: filteredTransactions.reduce((sum, t) => sum + (t.nag || 0), 0),
         amount: filteredTransactions.reduce((sum, t) => sum + (t.grossAmount || 0), 0),
     }), [filteredTransactions]);
 
@@ -189,7 +189,7 @@ export default function LilavTransactions() {
 
             </motion.div>
 
-            {/* Summary Stats - UPDATED: Show both kg and Carat */}
+            {/* Summary Stats - UPDATED: Show both kg and Nag */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -208,14 +208,14 @@ export default function LilavTransactions() {
                         <ShoppingBasket className="w-5 h-5 text-slate-400" />
                     </div>
                     <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Quantity</p>
-                    {/* UPDATED: Show both kg and Carat */}
+                    {/* UPDATED: Show both kg and Nag */}
                     <div className="flex flex-wrap items-baseline gap-2">
                         <p className="text-2xl font-bold text-slate-800">
                             {totals.quantity.toLocaleString('en-IN')} <span className="text-sm font-normal text-slate-400">kg</span>
                         </p>
-                        {totals.carat > 0 && (
+                        {totals.nag > 0 && (
                             <p className="text-2xl font-bold text-purple-600">
-                                {totals.carat.toLocaleString('en-IN')} <span className="text-sm font-normal text-purple-400">Crt</span>
+                                {totals.nag.toLocaleString('en-IN')} <span className="text-sm font-normal text-purple-400">Nag</span>
                             </p>
                         )}
                     </div>
@@ -305,7 +305,7 @@ export default function LilavTransactions() {
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Lot Info</th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Parties</th>
                                 {/* UPDATED: Changed header to show both units */}
-                                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Qty (kg/Crt)</th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Qty (kg/Nag)</th>
                                 <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Rate</th>
                                 <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                             </tr>
@@ -348,22 +348,22 @@ export default function LilavTransactions() {
                                             </span>
                                         </div>
                                     </td>
-                                    {/* UPDATED: Show both kg and Carat in Qty column */}
+                                    {/* UPDATED: Show both kg and Nag in Qty column */}
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex flex-col items-end gap-0.5">
                                             <span className="text-sm font-medium text-slate-700">
                                                 {txn.quantity?.toLocaleString('en-IN')} kg
                                             </span>
-                                            {txn.carat > 0 && (
+                                            {txn.nag > 0 && (
                                                 <span className="text-xs font-medium text-purple-600">
-                                                    {txn.carat?.toLocaleString('en-IN')} Crt
+                                                    {txn.nag?.toLocaleString('en-IN')} Nag
                                                 </span>
                                             )}
                                         </div>
                                     </td>
                                     {/* UPDATED: Show rate with unit */}
                                     <td className="px-4 py-3 text-right text-sm text-slate-600">
-                                        ₹{txn.rate}/{txn.sale_unit === 'carat' ? 'Crt' : 'kg'}
+                                        ₹{txn.rate}/{txn.sale_unit === 'nag' ? 'Nag' : 'kg'}
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <span className="inline-flex px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
@@ -383,7 +383,7 @@ export default function LilavTransactions() {
                     )}
                 </div>
 
-                {/* Mobile Card View - UPDATED: Show both kg and Carat */}
+                {/* Mobile Card View - UPDATED: Show both kg and Nag */}
                 <div className="md:hidden space-y-3 p-4">
                     {filteredTransactions.map((txn, index) => (
                         <div
@@ -410,15 +410,15 @@ export default function LilavTransactions() {
                                 </div>
                             </div>
 
-                            {/* UPDATED: Show both kg and Carat with rate unit */}
+                            {/* UPDATED: Show both kg and Nag with rate unit */}
                             <div className="flex justify-between border-t border-slate-200 pt-2 text-xs">
                                 <div className="flex flex-col">
                                     <span className="text-slate-700">
-                                        {txn.quantity} kg @ ₹{txn.rate}/{txn.sale_unit === 'carat' ? 'Crt' : 'kg'}
+                                        {txn.quantity} kg @ ₹{txn.rate}/{txn.sale_unit === 'nag' ? 'Nag' : 'kg'}
                                     </span>
-                                    {txn.carat > 0 && (
+                                    {txn.nag > 0 && (
                                         <span className="text-purple-600 font-medium">
-                                            {txn.carat} Crt
+                                            {txn.nag} Nag
                                         </span>
                                     )}
                                 </div>
