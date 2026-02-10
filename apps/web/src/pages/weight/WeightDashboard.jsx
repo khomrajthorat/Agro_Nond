@@ -92,7 +92,7 @@ const InlineWeightInput = ({ record, onWeightSave, disabled }) => {
           </div>
         )}
       </div>
-      <span className={`text-sm font-medium ${isNagBased ? 'text-purple-600' : 'text-green-600'}`}>
+      <span className={`text-sm font-medium w-10 shrink-0 ${isNagBased ? 'text-purple-600' : 'text-green-600'}`}>
         {unit}
       </span>
     </div>
@@ -457,7 +457,7 @@ const WeightDashboard = () => {
                     <th className="px-4 py-3 text-left font-medium">Farmer</th>
                     <th className="px-4 py-3 text-left font-medium">Item</th>
                     <th className="px-4 py-3 text-left font-medium">Estimated</th>
-                    <th className="px-4 py-3 text-center font-medium">Enter Weight</th>
+                    <th className="px-4 py-3 text-left font-medium">Enter Weight</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -477,9 +477,7 @@ const WeightDashboard = () => {
                         {record.est_weight > 0 ? `${record.est_weight} kg` : `${record.est_nag} Nag`}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-center">
-                          <InlineWeightInput record={record} onWeightSave={handleWeightSave} />
-                        </div>
+                        <InlineWeightInput record={record} onWeightSave={handleWeightSave} />
                       </td>
                     </tr>
                   ))}

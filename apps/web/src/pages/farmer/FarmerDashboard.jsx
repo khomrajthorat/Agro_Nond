@@ -553,7 +553,8 @@ const FarmerDashboard = () => {
   });
   const [stats, setStats] = useState({
     totalEarnings: 0,
-    totalVolume: 0,
+    totalVolumeKg: 0,
+    totalVolumeNag: 0,
     totalSalesCount: 0,
     pendingLotsCount: 0
   });
@@ -1079,7 +1080,20 @@ const FarmerDashboard = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">Total Volume</p>
-              <h3 className="text-2xl font-bold text-gray-900">{stats.totalVolume.toFixed(2)} kg</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex flex-wrap gap-x-2 gap-y-1 items-baseline">
+                {stats.totalVolumeKg > 0 && (
+                  <span>{stats.totalVolumeKg.toFixed(2)} <span className="text-xs font-semibold text-gray-400">kg</span></span>
+                )}
+                {stats.totalVolumeKg > 0 && stats.totalVolumeNag > 0 && (
+                  <span className="text-gray-300 text-lg font-light">|</span>
+                )}
+                {stats.totalVolumeNag > 0 && (
+                  <span>{stats.totalVolumeNag} <span className="text-xs font-semibold text-gray-400">Nag</span></span>
+                )}
+                {!(stats.totalVolumeKg > 0) && !(stats.totalVolumeNag > 0) && (
+                  <span>0.00 <span className="text-xs font-semibold text-gray-400">kg</span></span>
+                )}
+              </h3>
               <p className="text-xs text-gray-400 mt-1">Lifetime quantity</p>
             </div>
           </div>

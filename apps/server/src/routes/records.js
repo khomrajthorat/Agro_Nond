@@ -253,11 +253,35 @@ router.get('/my-stats', requireAuth, async (req, res) => {
                             ]
                         }
                     },
-                    totalVolume: { $sum: '$quantity' },
+                    // Sum volume from top-level records only to avoid double-counting split lots
+                    totalVolumeKg: {
+                        $sum: {
+                            $cond: [
+                                { $eq: [{ $ifNull: ['$parent_record_id', null] }, null] },
+                                '$quantity',
+                                0
+                            ]
+                        }
+                    },
+                    totalVolumeNag: {
+                        $sum: {
+                            $cond: [
+                                { $eq: [{ $ifNull: ['$parent_record_id', null] }, null] },
+                                '$nag',
+                                0
+                            ]
+                        }
+                    },
+                    // Count actual sales (excluding parent lot records)
                     totalSalesCount: {
                         $sum: {
                             $cond: [
-                                { $in: ['$status', ['Sold', 'Completed']] },
+                                {
+                                    $and: [
+                                        { $in: ['$status', ['Sold', 'Completed']] },
+                                        { $ne: ['$is_parent', true] }
+                                    ]
+                                },
                                 1,
                                 0
                             ]
@@ -279,7 +303,7 @@ router.get('/my-stats', requireAuth, async (req, res) => {
             }
         ]);
 
-        const result = stats.length > 0 ? stats[0] : { totalEarnings: 0, totalVolume: 0, totalSalesCount: 0, pendingLotsCount: 0 };
+        const result = stats.length > 0 ? stats[0] : { totalEarnings: 0, totalVolumeKg: 0, totalVolumeNag: 0, totalSalesCount: 0, pendingLotsCount: 0 };
 
         res.json(result);
     } catch (error) {
