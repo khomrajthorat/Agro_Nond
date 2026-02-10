@@ -161,6 +161,20 @@ export default function LilavEntry() {
         return { nagValue, qtyValue };
     };
 
+    // Helper to calculate remaining available quantity for a crop
+    const getRemainingQty = (cropId, excludeTraderId = null) => {
+        const crop = pendingCrops.find(c => c._id === cropId);
+        if (!crop) return 0;
+        const { nagValue, qtyValue } = getEffectiveValues(crop);
+        const totalAvailable = nagValue > 0 ? nagValue : qtyValue;
+
+        const allocatedToOthers = traderAllocations
+            .filter(a => a.cropId === cropId && a.traderId !== excludeTraderId)
+            .reduce((sum, a) => sum + a.qty, 0);
+
+        return Math.max(0, totalAvailable - allocatedToOthers);
+    };
+
     // --- Token Search Handler ---
     const handleTokenSearch = async () => {
         if (!tokenSearch.trim()) return;
@@ -237,6 +251,12 @@ export default function LilavEntry() {
         }
         if (!detail?.qty || parseFloat(detail.qty) <= 0) {
             return toast.error('Enter quantity for the item');
+        }
+
+        const remaining = getRemainingQty(selectedCrop._id, selectedTrader._id);
+        const inputQty = parseFloat(detail.qty);
+        if (inputQty > remaining) {
+            return toast.error(`Cannot allocate ${inputQty}. Only ${remaining} available.`);
         }
 
         const { nagValue, qtyValue } = getEffectiveValues(selectedCrop);
@@ -396,6 +416,13 @@ export default function LilavEntry() {
                 const unit = nagValue > 0 ? 'Nag' : 'Kg';
                 const baseRate = parseFloat(detail.baseRate) || 0;
                 const calculatedRate = unit === 'Nag' ? baseRate / 100 : baseRate / 10;
+                const inputQty = parseFloat(detail.qty);
+
+                // Final check against remaining qty
+                const remaining = getRemainingQty(selectedCrop._id, selectedTrader._id);
+                if (inputQty > remaining) {
+                    return toast.error(`Over-allocated ${selectedCrop.vegetable}. Max available: ${remaining} ${unit}`);
+                }
 
                 // Check if already exists and update, or add new
                 const existingIndex = allAllocations.findIndex(
@@ -409,7 +436,7 @@ export default function LilavEntry() {
                     crop: selectedCrop.vegetable,
                     baseRate: baseRate,
                     rate: calculatedRate,
-                    qty: parseFloat(detail.qty),
+                    qty: inputQty,
                     unit: unit.toLowerCase()
                 };
 
@@ -913,8 +940,9 @@ export default function LilavEntry() {
                                                                     return;
                                                                 }
                                                                 const numVal = parseFloat(val);
-                                                                if (numVal > maxQty) {
-                                                                    toast.error(`Maximum allowed is ${maxQty} ${unit}`);
+                                                                const remaining = getRemainingQty(crop._id, selectedTrader?._id);
+                                                                if (numVal > remaining) {
+                                                                    toast.error(`Maximum allowed is ${remaining} ${unit}`);
                                                                     return;
                                                                 }
                                                                 updateItemDetail(crop._id, 'qty', val);
@@ -927,7 +955,7 @@ export default function LilavEntry() {
                                                         </span>
                                                     </div>
                                                     <div className="text-[10px] text-gray-500 font-bold mt-1.5 uppercase tracking-wide">
-                                                        Max: {maxQty}
+                                                        Max: {getRemainingQty(crop._id, selectedTrader?._id)} / {maxQty}
                                                     </div>
                                                 </div>
                                             </td>

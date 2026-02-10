@@ -92,7 +92,7 @@ const InlineWeightInput = ({ record, onWeightSave, disabled }) => {
           </div>
         )}
       </div>
-      <span className={`text-sm font-medium ${isNagBased ? 'text-purple-600' : 'text-green-600'}`}>
+      <span className={`text-sm font-medium w-10 shrink-0 ${isNagBased ? 'text-purple-600' : 'text-green-600'}`}>
         {unit}
       </span>
     </div>
@@ -478,17 +478,42 @@ const WeightDashboard = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Desktop View */}
-              <div className="hidden sm:block">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium">Date</th>
-                      <th className="px-4 py-3 text-left font-medium">Farmer</th>
-                      <th className="px-4 py-3 text-left font-medium">Item</th>
-                      <th className="px-4 py-3 text-left font-medium">Estimated</th>
-                      <th className="px-4 py-3 text-center font-medium">Enter Weight</th>
+{/* Desktop View */}
+<div className="hidden sm:block">
+  <table className="w-full text-sm">
+    <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+      <tr>
+        <th className="px-4 py-3 text-left font-medium">Date</th>
+        <th className="px-4 py-3 text-left font-medium">Farmer</th>
+        <th className="px-4 py-3 text-left font-medium">Item</th>
+        <th className="px-4 py-3 text-left font-medium">Estimated</th>
+        <th className="px-4 py-3 text-center font-medium">Enter Weight</th>
+      </tr>
+    </thead>
+    <tbody className="divide-y divide-gray-50">
+      {pendingRecords.map((record) => (
+        <tr key={record.id} className="hover:bg-gray-50/50">
+          <td className="px-4 py-3">
+            <span className="text-gray-900">{formatDate(record.date)}</span>
+            <span className="block text-xs text-gray-400">{formatTime(record.date)}</span>
+          </td>
+          <td className="px-4 py-3 font-semibold text-gray-900">{record.farmer_id}</td>
+          <td className="px-4 py-3">
+            <span className="px-2 py-1 bg-gray-100 rounded text-gray-700 text-xs font-medium">
+              {record.item}
+            </span>
+          </td>
+          <td className="px-4 py-3 text-gray-600">
+            {record.est_weight > 0 ? `${record.est_weight} kg` : `${record.est_nag} Nag`}
+          </td>
+          <td className="px-4 py-3 text-center">
+            <InlineWeightInput record={record} onWeightSave={handleWeightSave} />
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
