@@ -381,7 +381,7 @@ const WeightDashboard = () => {
         </div>
 
         {/* Token Quick Search */}
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 mb-6">
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex-1">
               <p className="text-sm font-semibold text-gray-900 mb-1">Quick Token Search</p>
@@ -396,7 +396,7 @@ const WeightDashboard = () => {
                   if (e.key === 'Enter') handleTokenSearch();
                 }}
                 placeholder="Token #"
-                className="w-24 px-3 py-2 rounded-lg border border-amber-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none text-center font-bold text-lg"
+                className="w-24 px-3 py-2 rounded-lg border border-green-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none text-center font-bold text-lg"
               />
               <button
                 onClick={handleTokenSearch}

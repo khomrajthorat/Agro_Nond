@@ -985,10 +985,10 @@ const FarmerDashboard = () => {
 
             {/* Token Badge - Only show if token exists */}
             {dailyToken && (
-              <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl shadow-lg shadow-orange-200 animate-pulse-once">
-                <div className="text-white">
-                  <p className="text-xs font-medium opacity-90">Your Token Today</p>
-                  <p className="text-3xl font-black">#{dailyToken}</p>
+              <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg shadow-green-200 animate-pulse-once">
+                <div>
+                  <p className="text-xs font-medium text-white opacity-90">Your Token Today</p>
+                  <p className="text-3xl font-black text-white">#{dailyToken}</p>
                 </div>
               </div>
             )}
