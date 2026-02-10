@@ -85,6 +85,11 @@ const recordSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
+    // Daily Token for quick farmer lookup
+    token: {
+        type: Number,
+        default: null
+    },
     commission: {
         type: Number,
         default: 0

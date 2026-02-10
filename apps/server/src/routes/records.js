@@ -1,6 +1,8 @@
 import express from 'express';
 import Record from '../models/Record.js';
 import User from '../models/User.js';
+import DailyToken from '../models/DailyToken.js';
+import FarmerToken from '../models/FarmerToken.js';
 import { requireAuth } from '../middleware/auth.js';
 import { createAuditLog, getClientIp, AuditDescriptions } from '../utils/auditLogger.js';
 
@@ -478,6 +480,89 @@ router.get('/search-farmer', requireAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/records/search-by-token
+ * Search farmer and their records by today's token number (for Lilav/Weight staff)
+ */
+router.get('/search-by-token', requireAuth, async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) {
+            return res.status(400).json({ error: 'Token number required' });
+        }
+
+        const tokenNum = parseInt(token);
+        if (isNaN(tokenNum) || tokenNum <= 0) {
+            return res.status(400).json({ error: 'Invalid token number' });
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+
+        // Find the farmer with this token for today
+        const farmerToken = await FarmerToken.findOne({ date: today, token_number: tokenNum });
+
+        if (!farmerToken) {
+            return res.status(404).json({ error: 'No farmer found with this token for today' });
+        }
+
+        // Get farmer details
+        const farmer = await User.findById(farmerToken.farmer_id).select('full_name phone farmerId location');
+
+        if (!farmer) {
+            return res.status(404).json({ error: 'Farmer not found' });
+        }
+
+        // Get today's pending records for this farmer
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const pendingRecords = await Record.find({
+            farmer_id: farmerToken.farmer_id,
+            status: { $in: ['Pending', 'RateAssigned', 'Weighed'] },
+            createdAt: { $gte: todayStart, $lte: todayEnd }
+        }).sort({ createdAt: -1 });
+
+        res.json({
+            farmer: {
+                _id: farmer._id,
+                full_name: farmer.full_name,
+                phone: farmer.phone,
+                farmerId: farmer.farmerId,
+                location: farmer.location,
+                token: tokenNum
+            },
+            records: pendingRecords
+        });
+    } catch (error) {
+        console.error('Search by token error:', error);
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+/**
+ * GET /api/records/my-token
+ * Get the logged-in farmer's token for today
+ */
+router.get('/my-token', requireAuth, async (req, res) => {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const farmerId = req.user._id;
+
+        const farmerToken = await FarmerToken.findOne({ date: today, farmer_id: farmerId });
+
+        if (!farmerToken) {
+            return res.json({ token: null, message: 'No token assigned yet. Add a record to get your token.' });
+        }
+
+        res.json({ token: farmerToken.token_number, date: today });
+    } catch (error) {
+        console.error('Get my token error:', error);
+        res.status(500).json({ error: 'Failed to fetch token' });
+    }
+});
+
+/**
  * GET /api/records/pending/:farmerId
  * Get pending records for a farmer (Specific param route)
  * Also includes parent records that have remaining quantity to sell (partial sales)
@@ -589,8 +674,36 @@ router.post('/add', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'No items provided' });
         }
 
+        // --- DAILY TOKEN LOGIC ---
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const farmerId = req.user._id;
+        let tokenNumber;
+
+        // Check if farmer already has a token for today
+        let existingToken = await FarmerToken.findOne({ date: today, farmer_id: farmerId });
+
+        if (existingToken) {
+            tokenNumber = existingToken.token_number;
+        } else {
+            // Atomically increment the daily counter and get next token
+            const dailyCounter = await DailyToken.findOneAndUpdate(
+                { date: today },
+                { $inc: { count: 1 } },
+                { upsert: true, new: true }
+            );
+            tokenNumber = dailyCounter.count;
+
+            // Create the FarmerToken record
+            await FarmerToken.create({
+                date: today,
+                farmer_id: farmerId,
+                token_number: tokenNumber
+            });
+        }
+        // --- END TOKEN LOGIC ---
+
         const recordsToCreate = items.map(item => ({
-            farmer_id: req.user._id,
+            farmer_id: farmerId,
             market: market,
             vegetable: item.vegetable,
             quantity: item.quantity,
@@ -600,7 +713,8 @@ router.post('/add', requireAuth, async (req, res) => {
             qtySold: 0,
             rate: 0,
             totalAmount: 0,
-            trader: '-'
+            trader: '-',
+            token: tokenNumber // Assign daily token
         }));
 
         const savedRecords = await Record.insertMany(recordsToCreate);
@@ -718,6 +832,7 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
         // Calculate Stats
         let totalRevenue = 0;
         let totalQuantity = 0;
+        let totalNag = 0;
         let pendingPayment = 0;
         const vegetableStats = {};
 
@@ -734,18 +849,22 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
 
             // Count quantity (official weight preferred, else estimated)
             const qty = record.official_qty || record.quantity || 0;
+            const nag = record.official_nag || record.nag || 0;
             totalQuantity += qty;
+            totalNag += nag;
 
             // Vegetable stats
             if (!vegetableStats[record.vegetable]) {
                 vegetableStats[record.vegetable] = {
                     name: record.vegetable,
                     quantity: 0,
+                    nag: 0,
                     count: 0,
                     revenue: 0
                 };
             }
             vegetableStats[record.vegetable].quantity += qty;
+            vegetableStats[record.vegetable].nag += nag;
             vegetableStats[record.vegetable].count += 1;
             if (record.status === 'Sold') {
                 vegetableStats[record.vegetable].revenue += record.total_amount || 0;
@@ -757,6 +876,7 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
             stats: {
                 totalRevenue,
                 totalQuantity,
+                totalNag,
                 pendingPayment,
                 vegetableSummary: Object.values(vegetableStats)
             }

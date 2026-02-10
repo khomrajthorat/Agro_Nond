@@ -25,6 +25,7 @@ import notificationRoutes from './routes/notifications.js';
 import analyticsRouter from './routes/analytics.js';
 import auditRouter from './routes/audit.js';
 import vegetablesRouter from './routes/vegetables.js';
+import settingsRouter from './routes/settings.js';
 import connectDB from './config/db.js';
 
 connectDB();
@@ -85,6 +86,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/admin', auditRouter); // Audit logs under /api/admin
 app.use('/api/vegetables', vegetablesRouter);
+app.use('/api/settings', settingsRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });

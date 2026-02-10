@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import SystemSetting from '../models/SystemSetting.js';
 
 const router = express.Router();
 
@@ -119,6 +120,16 @@ router.post('/verify', async (req, res) => {
                     error: 'Failed to create user account',
                     details: creatError.message
                 });
+            }
+        }
+
+        // CHECK: Lilav Login Restricted?
+        if (['lilav', 'committee', 'weight'].includes(user.role)) {
+            const loginSetting = await SystemSetting.findOne({ key: 'lilav_login_enabled' });
+            // Default to true (allowed) if setting missing, but if false, BLOCK.
+            if (loginSetting && loginSetting.value === false) {
+                console.log(`[Auth] Blocked login for ${user.role} (System Locked)`);
+                return res.status(403).json({ error: 'Market staff login is currently disabled by administrator.' });
             }
         }
 

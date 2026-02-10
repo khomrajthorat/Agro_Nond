@@ -221,6 +221,7 @@ router.get('/traders/:id/history', requireAuth, requireCommitteeAccess, async (r
                     _id: null,
                     totalPurchaseValue: { $sum: '$sale_amount' },
                     totalQuantity: { $sum: '$official_qty' },
+                    totalNag: { $sum: '$official_nag' },
                     count: { $sum: 1 }
                 }
             }
@@ -260,6 +261,7 @@ router.get('/traders/:id/history', requireAuth, requireCommitteeAccess, async (r
                 $group: {
                     _id: '$vegetable',
                     quantity: { $sum: '$official_qty' },
+                    nag: { $sum: '$official_nag' },
                     amount: { $sum: '$sale_amount' },
                     count: { $sum: 1 }
                 }
@@ -276,10 +278,12 @@ router.get('/traders/:id/history', requireAuth, requireCommitteeAccess, async (r
         const stats = {
             totalPurchaseValue: statsAggregation[0]?.totalPurchaseValue || 0,
             totalQuantity: statsAggregation[0]?.totalQuantity || 0,
+            totalNag: statsAggregation[0]?.totalNag || 0,
             pendingPayment: pendingAggregation[0]?.totalPending || 0,
             vegetableSummary: vegetableSummary.map(v => ({
                 name: v._id,
                 quantity: v.quantity,
+                nag: v.nag,
                 amount: v.amount,
                 count: v.count
             }))

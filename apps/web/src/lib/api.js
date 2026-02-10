@@ -120,6 +120,10 @@ export const api = {
       body: JSON.stringify({ official_qty: weight })
     }),
 
+    // --- Token Methods ---
+    searchByToken: (token) => apiRequest(`/api/records/search-by-token?token=${token}`, { method: 'GET' }),
+    myToken: () => apiRequest('/api/records/my-token', { method: 'GET' }),
+
     // --- NEW Farmer Dashboard Methods ---
     myRecords: (params = {}) => {
       const query = new URLSearchParams(params).toString();
@@ -182,6 +186,13 @@ export const api = {
         return apiRequest(`/api/admin/audit-logs${query ? '?' + query : ''}`, { method: 'GET' });
       },
       summary: () => apiRequest('/api/admin/audit-logs/summary', { method: 'GET' }),
+    },
+    settings: {
+      list: () => apiRequest('/api/admin/settings', { method: 'GET' }),
+      update: (key, value, description) => apiRequest(`/api/admin/settings/${key}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ value, description })
+      }),
     },
   },
 
