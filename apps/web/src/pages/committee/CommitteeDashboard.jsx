@@ -209,11 +209,11 @@ export default function CommitteeDashboard() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-lg border border-slate-200 text-center">
-                <p className="text-xs text-slate-500 mb-1">From Farmers ({commissionRates.farmer}%)</p>
+                <p className="text-xs text-slate-500 mb-1">From Farmers ({commissionRates.trader}%)</p>
                 <p className="font-bold text-slate-900">₹{statsData.farmerCommission.toLocaleString()}</p>
               </div>
               <div className="p-3 rounded-lg border border-slate-200 text-center">
-                <p className="text-xs text-slate-500 mb-1">From Traders ({commissionRates.trader}%)</p>
+                <p className="text-xs text-slate-500 mb-1">From Traders ({commissionRates.farmer}%)</p>
                 <p className="font-bold text-slate-900">₹{statsData.traderCommission.toLocaleString()}</p>
               </div>
             </div>

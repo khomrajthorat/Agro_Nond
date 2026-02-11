@@ -79,6 +79,9 @@ const calculateSale = async (record, qty, nag) => {
         sale_amount = qty * record.sale_rate;
     }
 
+    // Ensure sale_amount is 2 decimals
+    sale_amount = Number(sale_amount.toFixed(2));
+
     // 1. Determine Rates: Check if already stored, otherwise fetch current
     let farmerRate, traderRate;
 
@@ -100,8 +103,9 @@ const calculateSale = async (record, qty, nag) => {
         traderRate = traderSpecific ? traderSpecific.rate : (traderAll ? traderAll.rate : 0.09);
     }
 
-    const farmer_commission = Math.round(sale_amount * farmerRate);
-    const trader_commission = Math.round(sale_amount * traderRate);
+    // STRICT CALCULATION: Use 2 decimal places, DO NOT ROUND to integer
+    const farmer_commission = Number((sale_amount * farmerRate).toFixed(2));
+    const trader_commission = Number((sale_amount * traderRate).toFixed(2));
 
     return {
         sale_amount,
@@ -110,7 +114,7 @@ const calculateSale = async (record, qty, nag) => {
         // Save the rates used for this transaction
         farmer_commission_rate: farmerRate,
         trader_commission_rate: traderRate,
-        commission: farmer_commission + trader_commission,
+        commission: Number((farmer_commission + trader_commission).toFixed(2)),
         net_payable_to_farmer: sale_amount - farmer_commission,
         net_receivable_from_trader: sale_amount + trader_commission,
         total_amount: sale_amount + trader_commission,
