@@ -31,6 +31,7 @@ const colors = {
 const styles = StyleSheet.create({
     page: {
         padding: '10mm',
+        paddingBottom: 60, // Space for footer and page number
         fontFamily: 'Helvetica',
         fontSize: 9,
         color: colors.textDark,
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     pageNumber: {
         position: 'absolute',
         fontSize: 8,
-        bottom: 10,
+        bottom: 20, // Moved up slightly
         left: 0,
         right: 0,
         textAlign: 'center',
