@@ -420,7 +420,10 @@ export default function TraderDetailsModal({ isOpen, onClose, trader }) {
                                                             <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Item</th>
                                                             <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Qty</th>
                                                             <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Rate</th>
-                                                            <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Total Amount</th>
+                                                            <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">
+                                                                Total Amount
+                                                                <span className="block text-[10px] lowercase font-normal text-slate-400">(inc. tax)</span>
+                                                            </th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
