@@ -536,7 +536,7 @@ const BillingInvoice = ({ data, type = 'farmer' }) => {
                     <View style={styles.detailsGrid}>
                         <View style={styles.detailsColumn}>
                             <View style={styles.detailsRow}>
-                                <Text style={styles.detailsLabel}>#</Text>
+                                <Text style={styles.detailsLabel}>Invoice Id</Text>
                                 <Text style={styles.detailsValue}>QT-{invoiceNumber}</Text>
                             </View>
                             <View style={styles.detailsRow}>
