@@ -381,7 +381,7 @@ const WeightDashboard = () => {
         </div>
 
         {/* Token Quick Search */}
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 mb-6">
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex-1">
               <p className="text-sm font-semibold text-gray-900 mb-1">Quick Token Search</p>
@@ -396,7 +396,7 @@ const WeightDashboard = () => {
                   if (e.key === 'Enter') handleTokenSearch();
                 }}
                 placeholder="Token #"
-                className="w-24 px-3 py-2 rounded-lg border border-amber-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none text-center font-bold text-lg"
+                className="w-24 px-3 py-2 rounded-lg border border-green-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none text-center font-bold text-lg"
               />
               <button
                 onClick={handleTokenSearch}
@@ -440,8 +440,8 @@ const WeightDashboard = () => {
             <div className="bg-white border border-green-100 rounded-xl mb-6 overflow-hidden">
               <div className="px-4 py-3 bg-green-50 border-b border-green-100">
                 <div className="flex items-center gap-2">
-                  <Scale size={18} className="text-green-600" />
-                  <h2 className="font-semibold text-gray-900">Ready to Weigh</h2>
+                  <Scale size={40} className="text-green-600" />
+                  <h2 className="font-semibold text-gray-900">Ready to Weight</h2>
                   {tokenFilterFarmerId && (
                     <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
                       Filtered by Token
@@ -478,42 +478,16 @@ const WeightDashboard = () => {
                   </div>
                 ))}
               </div>
-{/* Desktop View */}
-<div className="hidden sm:block">
-  <table className="w-full text-sm">
-    <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-      <tr>
-        <th className="px-4 py-3 text-left font-medium">Date</th>
-        <th className="px-4 py-3 text-left font-medium">Farmer</th>
-        <th className="px-4 py-3 text-left font-medium">Item</th>
-        <th className="px-4 py-3 text-left font-medium">Estimated</th>
-        <th className="px-4 py-3 text-center font-medium">Enter Weight</th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-gray-50">
-      {pendingRecords.map((record) => (
-        <tr key={record.id} className="hover:bg-gray-50/50">
-          <td className="px-4 py-3">
-            <span className="text-gray-900">{formatDate(record.date)}</span>
-            <span className="block text-xs text-gray-400">{formatTime(record.date)}</span>
-          </td>
-          <td className="px-4 py-3 font-semibold text-gray-900">{record.farmer_id}</td>
-          <td className="px-4 py-3">
-            <span className="px-2 py-1 bg-gray-100 rounded text-gray-700 text-xs font-medium">
-              {record.item}
-            </span>
-          </td>
-          <td className="px-4 py-3 text-gray-600">
-            {record.est_weight > 0 ? `${record.est_weight} kg` : `${record.est_nag} Nag`}
-          </td>
-          <td className="px-4 py-3 text-center">
-            <InlineWeightInput record={record} onWeightSave={handleWeightSave} />
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+              {/* Desktop View */}
+              <div className="hidden sm:block">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium">Date</th>
+                      <th className="px-4 py-3 text-left font-medium">Farmer</th>
+                      <th className="px-4 py-3 text-left font-medium">Item</th>
+                      <th className="px-4 py-3 text-left font-medium">Estimated</th>
+                      <th className="px-4 py-3 text-center font-medium">Enter Weight</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -542,7 +516,7 @@ const WeightDashboard = () => {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </div >
           );
         })()}
 
@@ -550,7 +524,7 @@ const WeightDashboard = () => {
         <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div className="flex items-center gap-2">
-              <CheckCircle size={18} className="text-green-600" />
+              <CheckCircle size={40} className="text-green-600" />
               <h2 className="font-semibold text-gray-900">Completed Records</h2>
             </div>
 
@@ -747,7 +721,7 @@ const WeightDashboard = () => {
             <strong>Note:</strong> Weight edits are disabled at this level. For corrections, please contact the Committee Office.
           </p>
         </div>
-      </main>
+      </main >
 
       {/* --- MODALS --- */}
 
@@ -919,7 +893,7 @@ const WeightDashboard = () => {
           </button>
         </div>
       </Modal>
-    </div>
+    </div >
   );
 };
 
