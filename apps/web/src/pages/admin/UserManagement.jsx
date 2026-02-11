@@ -41,7 +41,7 @@ export default function UserManagement() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   // Form states
-  const [newUser, setNewUser] = useState({ phone: '', role: 'farmer', full_name: '', business_name: '', address: '', location: '' });
+  const [newUser, setNewUser] = useState({ phone: '', role: 'farmer', full_name: '', business_name: '', business_address: '', location: '' });
   const [editingUser, setEditingUser] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -76,20 +76,44 @@ export default function UserManagement() {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: (data) => api.admin.users.create(data),
+    mutationFn: async (data) => {
+      // 1. Create the user (Basic info)
+      const res = await api.admin.users.create(data);
+      const createdUser = res.user || res; // Handle if response is { user: ... } or just user object
+      const userId = createdUser.id || createdUser._id;
+
+      // 2. Update with profile details if needed (Traders/Farmers)
+      // We send the extra fields using the update endpoint which we know handles them (e.g. from TraderManagement)
+      if (userId) {
+        await api.admin.users.update(userId, {
+          business_name: data.business_name,
+          business_address: data.business_address,
+          location: data.location
+        });
+      }
+      return createdUser;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-users']);
       setAddUserModalOpen(false);
-      setNewUser({ phone: '', role: 'farmer', full_name: '', business_name: '', address: '', location: '' });
+      setNewUser({ phone: '', role: 'farmer', full_name: '', business_name: '', business_address: '', location: '' });
       toast.success('User created successfully. They can now login with their phone number.');
     },
     onError: (err) => {
+      console.error(err);
       toast.error(err.response?.data?.error || 'Failed to create user');
     }
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: (data) => api.admin.users.update(data.id || data._id, { full_name: data.full_name, phone: data.phone }),
+    mutationFn: (data) => api.admin.users.update(data.id || data._id, {
+      full_name: data.full_name,
+      phone: data.phone,
+      // Allow updating profile fields in edit mode as well
+      business_name: data.business_name,
+      business_address: data.business_address,
+      location: data.location
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-users']);
       setEditUserModalOpen(false);
@@ -137,7 +161,14 @@ export default function UserManagement() {
   };
 
   const openEditModal = (user) => {
-    setEditingUser({ ...user });
+    // Map backend fields to form state if needed
+    setEditingUser({
+      ...user,
+      // Ensure specific fields are present if not in user object directly (depends on backend population)
+      business_name: user.business_name || '',
+      business_address: user.business_address || user.address || '', // Handle legacy address field
+      location: user.location || ''
+    });
     setEditUserModalOpen(true);
     setActionMenuOpen(null);
   };
@@ -434,11 +465,11 @@ export default function UserManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address <span className="text-gray-400 font-normal">(Optional)</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Address <span className="text-gray-400 font-normal">(Optional)</span></label>
                     <input
                       type="text"
-                      value={newUser.address}
-                      onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
+                      value={newUser.business_address}
+                      onChange={(e) => setNewUser({ ...newUser, business_address: e.target.value })}
                       className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-emerald-500 outline-none"
                       placeholder="e.g. Market Yard, Gate 2"
                     />

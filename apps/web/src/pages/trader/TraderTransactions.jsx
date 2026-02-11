@@ -57,8 +57,8 @@ export default function TraderTransactions() {
         id: t._id,
         date: t.sold_at || t.createdAt,
         crop: t.vegetable,
-        quantity: t.official_qty,
-        nag: t.official_nag,
+        quantity: t.sale_unit === 'nag' ? (t.official_nag || t.nag) : (t.official_qty || t.quantity),
+        unit: t.sale_unit === 'nag' ? 'Nag' : 'kg',
         rate: t.sale_rate,
         grossAmount: t.sale_amount,
         commission: t.trader_commission || Math.round((t.sale_amount || 0) * 0.09),
@@ -426,24 +426,24 @@ export default function TraderTransactions() {
           <table className="w-full">
             <thead className="bg-slate-50 border-y border-slate-100">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="w-[18%] pl-6 pr-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <button onClick={() => handleSort('date')} className="inline-flex items-center gap-1 hover:text-emerald-600">
-                    Date & Time
+                    Date
                     <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="w-[20%] px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <button onClick={() => handleSort('crop')} className="inline-flex items-center gap-1 hover:text-emerald-600">
                     Crop
                     <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Qty (kg)</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Rate/kg</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Gross</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Payment</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                <th className="w-[12%] px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Quantity</th>
+                <th className="w-[3%] px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Rate</th>
+                <th className="w-[12%] px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Gross</th>
+                <th className="w-[12%] px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                <th className="w-[20%] px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Payment</th>
+                <th className="w-[12%] pl-3 pr-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -455,7 +455,7 @@ export default function TraderTransactions() {
                   transition={{ delay: index * 0.03 }}
                   className="hover:bg-slate-50/50 transition-colors"
                 >
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="pl-6 pr-3 py-3 text-sm text-slate-600">
                     <div className="font-medium text-slate-900">
                       {new Date(txn.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </div>
@@ -463,31 +463,30 @@ export default function TraderTransactions() {
                       {new Date(txn.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium">
-                      <Package className="w-3 h-3" />
+                  <td className="px-3 py-3">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium">
                       {txn.crop}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">{txn.quantity?.toLocaleString('en-IN') || 0}</td>
-                  <td className="px-4 py-3 text-right text-sm text-slate-600">₹{txn.rate}</td>
-                  <td className="px-4 py-3 text-right text-sm text-slate-600">₹{txn.grossAmount?.toLocaleString('en-IN') || 0}</td>
-                  <td className="px-4 py-3 text-right text-sm font-bold text-emerald-600">₹{txn.totalCost?.toLocaleString('en-IN') || 0}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${txn.paymentStatus === 'paid'
+                  <td className="px-3 py-3 text-left text-sm font-medium text-slate-700">
+                    {txn.quantity?.toLocaleString('en-IN') || 0} <span className="text-slate-400 text-xs font-normal">{txn.unit}</span>
+                  </td>
+                  <td className="px-3 py-3 text-right text-sm text-slate-600">₹{txn.rate}</td>
+                  <td className="px-3 py-3 text-right text-sm text-slate-600">₹{txn.grossAmount?.toLocaleString('en-IN') || 0}</td>
+                  <td className="px-3 py-3 text-right text-sm font-bold text-emerald-600">₹{txn.totalCost?.toLocaleString('en-IN') || 0}</td>
+                  <td className="px-3 py-3 text-center">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${txn.paymentStatus === 'paid'
                       ? 'bg-emerald-100 text-emerald-700'
                       : 'bg-amber-100 text-amber-700'
                       }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${txn.paymentStatus === 'paid' ? 'bg-emerald-500' : 'bg-amber-500'
-                        }`} />
-                      {txn.paymentStatus.charAt(0).toUpperCase() + txn.paymentStatus.slice(1)}
+                      {txn.paymentStatus === 'paid' ? 'Paid' : 'Pending'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="pl-3 pr-6 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => setSelectedTransaction(txn)}
-                        className="p-1.5 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors"
+                        className="p-1 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
@@ -497,7 +496,7 @@ export default function TraderTransactions() {
                           e.stopPropagation();
                           handleDownloadPDF(txn);
                         }}
-                        className="p-1.5 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors"
+                        className="p-1 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors"
                         title="Download Invoice"
                       >
                         <Download className="w-4 h-4" />

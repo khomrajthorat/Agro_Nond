@@ -46,10 +46,10 @@ router.get('/metrics', requireAuth, requireAdmin, async (req, res) => {
     // Financial aggregation for "Total Volume" (All time)
     const financialStats = await Record.aggregate([
       { $match: { status: { $in: ['Sold', 'Completed'] } } },
-      { $group: { _id: null, totalVolume: { $sum: '$sale_amount' }, totalCommission: { $sum: '$commission' } } }
+      { $group: { _id: null, totalSales: { $sum: '$sale_amount' }, totalCommission: { $sum: '$commission' } } }
     ]);
 
-    const totalVolume = financialStats[0]?.totalVolume || 0;
+    const totalVolume = (financialStats[0]?.totalSales || 0) + (financialStats[0]?.totalCommission || 0);
     const totalCommission = financialStats[0]?.totalCommission || 0;
 
     res.json({
@@ -147,7 +147,7 @@ router.get('/committee-records', requireAuth, requireAdmin, async (req, res) => 
     const records = await Record.find({ status: { $in: ['Sold', 'Completed'] } })
       .populate('farmer_id', 'full_name farmerId')
       .populate('trader_id', 'full_name customId business_name')
-      .select('commission total_amount sale_amount vegetable market createdAt sold_at')
+      .select('commission farmer_commission trader_commission total_amount sale_amount vegetable market createdAt sold_at')
       .sort({ sold_at: -1 })
       .limit(100);
 

@@ -2,17 +2,46 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import SystemSetting from '../models/SystemSetting.js';
+import RefreshToken from '../models/RefreshToken.js';
+import crypto from 'crypto';
 
 const router = express.Router();
 
 // Temporary in-memory OTP store (Use Redis in production)
 const otpStore = new Map();
 
-// Helper to generate JWT
-const generateToken = (id) => {
+// Helper to generate IDs
+const generateAccessToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET || 'fallback_secret', {
-        expiresIn: '30d',
+        expiresIn: '15m', // Short lived
     });
+};
+
+const generateRefreshToken = () => {
+    return crypto.randomBytes(40).toString('hex');
+};
+
+const setTokenCookies = (res, accessToken, refreshToken) => {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction, // Use secure cookies in production
+        sameSite: isProduction ? 'None' : 'Lax', // None for cross-site (if needed) or Lax for local
+        path: '/'
+    };
+
+    res.cookie('accessToken', accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000 // 15 minutes
+    });
+
+    if (refreshToken) {
+        res.cookie('refreshToken', refreshToken, {
+            ...cookieOptions,
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+    }
 };
 
 /**
@@ -133,14 +162,25 @@ router.post('/verify', async (req, res) => {
             }
         }
 
-        // Generate Token
-        console.log('[Verify] Generating token...');
-        const token = generateToken(user._id);
-        console.log('[Verify] Token generated.');
+        // Generate Tokens
+        console.log('[Verify] Generating tokens...');
+        const accessToken = generateAccessToken(user._id);
+        const refreshToken = generateRefreshToken();
+
+        // Save Refresh Token to DB
+        await RefreshToken.create({
+            userId: user._id,
+            token: refreshToken,
+            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        });
+
+        console.log('[Verify] Tokens generated.');
+
+        // Set HttpOnly Cookies
+        setTokenCookies(res, accessToken, refreshToken);
 
         return res.json({
             message: 'Login successful',
-            token,
             user: {
                 id: user._id,
                 phone: user.phone,
@@ -164,11 +204,63 @@ router.post('/verify', async (req, res) => {
 });
 
 /**
- * @desc    Logout (Client side clears token)
+ * @desc    Refresh Access Token
+ * @route   POST /api/auth/refresh-token
+ * @access  Public (Helper for Auth)
+ */
+router.post('/refresh-token', async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        return res.status(401).json({ error: 'No refresh token provided' });
+    }
+
+    try {
+        const tokenDoc = await RefreshToken.findOne({ token: refreshToken }).populate('userId');
+
+        if (!tokenDoc || !tokenDoc.userId) {
+            res.clearCookie('accessToken');
+            res.clearCookie('refreshToken');
+            return res.status(403).json({ error: 'Invalid refresh token' });
+        }
+
+        if (tokenDoc.expires < Date.now()) {
+            await RefreshToken.deleteOne({ _id: tokenDoc._id }); // Cleanup
+            res.clearCookie('accessToken');
+            res.clearCookie('refreshToken');
+            return res.status(403).json({ error: 'Refresh token expired' });
+        }
+
+        // Generate new access token
+        const newAccessToken = generateAccessToken(tokenDoc.userId._id);
+
+        // (Optional) Rotate refresh token here for extra security
+
+        setTokenCookies(res, newAccessToken); // Only update access token cookie
+
+        res.json({ message: 'Token refreshed' });
+
+    } catch (error) {
+        console.error('Refresh Token Error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @desc    Logout
  * @route   POST /api/auth/logout
  * @access  Public
  */
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (refreshToken) {
+        await RefreshToken.deleteOne({ token: refreshToken });
+    }
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
     res.json({ message: 'Logged out successfully' });
 });
 

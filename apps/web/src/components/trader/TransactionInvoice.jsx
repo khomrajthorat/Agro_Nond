@@ -37,10 +37,12 @@ const colors = {
 const styles = StyleSheet.create({
     page: {
         padding: '12mm 15mm',
+        paddingBottom: 60,
         fontFamily: 'Helvetica',
         fontSize: 10,
         color: colors.textDark,
         backgroundColor: colors.white,
+        flexDirection: 'column',
     },
 
     // Payment Status Badge
@@ -147,6 +149,8 @@ const styles = StyleSheet.create({
     table: {
         width: '100%',
         marginBottom: 20,
+        marginTop: 10,
+        borderStyle: 'solid',
     },
     tableHeader: {
         flexDirection: 'row',
@@ -203,6 +207,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'flex-end',
         marginBottom: 20,
+        marginTop: 20,
     },
     totalsSection: {
         width: '45%',
@@ -448,116 +453,119 @@ const TransactionInvoice = ({ transaction, committeeInfo }) => {
         <Document>
             <Page size="A4" style={styles.page}>
 
-                {/* ─── Header ─── */}
-                <View style={styles.header}>
-                    <View style={styles.companyInfo}>
-                        <Text style={styles.companyName}>{committee.name}</Text>
-                        <Text style={styles.companyAddress}>{committee.address1}</Text>
-                        <Text style={styles.companyAddress}>{committee.address2}</Text>
-                        <Text style={styles.companyAddress}>{committee.address3}</Text>
-                        <Text style={styles.companyAddress}>Phone: {committee.phone}</Text>
-                        <Text style={styles.companyContact}>{committee.email}</Text>
-                        <Text style={styles.companyContact}>{committee.website}</Text>
-                    </View>
-                    <Text style={styles.invoiceTitle}>Receipt</Text>
-                </View>
-
-                {/* ─── Invoice Details Grid ─── */}
-                <View style={styles.detailsGrid}>
-                    <View style={styles.detailsColumn}>
-                        <View style={styles.detailsRow}>
-                            <Text style={styles.detailsLabel}>#</Text>
-                            <Text style={styles.detailsValue}>RCP-{invoiceNumber}</Text>
+                {/* ─── Content Container ─── */}
+                <View style={{ flex: 1 }}>
+                    {/* ─── Header ─── */}
+                    <View style={styles.header}>
+                        <View style={styles.companyInfo}>
+                            <Text style={styles.companyName}>{committee.name}</Text>
+                            <Text style={styles.companyAddress}>{committee.address1}</Text>
+                            <Text style={styles.companyAddress}>{committee.address2}</Text>
+                            <Text style={styles.companyAddress}>{committee.address3}</Text>
+                            <Text style={styles.companyAddress}>Phone: {committee.phone}</Text>
+                            <Text style={styles.companyContact}>{committee.email}</Text>
+                            <Text style={styles.companyContact}>{committee.website}</Text>
                         </View>
-                        <View style={styles.detailsRow}>
-                            <Text style={styles.detailsLabel}>Date</Text>
-                            <Text style={styles.detailsValue}>{formatDate(transaction.date)}</Text>
-                        </View>
-                    </View>
-                </View>
-
-                {/* ─── Bill To Section ─── */}
-                <View style={styles.billToSection}>
-                    <Text style={styles.billToLabel}>Bill To (Trader)</Text>
-                    <Text style={styles.billToName}>{transaction.traderName || 'Trader'}</Text>
-                    {transaction.traderPhone && (
-                        <Text style={styles.billToAddress}>Phone: {transaction.traderPhone}</Text>
-                    )}
-                    {transaction.traderAddress && (
-                        <Text style={styles.billToAddress}>{transaction.traderAddress}</Text>
-                    )}
-                    {!transaction.traderPhone && !transaction.traderAddress && (
-                        <Text style={styles.billToAddress}>Maharashtra, India</Text>
-                    )}
-                </View>
-
-                {/* ─── Items Table ─── */}
-                <View style={styles.table}>
-                    {/* Table Header */}
-                    <View style={styles.tableHeader}>
-                        <Text style={[styles.th, styles.thSerial]}>#</Text>
-                        <Text style={[styles.th, styles.thDescription]}>Item & Description</Text>
-                        <Text style={[styles.th, styles.thQty]}>Qty</Text>
-                        <Text style={[styles.th, styles.thRate]}>Rate</Text>
-                        <Text style={[styles.th, styles.thAmount]}>Amount</Text>
+                        <Text style={styles.invoiceTitle}>Receipt</Text>
                     </View>
 
-                    {/* Table Row */}
-                    <View style={styles.tableRow}>
-                        <Text style={[styles.td, styles.tdSerial]}>1</Text>
-                        <View style={styles.tdDescription}>
-                            <Text style={styles.tdDescriptionMain}>
-                                {transaction.crop || 'Agricultural Produce'}
-                            </Text>
-                            <Text style={styles.tdDescriptionSub}>
-                                Trader purchase transaction
-                            </Text>
+                    {/* ─── Invoice Details Grid ─── */}
+                    <View style={styles.detailsGrid}>
+                        <View style={styles.detailsColumn}>
+                            <View style={styles.detailsRow}>
+                                <Text style={styles.detailsLabel}>Invoice Id</Text>
+                                <Text style={styles.detailsValue}>RCP-{invoiceNumber}</Text>
+                            </View>
+                            <View style={styles.detailsRow}>
+                                <Text style={styles.detailsLabel}>Date</Text>
+                                <Text style={styles.detailsValue}>{formatDate(transaction.date)}</Text>
+                            </View>
                         </View>
-                        <Text style={[styles.td, styles.tdQty]}>
-                            {transaction.quantity?.toFixed(2) || '0.00'}
-                        </Text>
-                        <Text style={[styles.td, styles.tdRate]}>
-                            {formatNumber(transaction.rate || 0)}
-                        </Text>
-                        <Text style={[styles.td, styles.tdAmount]}>
-                            {formatNumber(purchaseAmount)}
-                        </Text>
                     </View>
-                </View>
 
-                {/* ─── Totals Section ─── */}
-                <View style={styles.totalsContainer}>
-                    <View style={styles.totalsSection}>
-                        <View style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>Sub Total</Text>
-                            <Text style={styles.totalValue}>{formatNumber(purchaseAmount)}</Text>
-                        </View>
-                        <View style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>
-                                Market Fee ({commissionPercent}%)
-                            </Text>
-                            <Text style={styles.totalValue}>
-                                +{formatNumber(commissionAmount)}
-                            </Text>
-                        </View>
-                        <View style={styles.grandTotalRow}>
-                            <Text style={styles.grandTotalLabel}>Total</Text>
-                            <Text style={styles.grandTotalValue}>
-                                ₹{formatNumber(totalAmount)}
-                            </Text>
+                    {/* ─── Bill To Section ─── */}
+                    <View style={styles.billToSection}>
+                        <Text style={styles.billToLabel}>Bill To (Trader)</Text>
+                        <Text style={styles.billToName}>{transaction.traderName || 'Trader'}</Text>
+                        {transaction.traderPhone && (
+                            <Text style={styles.billToAddress}>Phone: {transaction.traderPhone}</Text>
+                        )}
+                        {transaction.traderAddress && (
+                            <Text style={styles.billToAddress}>{transaction.traderAddress}</Text>
+                        )}
+                        {!transaction.traderPhone && !transaction.traderAddress && (
+                            <Text style={styles.billToAddress}>Maharashtra, India</Text>
+                        )}
+                    </View>
+
+                    {/* ─── Items Table ─── */}
+                    <View style={styles.table}>
+                        {/* Table Header */}
+                        <View style={styles.tableHeader}>
+                            <Text style={[styles.th, styles.thSerial]}>#</Text>
+                            <Text style={[styles.th, styles.thDescription]}>Item & Description</Text>
+                            <Text style={[styles.th, styles.thQty]}>Qty</Text>
+                            <Text style={[styles.th, styles.thRate]}>Rate</Text>
+                            <Text style={[styles.th, styles.thAmount]}>Amount</Text>
                         </View>
 
-                        {/* Payment Status Badge */}
-                        <View style={[
-                            styles.paymentStatusBadge,
-                            { backgroundColor: paymentStatus.bg }
-                        ]}>
-                            <Text style={[
-                                styles.paymentStatusText,
-                                { color: paymentStatus.text }
+                        {/* Table Row */}
+                        <View style={styles.tableRow}>
+                            <Text style={[styles.td, styles.tdSerial]}></Text>
+                            <View style={styles.tdDescription}>
+                                <Text style={styles.tdDescriptionMain}>
+                                    {transaction.crop || 'Agricultural Produce'}
+                                </Text>
+                                <Text style={styles.tdDescriptionSub}>
+                                    Trader purchase transaction
+                                </Text>
+                            </View>
+                            <Text style={[styles.td, styles.tdQty]}>
+                                {transaction.quantity?.toFixed(2) || '0.00'}
+                            </Text>
+                            <Text style={[styles.td, styles.tdRate]}>
+                                {formatNumber(transaction.rate || 0)}
+                            </Text>
+                            <Text style={[styles.td, styles.tdAmount]}>
+                                {formatNumber(purchaseAmount)}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* ─── Totals Section ─── */}
+                    <View style={styles.totalsContainer}>
+                        <View style={styles.totalsSection}>
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>Sub Total</Text>
+                                <Text style={styles.totalValue}>{formatNumber(purchaseAmount)}</Text>
+                            </View>
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>
+                                    Market Fee ({commissionPercent}%)
+                                </Text>
+                                <Text style={styles.totalValue}>
+                                    +{formatNumber(commissionAmount)}
+                                </Text>
+                            </View>
+                            <View style={styles.grandTotalRow}>
+                                <Text style={styles.grandTotalLabel}>Total</Text>
+                                <Text style={styles.grandTotalValue}>
+                                    Rs. {formatNumber(totalAmount)}
+                                </Text>
+                            </View>
+
+                            {/* Payment Status Badge */}
+                            <View style={[
+                                styles.paymentStatusBadge,
+                                { backgroundColor: paymentStatus.bg }
                             ]}>
-                                {paymentStatus.label}
-                            </Text>
+                                <Text style={[
+                                    styles.paymentStatusText,
+                                    { color: paymentStatus.text }
+                                ]}>
+                                    {paymentStatus.label}
+                                </Text>
+                            </View>
                         </View>
                     </View>
                 </View>

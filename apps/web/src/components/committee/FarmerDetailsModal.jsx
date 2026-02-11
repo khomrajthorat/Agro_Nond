@@ -402,17 +402,18 @@ export default function FarmerDetailsModal({ isOpen, onClose, farmer }) {
                                                         <tr>
                                                             <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Date</th>
                                                             <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Item</th>
-                                                            <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Trader</th>
                                                             <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Qty</th>
                                                             <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Rate</th>
-                                                            <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Total</th>
-                                                            <th className="text-center text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Status</th>
+                                                            <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">
+                                                                Net Amount
+                                                                <span className="block text-[10px] lowercase font-normal text-slate-400">(after tax)</span>
+                                                            </th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
                                                         {history.length === 0 ? (
                                                             <tr>
-                                                                <td colSpan="7" className="px-6 py-12 text-center text-slate-500">
+                                                                <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
                                                                     No sales history found for this farmer.
                                                                 </td>
                                                             </tr>
@@ -434,9 +435,6 @@ export default function FarmerDetailsModal({ isOpen, onClose, farmer }) {
                                                                                 {record.vegetable}
                                                                             </span>
                                                                         </td>
-                                                                        <td className="px-6 py-4 text-sm text-slate-600">
-                                                                            {record.trader_id?.business_name || record.trader_id?.full_name || '-'}
-                                                                        </td>
                                                                         {/* CLEAN QTY DISPLAY */}
                                                                         <td className="px-6 py-4 text-right text-sm font-medium text-slate-700">
                                                                             {formatQtyDisplay(qty, nag)}
@@ -446,21 +444,11 @@ export default function FarmerDetailsModal({ isOpen, onClose, farmer }) {
                                                                             {record.sale_rate ? `₹${record.sale_rate}/${rateUnit}` : '-'}
                                                                         </td>
                                                                         <td className="px-6 py-4 text-right">
-                                                                            {record.total_amount ? (
-                                                                                <span className="font-bold text-emerald-600">₹{record.total_amount.toLocaleString()}</span>
-                                                                            ) : '-'}
-                                                                        </td>
-                                                                        <td className="px-6 py-4">
-                                                                            <div className="flex justify-center">
-                                                                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${record.status === 'Sold' || record.status === 'Completed'
-                                                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                                                    : record.status === 'Weighed'
-                                                                                        ? 'bg-blue-100 text-blue-700'
-                                                                                        : 'bg-amber-100 text-amber-700'
-                                                                                    }`}>
-                                                                                    {record.status}
+                                                                            {(record.net_payable_to_farmer || record.total_amount) ? (
+                                                                                <span className="font-bold text-emerald-600">
+                                                                                    ₹{(record.net_payable_to_farmer || ((record.total_amount || 0) - (record.farmer_commission || 0))).toLocaleString()}
                                                                                 </span>
-                                                                            </div>
+                                                                            ) : '-'}
                                                                         </td>
                                                                     </tr>
                                                                 );
