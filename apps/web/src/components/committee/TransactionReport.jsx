@@ -162,6 +162,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: colors.textLight,
     },
+    textMarathi: {
+        fontFamily: 'NotoSansDevanagari',
+    },
 });
 
 // Helper formatters
@@ -241,7 +244,7 @@ const TransactionReport = ({ records, filters }) => {
 
                             {/* Farmer */}
                             <View style={[styles.tableCol, { width: '15%' }]}>
-                                <Text style={styles.tableCellLeft}>
+                                <Text style={[styles.tableCellLeft, styles.textMarathi]}>
                                     {record.farmer_id?.full_name || 'Unknown'}
                                     {record.token ? ` (#${record.token})` : ''}
                                 </Text>
@@ -249,14 +252,14 @@ const TransactionReport = ({ records, filters }) => {
 
                             {/* Trader */}
                             <View style={[styles.tableCol, { width: '15%' }]}>
-                                <Text style={styles.tableCellLeft}>
+                                <Text style={[styles.tableCellLeft, styles.textMarathi]}>
                                     {record.trader_id?.business_name || record.trader_id?.full_name || 'Unknown'}
                                 </Text>
                             </View>
 
                             {/* Item */}
                             <View style={[styles.tableCol, { width: '10%' }]}>
-                                <Text style={styles.tableCell}>{record.vegetable || record.crop}</Text>
+                                <Text style={[styles.tableCell, styles.textMarathi]}>{record.vegetable || record.crop}</Text>
                             </View>
 
                             {/* Qty */}
@@ -307,19 +310,19 @@ const TransactionReport = ({ records, filters }) => {
                 <View style={styles.footer}>
                     <View style={styles.totalBox}>
                         <Text style={styles.totalLabel}>Total Turnover</Text>
-                        <Text style={styles.totalValue}>₹{formatCurrency(totals.amount)}</Text>
+                        <Text style={styles.totalValue}>Rs. {formatCurrency(totals.amount)}</Text>
                     </View>
                     <View style={styles.totalBox}>
                         <Text style={styles.totalLabel}>Total Commission</Text>
-                        <Text style={styles.totalValue}>₹{formatCurrency(totals.commission)}</Text>
+                        <Text style={styles.totalValue}>Rs. {formatCurrency(totals.commission)}</Text>
                     </View>
                     <View style={styles.totalBox}>
                         <Text style={styles.totalLabel}>Unpaid to Farmers</Text>
-                        <Text style={[styles.totalValue, { color: colors.textDark }]}>₹{formatCurrency(records.filter(r => r.farmer_payment_status === 'Pending').reduce((sum, r) => sum + (r.net_payable_to_farmer || 0), 0))}</Text>
+                        <Text style={[styles.totalValue, { color: colors.textDark }]}>Rs. {formatCurrency(records.filter(r => r.farmer_payment_status === 'Pending').reduce((sum, r) => sum + (r.net_payable_to_farmer || 0), 0))}</Text>
                     </View>
                     <View style={styles.totalBox}>
                         <Text style={styles.totalLabel}>Receivable from Traders</Text>
-                        <Text style={[styles.totalValue, { color: colors.textDark }]}>₹{formatCurrency(records.filter(r => r.trader_payment_status === 'Pending').reduce((sum, r) => sum + (r.net_receivable_from_trader || 0), 0))}</Text>
+                        <Text style={[styles.totalValue, { color: colors.textDark }]}>Rs. {formatCurrency(records.filter(r => r.trader_payment_status === 'Pending').reduce((sum, r) => sum + (r.net_receivable_from_trader || 0), 0))}</Text>
                     </View>
                 </View>
 

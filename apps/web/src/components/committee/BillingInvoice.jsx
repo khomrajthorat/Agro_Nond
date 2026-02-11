@@ -516,165 +516,168 @@ const BillingInvoice = ({ data, type = 'farmer' }) => {
         <Document>
             <Page size="A4" style={styles.page}>
 
-                {/* ─── Header ─── */}
-                <View style={styles.header}>
-                    <View style={styles.companyInfo}>
-                        <Text style={styles.companyName}>{committee.name}</Text>
-                        <Text style={styles.companyAddress}>{committee.address1}</Text>
-                        <Text style={styles.companyAddress}>{committee.address2}</Text>
-                        <Text style={styles.companyAddress}>{committee.address3}</Text>
-                        <Text style={styles.companyAddress}>Phone: {committee.phone}</Text>
-                        <Text style={styles.companyContact}>{committee.email}</Text>
-                        <Text style={styles.companyContact}>{committee.website}</Text>
+                {/* ─── Content Container ─── */}
+                <View style={{ flex: 1 }}>
+                    {/* ─── Header ─── */}
+                    <View style={styles.header}>
+                        <View style={styles.companyInfo}>
+                            <Text style={styles.companyName}>{committee.name}</Text>
+                            <Text style={styles.companyAddress}>{committee.address1}</Text>
+                            <Text style={styles.companyAddress}>{committee.address2}</Text>
+                            <Text style={styles.companyAddress}>{committee.address3}</Text>
+                            <Text style={styles.companyAddress}>Phone: {committee.phone}</Text>
+                            <Text style={styles.companyContact}>{committee.email}</Text>
+                            <Text style={styles.companyContact}>{committee.website}</Text>
+                        </View>
+                        <Text style={styles.invoiceTitle}>{title}</Text>
                     </View>
-                    <Text style={styles.invoiceTitle}>{title}</Text>
-                </View>
 
-                {/* ─── Invoice Details Grid ─── */}
-                <View style={styles.detailsGrid}>
-                    <View style={styles.detailsColumn}>
-                        <View style={styles.detailsRow}>
-                            <Text style={styles.detailsLabel}>#</Text>
-                            <Text style={styles.detailsValue}>QT-{invoiceNumber}</Text>
-                        </View>
-                        <View style={styles.detailsRow}>
-                            <Text style={styles.detailsLabel}>Invoice Date</Text>
-                            <Text style={styles.detailsValue}>{formatDate(data.date)}</Text>
-                        </View>
-                        {data.token && (
+                    {/* ─── Invoice Details Grid ─── */}
+                    <View style={styles.detailsGrid}>
+                        <View style={styles.detailsColumn}>
                             <View style={styles.detailsRow}>
-                                <Text style={styles.detailsLabel}>Token No</Text>
-                                <Text style={[styles.detailsValue, { color: colors.brand }]}>#{data.token}</Text>
+                                <Text style={styles.detailsLabel}>#</Text>
+                                <Text style={styles.detailsValue}>QT-{invoiceNumber}</Text>
+                            </View>
+                            <View style={styles.detailsRow}>
+                                <Text style={styles.detailsLabel}>Invoice Date</Text>
+                                <Text style={styles.detailsValue}>{formatDate(data.date)}</Text>
+                            </View>
+                            {data.token && (
+                                <View style={styles.detailsRow}>
+                                    <Text style={styles.detailsLabel}>Token No</Text>
+                                    <Text style={[styles.detailsValue, { color: colors.brand }]}>#{data.token}</Text>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+
+                    {/* ─── Bill To Section ─── */}
+                    <View style={styles.billToSection}>
+                        <Text style={styles.billToLabel}>{isFarmer ? 'Pay To' : 'Bill To'}</Text>
+                        <Text style={styles.billToName}>{data.name || 'Unknown'}</Text>
+                        {data.phone && (
+                            <Text style={styles.billToAddress}>Phone: {data.phone}</Text>
+                        )}
+                        {data.address && (
+                            <Text style={styles.billToAddress}>{data.address}</Text>
+                        )}
+                        {data.village && (
+                            <Text style={styles.billToAddress}>{data.village}, Maharashtra</Text>
+                        )}
+                        {!data.phone && !data.address && !data.village && (
+                            <Text style={styles.billToAddress}>Maharashtra, India</Text>
+                        )}
+                    </View>
+
+                    {/* ─── Items Table ─── */}
+                    <View style={styles.table}>
+                        {/* Table Header */}
+                        <View style={styles.tableHeader}>
+                            <Text style={[styles.th, styles.thSerial]}>#</Text>
+                            <Text style={[styles.th, styles.thDescription]}>Item & Description</Text>
+                            <Text style={[styles.th, styles.thQty]}>Qty</Text>
+                            <Text style={[styles.th, styles.thRate]}>Rate</Text>
+                            <Text style={[styles.th, styles.thAmount]}>Amount</Text>
+                        </View>
+
+                        {/* Table Rows */}
+                        {data.splits && data.splits.length > 1 ? (
+                            // Render individual rows for each split
+                            data.splits.map((split, index) => {
+                                const splitQty = split.qty || split.quantity || 0;
+                                const splitNag = split.nag || 0;
+                                const splitRate = split.rate || 0;
+                                const splitAmount = split.amount || (splitQty * splitRate);
+                                const splitUnit = splitQty > 0 ? 'kg' : 'Nag';
+                                const displaySplitQty = splitQty > 0 ? splitQty : splitNag;
+
+                                return (
+                                    <View style={styles.tableRow} key={index}>
+                                        <Text style={[styles.td, styles.tdSerial]}>{index + 1}</Text>
+                                        <View style={styles.tdDescription}>
+                                            <Text style={styles.tdDescriptionMain}>
+                                                {index === 0 ? (data.crop || 'Agricultural Produce') : ''}
+                                            </Text>
+                                            {index === 0 && (
+                                                <Text style={styles.tdDescriptionSub}>
+                                                    Sale transaction - Split {index + 1}
+                                                </Text>
+                                            )}
+                                        </View>
+                                        <Text style={[styles.td, styles.tdQty]}>
+                                            {displaySplitQty.toFixed(2)}
+                                        </Text>
+                                        <Text style={[styles.td, styles.tdRate]}>
+                                            {formatNumber(splitRate)}
+                                        </Text>
+                                        <Text style={[styles.td, styles.tdAmount]}>
+                                            {formatNumber(splitAmount)}
+                                        </Text>
+                                    </View>
+                                );
+                            })
+                        ) : (
+                            // Single row for non-split records
+                            <View style={styles.tableRow}>
+                                <Text style={[styles.td, styles.tdSerial]}></Text>
+                                <View style={styles.tdDescription}>
+                                    <Text style={styles.tdDescriptionMain}>
+                                        {data.crop || 'Agricultural Produce'}
+                                    </Text>
+                                    <Text style={styles.tdDescriptionSub}>
+                                        {isFarmer ? 'Farmer sale transaction' : 'Trader purchase transaction'}
+                                    </Text>
+                                </View>
+                                <Text style={[styles.td, styles.tdQty]}>
+                                    {getQuantityDisplay()}
+                                </Text>
+                                <Text style={[styles.td, styles.tdRate]}>
+                                    {formatNumber(rate)}
+                                </Text>
+                                <Text style={[styles.td, styles.tdAmount]}>
+                                    {formatNumber(baseAmount)}
+                                </Text>
                             </View>
                         )}
                     </View>
-                </View>
 
-                {/* ─── Bill To Section ─── */}
-                <View style={styles.billToSection}>
-                    <Text style={styles.billToLabel}>{isFarmer ? 'Pay To' : 'Bill To'}</Text>
-                    <Text style={styles.billToName}>{data.name || 'Unknown'}</Text>
-                    {data.phone && (
-                        <Text style={styles.billToAddress}>Phone: {data.phone}</Text>
-                    )}
-                    {data.address && (
-                        <Text style={styles.billToAddress}>{data.address}</Text>
-                    )}
-                    {data.village && (
-                        <Text style={styles.billToAddress}>{data.village}, Maharashtra</Text>
-                    )}
-                    {!data.phone && !data.address && !data.village && (
-                        <Text style={styles.billToAddress}>Maharashtra, India</Text>
-                    )}
-                </View>
-
-                {/* ─── Items Table ─── */}
-                <View style={styles.table}>
-                    {/* Table Header */}
-                    <View style={styles.tableHeader}>
-                        <Text style={[styles.th, styles.thSerial]}>#</Text>
-                        <Text style={[styles.th, styles.thDescription]}>Item & Description</Text>
-                        <Text style={[styles.th, styles.thQty]}>Qty</Text>
-                        <Text style={[styles.th, styles.thRate]}>Rate</Text>
-                        <Text style={[styles.th, styles.thAmount]}>Amount</Text>
-                    </View>
-
-                    {/* Table Rows */}
-                    {data.splits && data.splits.length > 1 ? (
-                        // Render individual rows for each split
-                        data.splits.map((split, index) => {
-                            const splitQty = split.qty || split.quantity || 0;
-                            const splitNag = split.nag || 0;
-                            const splitRate = split.rate || 0;
-                            const splitAmount = split.amount || (splitQty * splitRate);
-                            const splitUnit = splitQty > 0 ? 'kg' : 'Nag';
-                            const displaySplitQty = splitQty > 0 ? splitQty : splitNag;
-
-                            return (
-                                <View style={styles.tableRow} key={index}>
-                                    <Text style={[styles.td, styles.tdSerial]}>{index + 1}</Text>
-                                    <View style={styles.tdDescription}>
-                                        <Text style={styles.tdDescriptionMain}>
-                                            {index === 0 ? (data.crop || 'Agricultural Produce') : ''}
-                                        </Text>
-                                        {index === 0 && (
-                                            <Text style={styles.tdDescriptionSub}>
-                                                Sale transaction - Split {index + 1}
-                                            </Text>
-                                        )}
-                                    </View>
-                                    <Text style={[styles.td, styles.tdQty]}>
-                                        {displaySplitQty.toFixed(2)}
-                                    </Text>
-                                    <Text style={[styles.td, styles.tdRate]}>
-                                        {formatNumber(splitRate)}
-                                    </Text>
-                                    <Text style={[styles.td, styles.tdAmount]}>
-                                        {formatNumber(splitAmount)}
-                                    </Text>
-                                </View>
-                            );
-                        })
-                    ) : (
-                        // Single row for non-split records
-                        <View style={styles.tableRow}>
-                            <Text style={[styles.td, styles.tdSerial]}>1</Text>
-                            <View style={styles.tdDescription}>
-                                <Text style={styles.tdDescriptionMain}>
-                                    {data.crop || 'Agricultural Produce'}
+                    {/* ─── Totals Section ─── */}
+                    <View style={styles.totalsContainer}>
+                        <View style={styles.totalsSection}>
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>Sub Total</Text>
+                                <Text style={styles.totalValue}>{formatNumber(baseAmount)}</Text>
+                            </View>
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>
+                                    {isFarmer
+                                        ? `Commission (${commissionPercent}%)`
+                                        : `Market Fee (${commissionPercent}%)`}
                                 </Text>
-                                <Text style={styles.tdDescriptionSub}>
-                                    {isFarmer ? 'Farmer sale transaction' : 'Trader purchase transaction'}
+                                <Text style={styles.totalValue}>
+                                    {isFarmer ? '-' : '+'}{formatNumber(commission)}
                                 </Text>
                             </View>
-                            <Text style={[styles.td, styles.tdQty]}>
-                                {getQuantityDisplay()}
-                            </Text>
-                            <Text style={[styles.td, styles.tdRate]}>
-                                {formatNumber(rate)}
-                            </Text>
-                            <Text style={[styles.td, styles.tdAmount]}>
-                                {formatNumber(baseAmount)}
-                            </Text>
-                        </View>
-                    )}
-                </View>
+                            <View style={styles.grandTotalRow}>
+                                <Text style={styles.grandTotalLabel}>Total</Text>
+                                <Text style={styles.grandTotalValue}>
+                                    Rs. {formatNumber(finalAmount)}
+                                </Text>
+                            </View>
 
-                {/* ─── Totals Section ─── */}
-                <View style={styles.totalsContainer}>
-                    <View style={styles.totalsSection}>
-                        <View style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>Sub Total</Text>
-                            <Text style={styles.totalValue}>{formatNumber(baseAmount)}</Text>
-                        </View>
-                        <View style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>
-                                {isFarmer
-                                    ? `Commission (${commissionPercent}%)`
-                                    : `Market Fee (${commissionPercent}%)`}
-                            </Text>
-                            <Text style={styles.totalValue}>
-                                {isFarmer ? '-' : '+'}{formatNumber(commission)}
-                            </Text>
-                        </View>
-                        <View style={styles.grandTotalRow}>
-                            <Text style={styles.grandTotalLabel}>Total</Text>
-                            <Text style={styles.grandTotalValue}>
-                                ₹{formatNumber(finalAmount)}
-                            </Text>
-                        </View>
-
-                        {/* Payment Status Badge */}
-                        <View style={[
-                            styles.paymentStatusBadge,
-                            { backgroundColor: paymentStatus.bg }
-                        ]}>
-                            <Text style={[
-                                styles.paymentStatusText,
-                                { color: paymentStatus.text }
+                            {/* Payment Status Badge */}
+                            <View style={[
+                                styles.paymentStatusBadge,
+                                { backgroundColor: paymentStatus.bg }
                             ]}>
-                                {paymentStatus.label}
-                            </Text>
+                                <Text style={[
+                                    styles.paymentStatusText,
+                                    { color: paymentStatus.text }
+                                ]}>
+                                    {paymentStatus.label}
+                                </Text>
+                            </View>
                         </View>
                     </View>
                 </View>

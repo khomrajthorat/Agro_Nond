@@ -86,8 +86,8 @@ export default function Footer() {
                   <ul className="space-y-3">
                     <li><Link to="/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Farmer Dashboard</Link></li>
                     <li><Link to="/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Trader Portal</Link></li>
-                    <li><Link to="/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Market Committee</Link></li>
-                    <li><Link to="/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Admin Panel</Link></li>
+                    <li><Link to="/market/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Market Committee</Link></li>
+                    <li><Link to="/admin/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Admin Panel</Link></li>
                   </ul>
                 </div>
 
