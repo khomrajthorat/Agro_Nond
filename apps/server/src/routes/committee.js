@@ -226,7 +226,15 @@ router.get('/traders/:id/history', requireAuth, requireCommitteeAccess, async (r
             {
                 $group: {
                     _id: null,
-                    totalPurchaseValue: { $sum: '$sale_amount' },
+                    totalPurchaseValue: {
+                        $sum: {
+                            $cond: [
+                                { $gt: ['$net_receivable_from_trader', 0] },
+                                '$net_receivable_from_trader',
+                                { $add: ['$sale_amount', { $ifNull: ['$trader_commission', 0] }] }
+                            ]
+                        }
+                    },
                     totalQuantity: { $sum: '$official_qty' },
                     totalNag: { $sum: '$official_nag' },
                     count: { $sum: 1 }
