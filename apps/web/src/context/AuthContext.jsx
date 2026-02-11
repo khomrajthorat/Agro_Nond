@@ -16,46 +16,46 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false); // ✅ FIX 1: Make it a state variable
 
-  // Initialize auth state from local storage
+  // Initialize auth state from HttpOnly Cookie Session
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('auth_token');
+      // We don't check for token in LS anymore.
+      // We check if we have user_data to show UI immediately (optimistic),
+      // but real source of truth is the API call which sends the cookie.
+
       const storedUser = localStorage.getItem('user_data');
-
-      if (token && storedUser) {
-        // Optimistically set user
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-
-        // ✅ FIX 2: Set profileLoading to true while fetching
-        setProfileLoading(true);
-
-        // Validate token and refresh profile in background
-        try {
-          const profileData = await api.users.getProfile();
-
-          // ✅ FIX 3: Properly merge the profile data
-          const updatedUser = {
-            ...parsedUser,
-            ...profileData,
-            // Ensure role is present
-            role: profileData.role || parsedUser.role || 'farmer'
-          };
-
-          setUser(updatedUser);
-          localStorage.setItem('user_data', JSON.stringify(updatedUser));
-        } catch (error) {
-          console.error('Session validation failed:', error);
-          // If 401, clear session
-          if (error.message === 'Unauthorized' || error.message.includes('401')) {
-            logout();
-          }
-        } finally {
-          // ✅ FIX 4: Set profileLoading to false after fetch completes
-          setProfileLoading(false);
-        }
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        // If no user data, assume not logged in to avoid 401 error on fresh load
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      setProfileLoading(true);
+
+      try {
+        // This request will send the HttpOnly cookie. 
+        // If valid, we get 200 OK and user data.
+        const profileData = await api.users.getProfile();
+
+        const updatedUser = {
+          ...(storedUser ? JSON.parse(storedUser) : {}),
+          ...profileData,
+          role: profileData.role || 'farmer'
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem('user_data', JSON.stringify(updatedUser)); // Keep user data for basic UI
+      } catch (error) {
+        console.warn('Session check failed:', error);
+        // If 401/403, clear everything
+        localStorage.removeItem('user_data');
+        setUser(null);
+      } finally {
+        setProfileLoading(false);
+        setLoading(false);
+      }
     };
 
     initializeAuth();
@@ -87,8 +87,8 @@ export function AuthProvider({ children }) {
         role: data.user.role || 'farmer' // Default to farmer if no role
       };
 
-      // Store session
-      localStorage.setItem('auth_token', data.token);
+      // Store session (Only user data, token is HttpOnly cookie)
+      // localStorage.setItem('auth_token', data.token); // REMOVED
       localStorage.setItem('user_data', JSON.stringify(userWithRole));
 
       setUser(userWithRole);
@@ -102,6 +102,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const updateRole = useCallback(async (role) => {
+    // ... existing implementation ...
     if (!user) return { error: { message: 'No user logged in' } };
 
     try {
@@ -111,7 +112,7 @@ export function AuthProvider({ children }) {
       // Update local state
       const updatedUser = { ...user, role };
       setUser(updatedUser);
-      localStorage.setItem('user_data', JSON.stringify(updatedUser));
+      localStorage.setItem('user_data', JSON.stringify(updatedUser)); // Keep synced
 
       return { data: response, error: null };
     } catch (error) {
@@ -123,7 +124,7 @@ export function AuthProvider({ children }) {
   const signOut = useCallback(async () => {
     try {
       setLoading(true);
-      // Call backend logout (optional, but good practice)
+      // Call backend logout (Clear cookies)
       await api.auth.logout();
     } catch (error) {
       console.error('Sign out error:', error);
@@ -135,7 +136,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    // localStorage.removeItem('auth_token'); // REMOVED
     localStorage.removeItem('user_data');
     setUser(null);
   };
