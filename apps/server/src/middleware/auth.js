@@ -3,21 +3,23 @@ import User from '../models/User.js';
 
 /**
  * Authentication middleware
- * Verifies JWT token from Authorization header
+ * Verifies JWT token from HttpOnly Cookie or Authorization header
  */
 export async function requireAuth(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
+    let token;
 
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No authorization header' });
+    // 1. Check Cookie (Primary for Web)
+    if (req.cookies && req.cookies.accessToken) {
+      token = req.cookies.accessToken;
+    }
+    // 2. Check Header (Fallback for Mobile/API)
+    else if (req.headers.authorization) {
+      token = req.headers.authorization.replace('Bearer ', '');
     }
 
-    // Extract token from "Bearer <token>"
-    const token = authHeader.replace('Bearer ', '');
-
     if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+      return res.status(401).json({ error: 'Not authenticated' });
     }
 
     // Verify token
@@ -34,7 +36,7 @@ export async function requireAuth(req, res, next) {
     req.user = user;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error.message);
+    // console.error('Auth middleware error:', error.message);
     res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
@@ -45,10 +47,15 @@ export async function requireAuth(req, res, next) {
  */
 export async function optionalAuth(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
+    let token;
 
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
+    if (req.cookies && req.cookies.accessToken) {
+      token = req.cookies.accessToken;
+    } else if (req.headers.authorization) {
+      token = req.headers.authorization.replace('Bearer ', '');
+    }
+
+    if (token) {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
         const user = await User.findById(decoded.id);

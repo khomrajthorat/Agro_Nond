@@ -55,9 +55,14 @@ const corsOptions = {
   credentials: true,
 };
 
+import cookieParser from 'cookie-parser';
+
+// ... (other imports)
+
 app.use(helmet());
 app.use(compression());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(cookieParser()); // Use cookie-parser
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));

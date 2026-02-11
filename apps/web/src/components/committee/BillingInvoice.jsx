@@ -37,10 +37,12 @@ const colors = {
 const styles = StyleSheet.create({
     page: {
         padding: '12mm 15mm',
+        paddingBottom: 60,
         fontFamily: 'Helvetica',
         fontSize: 10,
         color: colors.textDark,
         backgroundColor: colors.white,
+        flexDirection: 'column',
     },
 
     // Payment Status Badge
@@ -147,6 +149,8 @@ const styles = StyleSheet.create({
     table: {
         width: '100%',
         marginBottom: 20,
+        marginTop: 10,
+        borderStyle: 'solid', // Ensure it takes space
     },
     tableHeader: {
         flexDirection: 'row',
@@ -203,6 +207,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'flex-end',
         marginBottom: 20,
+        marginTop: 20, // Add margin top to separate from table
     },
     totalsSection: {
         width: '45%',

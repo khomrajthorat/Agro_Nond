@@ -7,27 +7,52 @@ async function getAccessToken() {
 
 // Authenticated API request wrapper
 async function apiRequest(endpoint, options = {}) {
-  const token = await getAccessToken();
+  // const token = await getAccessToken(); // Removed: Cookies handled by browser
 
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  // if (token) {
+  //   headers['Authorization'] = `Bearer ${token}`;
+  // }
 
   const url = `${API_URL}${endpoint}`;
 
-  try {
-    const response = await fetch(url, { ...options, headers });
+  const fetchOptions = {
+    ...options,
+    headers,
+    credentials: 'include', //  Required for HttpOnly Cookies
+  };
 
-    if (response.status === 401) {
-      console.warn('Unauthorized - token may be expired');
-      // Optional: Redirect to login
-      // window.location.href = '/login';
-      throw new Error('Unauthorized');
+  try {
+    let response = await fetch(url, fetchOptions);
+
+    // 401 Interceptor: Try Refreshing Token
+    if (response.status === 401 && !options._retry) {
+      console.warn('Unauthorized - Attempting Token Refresh...');
+
+      try {
+        const refreshResponse = await fetch(`${API_URL}/api/auth/refresh-token`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        if (refreshResponse.ok) {
+          console.log('Token Refresh Successful. Retrying request...');
+          // Retry original request
+          response = await fetch(url, { ...fetchOptions, _retry: true });
+        } else {
+          console.error('Token Refresh Failed. Redirecting to login.');
+          // Optional: Trigger logout in context (via event or direct redirect)
+          // window.location.href = '/login'; 
+          throw new Error('Session expired. Please login again.');
+        }
+      } catch (refreshError) {
+        console.error('Error during token refresh:', refreshError);
+        throw new Error('Session expired');
+      }
     }
 
     if (!response.ok) {
