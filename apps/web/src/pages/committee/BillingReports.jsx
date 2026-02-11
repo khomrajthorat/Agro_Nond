@@ -228,13 +228,13 @@ export default function BillingReports() {
     } else {
       traderComm = Math.round(baseAmount * traderRate);
     }
-// Net amounts
-netFarmer = record.net_payable_to_farmer || (baseAmount - farmerComm);
-netTrader = record.net_receivable_from_trader || (baseAmount + traderComm);
+    // Net amounts
+    netFarmer = record.net_payable_to_farmer || (baseAmount - farmerComm);
+    netTrader = record.net_receivable_from_trader || (baseAmount + traderComm);
 
-const nagValue = (record.official_nag && record.official_nag > 0)
-  ? record.official_nag
-  : (record.nag || 0);
+    const nagValue = (record.official_nag && record.official_nag > 0)
+      ? record.official_nag
+      : (record.nag || 0);
     const qtyValue = record.qtySold || record.official_qty || record.quantity || 0;
 
     if (activeTab === 'farmers') {
@@ -242,8 +242,7 @@ const nagValue = (record.official_nag && record.official_nag > 0)
         id: record._id,
         date: record.sold_at || record.createdAt,
         name: record.farmer_id?.full_name || 'Unknown Farmer',
-        address: record.farmer_id?.address,
-        village: record.farmer_id?.village,
+        address: record.farmer_id?.location || record.farmer_id?.address,
         phone: record.farmer_id?.phone,
         crop: record.vegetable,
         qty: qtyValue,
@@ -253,7 +252,8 @@ const nagValue = (record.official_nag && record.official_nag > 0)
         commissionRate: farmerRate, // Pass explicit rate
         finalAmount: netFarmer,
         status: record.farmer_payment_status || (record.payment_status === 'paid' ? 'Paid' : 'Pending'),
-        type: 'pay'
+        type: 'pay',
+        token: record.token || null
       };
     } else {
       return {
@@ -261,7 +261,7 @@ const nagValue = (record.official_nag && record.official_nag > 0)
         date: record.sold_at || record.createdAt,
         name: record.trader_id?.business_name || record.trader_id?.full_name || 'Unknown Trader',
         phone: record.trader_id?.phone,
-        address: record.trader_id?.address,
+        address: record.trader_id?.business_address || record.trader_id?.address,
         crop: record.vegetable,
         qty: qtyValue,
         nag: nagValue,
@@ -270,7 +270,8 @@ const nagValue = (record.official_nag && record.official_nag > 0)
         commissionRate: traderRate, // Pass explicit rate
         finalAmount: netTrader,
         status: record.trader_payment_status || (record.payment_status === 'paid' ? 'Paid' : 'Pending'),
-        type: 'receive'
+        type: 'receive',
+        token: record.token || null
       };
     }
   }, [activeTab, commissionRates]);

@@ -39,6 +39,21 @@ router.get('/stats', requireAuth, requireTrader, async (req, res) => {
                     // Better approach: sum(sale_amount) + sum(commission) is generally safer if net_receivable isn't populated on old records
                     totalBaseSpend: { $sum: '$sale_amount' },
                     totalCommission: { $sum: '$commission' },
+                    totalPaid: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$trader_payment_status', ['Paid', 'paid']] },
+                                {
+                                    $cond: {
+                                        if: { $gt: ['$net_receivable_from_trader', 0] },
+                                        then: '$net_receivable_from_trader',
+                                        else: { $add: ['$sale_amount', '$commission'] }
+                                    }
+                                },
+                                0
+                            ]
+                        }
+                    }
                 }
             }
         ]);
@@ -84,6 +99,7 @@ router.get('/stats', requireAuth, requireTrader, async (req, res) => {
             totalBaseSpend: totalBase,
             totalCommission: totalComm,
             totalSpend: totalBase + totalComm,
+            totalPaid: stats[0]?.totalPaid || 0,
             pendingPayments: pendingStats[0]?.totalPending || 0
         };
 

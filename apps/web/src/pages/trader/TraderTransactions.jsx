@@ -214,6 +214,7 @@ export default function TraderTransactions() {
   const totals = useMemo(() => ({
     count: totalCount,
     quantity: filteredTransactions.reduce((sum, t) => sum + (t.quantity || 0), 0),
+    nag: filteredTransactions.reduce((sum, t) => sum + (t.nag || 0), 0),
     grossAmount: filteredTransactions.reduce((sum, t) => sum + (t.grossAmount || 0), 0),
     commission: filteredTransactions.reduce((sum, t) => sum + (t.commission || 0), 0),
     totalCost: filteredTransactions.reduce((sum, t) => sum + (t.totalCost || 0), 0)
@@ -275,21 +276,33 @@ export default function TraderTransactions() {
           <div className="absolute right-2 top-2 p-2 bg-slate-50 rounded-lg group-hover:bg-emerald-50 transition-colors">
             <ShoppingBasket className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
           </div>
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Page Quantity</p>
-          <p className="text-2xl font-bold text-slate-800">{totals.quantity.toLocaleString('en-IN')} <span className="text-sm font-normal text-slate-400">kg</span></p>
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Quantity</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-slate-800">
+              {totals.quantity.toLocaleString('en-IN')} <span className="text-sm font-normal text-slate-400">kg</span>
+            </p>
+            {totals.nag > 0 && (
+              <>
+                <span className="text-slate-300 text-lg font-light">|</span>
+                <p className="text-2xl font-bold text-slate-800">
+                  {totals.nag.toLocaleString('en-IN')} <span className="text-sm font-normal text-slate-400">Nag</span>
+                </p>
+              </>
+            )}
+          </div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-emerald-500 transition-all">
           <div className="absolute right-2 top-2 p-2 bg-slate-50 rounded-lg group-hover:bg-emerald-50 transition-colors">
             <Wallet className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
           </div>
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Page Gross Amount</p>
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Gross Amount</p>
           <p className="text-2xl font-bold text-slate-800">₹{totals.grossAmount.toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-emerald-500 transition-all">
           <div className="absolute right-2 top-2 p-2 bg-slate-50 rounded-lg group-hover:bg-emerald-50 transition-colors">
             <Wallet className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
           </div>
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Page Total Cost</p>
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Cost</p>
           <p className="text-2xl font-bold text-emerald-600">₹{totals.totalCost.toLocaleString('en-IN')}</p>
         </div>
       </motion.div>

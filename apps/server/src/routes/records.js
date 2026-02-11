@@ -53,7 +53,9 @@ router.get('/my-records', requireAuth, async (req, res) => {
                     const pId = child.parent_record_id.toString();
                     if (!parentMap[pId]) {
                         parentMap[pId] = {
-                            splits: [], soldQty: 0, soldNag: 0, totalSaleAmount: 0,
+                            splits: [], soldQty: 0, soldNag: 0,
+                            allocatedQty: 0, allocatedNag: 0, // Track allocated vs sold separately
+                            totalSaleAmount: 0,
                             childCount: 0, soldCount: 0, weightPendingQty: 0, weightPendingNag: 0, weightPendingCount: 0,
                             totalFarmerCommission: 0, totalTraderCommission: 0
                         };
@@ -84,6 +86,19 @@ router.get('/my-records', requireAuth, async (req, res) => {
                             parentMap[pId].totalTraderCommission += tComm;
                         }
                     }
+
+                    // Live Update Logic:
+                    // Inventory used is max(allocated, weighed).
+                    // If allocated 5kg, weighed 6kg -> Used 6kg.
+                    // If allocated 5kg, weighed 4kg -> Used 5kg (Phantom stock prevention).
+                    const allocQty = child.allocated_qty || child.quantity || 0;
+                    const officialQty = child.official_qty || 0;
+                    parentMap[pId].allocatedQty += Math.max(allocQty, officialQty);
+
+                    const allocNag = child.allocated_nag || child.nag || 0;
+                    const officialNag = child.official_nag || 0;
+                    parentMap[pId].allocatedNag += Math.max(allocNag, officialNag);
+
                     parentMap[pId].childCount += 1;
                     if (['Sold', 'Completed'].includes(child.status)) parentMap[pId].soldCount += 1;
 
@@ -131,8 +146,9 @@ router.get('/my-records', requireAuth, async (req, res) => {
                     const totalNag = record.nag || 0;
                     const hasWeightPending = data.weightPendingQty > 0.01 || data.weightPendingNag > 0.01;
                     const hasSoldSomething = data.soldQty > 0.01 || data.soldNag > 0.01;
-                    const hasRemaining = (totalQty > 0 && (data.soldQty + data.weightPendingQty) < totalQty - 0.01) ||
-                        (totalNag > 0 && (data.soldNag + data.weightPendingNag) < totalNag - 0.01);
+                    // Fix: Use allocatedQty for remaining check to avoid phantom stock if weight < allocation
+                    const hasRemaining = (totalQty > 0 && data.allocatedQty < totalQty - 0.01) ||
+                        (totalNag > 0 && data.allocatedNag < totalNag - 0.01);
 
                     if (hasWeightPending && !hasSoldSomething) record.display_status = 'WeightPending';
                     else if (hasWeightPending && hasSoldSomething) record.display_status = 'WeightPending';
@@ -155,7 +171,7 @@ router.get('/my-records', requireAuth, async (req, res) => {
         if (!status || status === 'All') {
             const totalRecords = await Record.countDocuments(baseQuery);
             const rawRecords = await Record.find(baseQuery)
-                .populate('farmer_id', 'full_name phone farmerId')
+                .populate('farmer_id', 'full_name phone farmerId location')
                 .select('-trader_id -trader_payment_ref -trader_payment_mode -trader_payment_status -net_receivable_from_trader -trader_commission')
                 .sort({ createdAt: -1 })
                 .skip(skip)
@@ -188,7 +204,7 @@ router.get('/my-records', requireAuth, async (req, res) => {
 
         // We fetch ALL matching candidates (without pagination limit) to filter correctly in memory
         const candidateRecords = await Record.find({ ...baseQuery, ...dbStatusQuery })
-            .populate('farmer_id', 'full_name phone farmerId')
+            .populate('farmer_id', 'full_name phone farmerId location')
             .select('-trader_id -trader_payment_ref -trader_payment_mode -trader_payment_status -net_receivable_from_trader -trader_commission')
             .sort({ createdAt: -1 })
             .lean();
@@ -253,11 +269,35 @@ router.get('/my-stats', requireAuth, async (req, res) => {
                             ]
                         }
                     },
-                    totalVolume: { $sum: '$quantity' },
+                    // Sum volume from top-level records only to avoid double-counting split lots
+                    totalVolumeKg: {
+                        $sum: {
+                            $cond: [
+                                { $eq: [{ $ifNull: ['$parent_record_id', null] }, null] },
+                                '$quantity',
+                                0
+                            ]
+                        }
+                    },
+                    totalVolumeNag: {
+                        $sum: {
+                            $cond: [
+                                { $eq: [{ $ifNull: ['$parent_record_id', null] }, null] },
+                                '$nag',
+                                0
+                            ]
+                        }
+                    },
+                    // Count actual sales (excluding parent lot records)
                     totalSalesCount: {
                         $sum: {
                             $cond: [
-                                { $in: ['$status', ['Sold', 'Completed']] },
+                                {
+                                    $and: [
+                                        { $in: ['$status', ['Sold', 'Completed']] },
+                                        { $ne: ['$is_parent', true] }
+                                    ]
+                                },
                                 1,
                                 0
                             ]
@@ -279,7 +319,7 @@ router.get('/my-stats', requireAuth, async (req, res) => {
             }
         ]);
 
-        const result = stats.length > 0 ? stats[0] : { totalEarnings: 0, totalVolume: 0, totalSalesCount: 0, pendingLotsCount: 0 };
+        const result = stats.length > 0 ? stats[0] : { totalEarnings: 0, totalVolumeKg: 0, totalVolumeNag: 0, totalSalesCount: 0, pendingLotsCount: 0 };
 
         res.json(result);
     } catch (error) {
@@ -604,8 +644,23 @@ router.get('/pending/:farmerId', requireAuth, async (req, res) => {
                     const childQty = child.official_qty || child.quantity || 0;
                     const childNag = child.official_nag || child.nag || 0;
 
+
                     soldQty += childQty;
                     soldNag += childNag;
+
+                    // New: Calculate allocated qty for remaining check
+                    // child.quantity IS the allocated/estimated quantity
+                    const allocQty = child.allocated_qty || child.quantity || 0;
+                    const allocNag = child.allocated_nag || child.nag || 0;
+
+                    // We reuse the variables above but need separate tracking for pending logic?
+                    // The pending logic uses soldQty to calculate remaining.
+                    // Let's Override soldQty logic for the remaining calculation purpose within this loop?
+                    // No, soldQty is sent to frontend as 'sold_qty'. We should keep that accurate (official).
+                    // But we should use allocated for 'remaining_qty' calc.
+
+                    child.allocated_qty_temp = allocQty; // Store temp for reduction
+                    child.allocated_nag_temp = allocNag;
 
                     // Capture rate from first sold child to lock it for subsequent splits (legacy behavior, kept for reference)
                     if (!prevRate && child.sale_rate) {
@@ -628,9 +683,24 @@ router.get('/pending/:farmerId', requireAuth, async (req, res) => {
                 }
             }
 
-            // Calculate remaining
-            const remainingQty = (parent.quantity || 0) - soldQty;
-            const remainingNag = (parent.nag || 0) - soldNag;
+
+            // Calculate remaining using MAX(allocated, official) quantity
+            // This ensures live updates (if 6kg weighed vs 5kg allocated -> deduct 6kg)
+            // And prevents phantom stock (if 4kg weighed vs 5kg allocated -> deduct 5kg)
+            const totalUsedQty = children.reduce((sum, c) => {
+                const alloc = c.allocated_qty || c.quantity || 0;
+                const official = c.official_qty || 0;
+                return sum + Math.max(alloc, official);
+            }, 0);
+
+            const totalUsedNag = children.reduce((sum, c) => {
+                const alloc = c.allocated_nag || c.nag || 0;
+                const official = c.official_nag || 0;
+                return sum + Math.max(alloc, official);
+            }, 0);
+
+            const remainingQty = (parent.quantity || 0) - totalUsedQty;
+            const remainingNag = (parent.nag || 0) - totalUsedNag;
 
             // Only include if there's remaining quantity to sell
             if (remainingQty > 0.01 || remainingNag > 0.01) {
@@ -1073,7 +1143,8 @@ router.patch('/:id/sell', requireAuth, async (req, res) => {
                     status: 'RateAssigned',
                     parent_record_id: record._id,
                     is_parent: false,
-                    lot_id: childLotId // Set lot_id here so pre-save hook skips
+                    lot_id: childLotId, // Set lot_id here so pre-save hook skips
+                    token: record.token // Propagate daily token to child record
                 });
 
                 try {
