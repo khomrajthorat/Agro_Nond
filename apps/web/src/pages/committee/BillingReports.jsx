@@ -610,7 +610,8 @@ export default function BillingReports() {
                       <div className="font-semibold text-slate-900">
                         {new Date(item.date).toLocaleDateString('en-IN', {
                           day: 'numeric',
-                          month: 'short'
+                          month: 'short',
+                          year: 'numeric'
                         })}
                       </div>
                       <div className="text-xs text-slate-400 mt-0.5">

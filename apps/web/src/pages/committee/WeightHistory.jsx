@@ -227,12 +227,18 @@ export default function WeightHistory() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
                     <p className="text-xs text-emerald-600 font-medium uppercase">Total Records</p>
-                    <p className="text-2xl font-bold text-emerald-700">{filteredRecords.length}</p>
+                    <p className="text-2xl font-bold text-emerald-700">{records.length}</p>
                 </div>
                 <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                     <p className="text-xs text-blue-600 font-medium uppercase">Today's Records</p>
                     <p className="text-2xl font-bold text-blue-700">
-                        {filteredRecords.filter(r => new Date(r.date).toDateString() === new Date().toDateString()).length}
+                        {records.filter(r => new Date(r.date).toDateString() === new Date().toDateString()).length}
+                    </p>
+                </div>
+                <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                    <p className="text-xs text-purple-600 font-medium uppercase">Total Farmers</p>
+                    <p className="text-2xl font-bold text-purple-700">
+                        {new Set(records.map(r => r.farmer_id)).size}
                     </p>
                 </div>
             </div>
@@ -259,7 +265,7 @@ export default function WeightHistory() {
                                 <th className="text-left text-xs font-semibold text-slate-500 uppercase px-6 py-4">Item</th>
                                 <th className="text-left text-xs font-semibold text-slate-500 uppercase px-6 py-4">Est. Weight</th>
                                 <th className="text-left text-xs font-semibold text-slate-500 uppercase px-6 py-4">Official Weight</th>
-                                <th className="text-right text-xs font-semibold text-slate-500 uppercase px-6 py-4">Status</th>
+                                <th className="text-left text-xs font-semibold text-slate-500 uppercase px-6 py-4">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -284,7 +290,7 @@ export default function WeightHistory() {
                                     <td className="px-6 py-4">
                                         <InlineWeightEdit record={record} onSave={handleWeightUpdate} />
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-left">
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1
                                     ${['Done', 'Sold'].includes(record.status) ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}
                                 `}>
