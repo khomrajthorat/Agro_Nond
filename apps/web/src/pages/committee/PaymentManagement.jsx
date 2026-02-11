@@ -255,8 +255,8 @@ const PaymentManagement = () => {
     });
 
     const stats = {
-        receivables: records.filter(r => r.trader_payment_status === 'Pending').reduce((acc, r) => acc + (r.net_receivable_from_trader || 0), 0),
-        payables: records.filter(r => r.farmer_payment_status === 'Pending').reduce((acc, r) => acc + (r.net_payable_to_farmer || 0), 0)
+        receivables: records.filter(r => r.trader_payment_status === 'Pending').reduce((acc, r) => acc + (r.net_payable_to_farmer || 0), 0),
+        payables: records.filter(r => r.farmer_payment_status === 'Pending').reduce((acc, r) => acc + (r.net_receivable_from_trader || 0), 0)
     };
 
     // Status Badge Component
@@ -494,7 +494,7 @@ const PaymentManagement = () => {
                             <tr className="bg-slate-50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Parties</th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amounts</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amounts</th>
                                 <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Farmer Status</th>
                                 <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Trader Status</th>
                                 <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
@@ -548,15 +548,15 @@ const PaymentManagement = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-5 text-right">
+                                        <td className="px-6 py-5 text-left">
                                             <div className="space-y-1">
                                                 <div className="font-bold text-slate-900">
                                                     ₹{record.net_receivable_from_trader?.toLocaleString('en-IN')}
-                                                    <span className="text-xs text-slate-400 font-normal ml-1">In</span>
+                                                    <span className="text-xs text-rose-600 font-bold ml-1">Out</span>
                                                 </div>
                                                 <div className="font-medium text-slate-500">
                                                     ₹{record.net_payable_to_farmer?.toLocaleString('en-IN')}
-                                                    <span className="text-xs text-slate-400 font-normal ml-1">Out</span>
+                                                    <span className="text-xs text-emerald-600 font-bold ml-1">In</span>
                                                 </div>
                                             </div>
                                         </td>

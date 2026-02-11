@@ -170,8 +170,8 @@ export default function TraderDashboard() {
                 <th className="px-5 py-3 text-left font-semibold text-slate-600">Date & Time</th>
 
                 <th className="px-5 py-3 text-left font-semibold text-slate-600">Crop</th>
-                <th className="px-5 py-3 text-right font-semibold text-slate-600">Qty / Nag</th>
-                <th className="px-5 py-3 text-right font-semibold text-slate-600">Rate/kg</th>
+                <th className="px-5 py-3 text-right font-semibold text-slate-600">Quantity</th>
+                <th className="px-5 py-3 text-right font-semibold text-slate-600">Rate</th>
                 <th className="px-5 py-3 text-right font-semibold text-slate-600">Total Amount</th>
                 <th className="px-5 py-3 text-center font-semibold text-slate-600">Status</th>
                 <th className="px-5 py-3 text-center font-semibold text-slate-600">Action</th>
