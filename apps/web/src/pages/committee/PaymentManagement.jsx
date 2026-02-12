@@ -495,11 +495,17 @@ const PaymentManagement = () => {
                                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Farmer</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Trader</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">In (Receivable)</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Out (Payable)</th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    In (Receivable)
+                                    <span className="block text-[10px] font-normal leading-tight text-slate-400 normal-case mt-0.5">from trader</span>
+                                </th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Out (Payable)
+                                    <span className="block text-[10px] font-normal leading-tight text-slate-400 normal-case mt-0.5">to farmer</span>
+                                </th>
                                 <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Farmer Status</th>
                                 <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Trader Status</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -550,10 +556,10 @@ const PaymentManagement = () => {
                                                 <span className="text-sm font-medium text-slate-700">{record.trader_id?.business_name || 'Unknown'}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-5 text-right font-medium text-emerald-600">
+                                        <td className="px-6 py-5 text-center font-medium text-emerald-600">
                                             ₹{record.net_receivable_from_trader?.toLocaleString('en-IN')}
                                         </td>
-                                        <td className="px-6 py-5 text-right font-medium text-rose-600">
+                                        <td className="px-6 py-5 text-center font-medium text-rose-600">
                                             ₹{record.net_payable_to_farmer?.toLocaleString('en-IN')}
                                         </td>
                                         <td className="px-6 py-5 text-center">
