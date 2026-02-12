@@ -228,12 +228,12 @@ router.post('/record', requireAuth, async (req, res) => {
 // PUT /api/weight/record/:id (Update existing weight record)
 router.put('/record/:id', requireAuth, async (req, res) => {
     try {
-        const { updatedWeight, official_nag } = req.body;
+        const { updatedWeight, official_qty: reqQty, official_nag } = req.body;
 
         const record = await Record.findById(req.params.id);
         if (!record) return res.status(404).json({ error: 'Record not found' });
 
-        const official_qty = updatedWeight ? parseFloat(updatedWeight) : 0;
+        const official_qty = updatedWeight ? parseFloat(updatedWeight) : (reqQty ? parseFloat(reqQty) : 0);
         const o_nag = official_nag ? parseFloat(official_nag) : 0;
 
         record.official_qty = official_qty;
