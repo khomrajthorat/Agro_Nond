@@ -439,9 +439,33 @@ const WeightDashboard = () => {
 
         {/* SECTION 1: Ready to Weigh (Pending Records with Inline Input) */}
         {(() => {
-          const displayPending = tokenFilterFarmerId
-            ? pendingRecords.filter(r => String(r.farmer_ref_id) === String(tokenFilterFarmerId))
-            : pendingRecords;
+          let displayPending = [];
+
+          if (tokenSearchResult && tokenSearchResult.records && tokenSearchResult.records.length > 0) {
+            // ✅ STRICT: Show ONLY searched records
+            displayPending = tokenSearchResult.records
+              .filter(r => ['Pending', 'RateAssigned'].includes(r.status))
+              .map(r => ({
+                id: r._id,
+                date: r.createdAt,
+                farmer_id: tokenSearchResult.farmer.farmerId,
+                farmer_ref_id: tokenSearchResult.farmer._id,
+                item: r.vegetable,
+                est_weight: r.quantity,
+                est_nag: r.nag,
+                updated_weight: r.official_qty,
+                updated_nag: r.official_nag,
+                status: r.status,
+                record_ref_id: r._id
+              }));
+          } else if (tokenFilterFarmerId) {
+            // Logic when filter is active but maybe search result state is lost/different?
+            // Stick to the filter ID
+            displayPending = pendingRecords.filter(r => String(r.farmer_ref_id) === String(tokenFilterFarmerId));
+          } else {
+            // Default: Show all pending (rate assigned) records
+            displayPending = pendingRecords;
+          }
           return displayPending.length > 0 && (
             <div className="bg-white border border-green-100 rounded-xl mb-6 overflow-hidden">
               <div className="px-4 py-3 bg-green-50 border-b border-green-100">
