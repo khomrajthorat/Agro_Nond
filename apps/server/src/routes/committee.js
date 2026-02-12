@@ -45,7 +45,14 @@ router.get('/stats', requireAuth, requireCommitteeAccess, async (req, res) => {
             ]),
             Record.aggregate([
                 { $match: { status: { $in: ['Sold', 'Completed'] } } },
-                { $group: { _id: null, totalCommission: { $sum: '$commission' } } }
+                {
+                    $group: {
+                        _id: null,
+                        totalCommission: { $sum: '$commission' },
+                        totalFarmerCommission: { $sum: '$farmer_commission' },
+                        totalTraderCommission: { $sum: '$trader_commission' }
+                    }
+                }
             ])
         ]);
 
@@ -63,8 +70,8 @@ router.get('/stats', requireAuth, requireCommitteeAccess, async (req, res) => {
             }
         });
 
-        const farmerCommission = Math.round(totalCommission * (4 / 13));
-        const traderCommission = Math.round(totalCommission * (9 / 13));
+        const farmerCommission = commissionStats[0]?.totalFarmerCommission || 0;
+        const traderCommission = commissionStats[0]?.totalTraderCommission || 0;
 
         res.json({
             totalFarmers,
@@ -219,7 +226,15 @@ router.get('/traders/:id/history', requireAuth, requireCommitteeAccess, async (r
             {
                 $group: {
                     _id: null,
-                    totalPurchaseValue: { $sum: '$sale_amount' },
+                    totalPurchaseValue: {
+                        $sum: {
+                            $cond: [
+                                { $gt: ['$net_receivable_from_trader', 0] },
+                                '$net_receivable_from_trader',
+                                { $add: ['$sale_amount', { $ifNull: ['$trader_commission', 0] }] }
+                            ]
+                        }
+                    },
                     totalQuantity: { $sum: '$official_qty' },
                     totalNag: { $sum: '$official_nag' },
                     count: { $sum: 1 }

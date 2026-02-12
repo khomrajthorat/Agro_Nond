@@ -49,7 +49,7 @@ export default function WeightManagement() {
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider">Date & Time</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider">Farmer</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider">Commodity</th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-emerald-800 uppercase tracking-wider">Weight / Qty</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider">Weight / Qty</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider pl-8">Status</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider">Weighed By</th>
                             </tr>
@@ -79,7 +79,7 @@ export default function WeightManagement() {
                                                 {record.vegetable}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-left">
                                             <span className="font-mono font-bold text-slate-800 text-lg">
                                                 {record.quantity > 0
                                                     ? `${record.quantity} kg`

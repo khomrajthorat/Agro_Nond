@@ -255,8 +255,8 @@ const PaymentManagement = () => {
     });
 
     const stats = {
-        receivables: records.filter(r => r.trader_payment_status === 'Pending').reduce((acc, r) => acc + (r.net_payable_to_farmer || 0), 0),
-        payables: records.filter(r => r.farmer_payment_status === 'Pending').reduce((acc, r) => acc + (r.net_receivable_from_trader || 0), 0)
+        receivables: records.filter(r => r.trader_payment_status === 'Pending').reduce((acc, r) => acc + (r.net_receivable_from_trader || 0), 0),
+        payables: records.filter(r => r.farmer_payment_status === 'Pending').reduce((acc, r) => acc + (r.net_payable_to_farmer || 0), 0)
     };
 
     // Status Badge Component
@@ -492,25 +492,33 @@ const PaymentManagement = () => {
                     <table className="w-full">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-100">
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Parties</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amounts</th>
-                                <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Farmer Status</th>
-                                <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Trader Status</th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Farmer</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Trader</th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    In (Receivable)
+                                    <span className="block text-[10px] font-normal leading-tight text-slate-400 normal-case mt-0.5">from trader</span>
+                                </th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Out (Payable)
+                                    <span className="block text-[10px] font-normal leading-tight text-slate-400 normal-case mt-0.5">to farmer</span>
+                                </th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Farmer Status</th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Trader Status</th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-16 text-center">
+                                    <td colSpan="8" className="px-6 py-16 text-center">
                                         <RefreshCw className="animate-spin mx-auto text-emerald-600 mb-3" size={32} />
                                         <p className="text-slate-500 font-medium">Loading records...</p>
                                     </td>
                                 </tr>
                             ) : filteredRecords.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-16 text-center">
+                                    <td colSpan="8" className="px-6 py-16 text-center">
                                         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                             <Search size={28} className="text-slate-400" />
                                         </div>
@@ -521,7 +529,7 @@ const PaymentManagement = () => {
                             ) : (
                                 filteredRecords.map(record => (
                                     <tr key={record._id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-5">
+                                        <td className="px-6 py-5 whitespace-nowrap">
                                             <div className="font-semibold text-slate-900">
                                                 {new Date(record.createdAt).toLocaleDateString('en-IN', {
                                                     day: 'numeric',
@@ -537,28 +545,22 @@ const PaymentManagement = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">F</span>
-                                                    <span className="text-sm font-medium text-slate-900">{record.farmer_id?.full_name || 'Unknown'}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">T</span>
-                                                    <span className="text-sm font-medium text-slate-700">{record.trader_id?.business_name || 'Unknown'}</span>
-                                                </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center flex-shrink-0">F</span>
+                                                <span className="text-sm font-medium text-slate-900">{record.farmer_id?.full_name || 'Unknown'}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-5 text-left">
-                                            <div className="space-y-1">
-                                                <div className="font-bold text-slate-900">
-                                                    ₹{record.net_receivable_from_trader?.toLocaleString('en-IN')}
-                                                    <span className="text-xs text-rose-600 font-bold ml-1">Out</span>
-                                                </div>
-                                                <div className="font-medium text-slate-500">
-                                                    ₹{record.net_payable_to_farmer?.toLocaleString('en-IN')}
-                                                    <span className="text-xs text-emerald-600 font-bold ml-1">In</span>
-                                                </div>
+                                        <td className="px-6 py-5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center flex-shrink-0">T</span>
+                                                <span className="text-sm font-medium text-slate-700">{record.trader_id?.business_name || 'Unknown'}</span>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-5 text-center font-medium text-emerald-600">
+                                            ₹{record.net_receivable_from_trader?.toLocaleString('en-IN')}
+                                        </td>
+                                        <td className="px-6 py-5 text-center font-medium text-rose-600">
+                                            ₹{record.net_payable_to_farmer?.toLocaleString('en-IN')}
                                         </td>
                                         <td className="px-6 py-5 text-center">
                                             <StatusBadge status={record.farmer_payment_status} type="farmer" />
@@ -571,7 +573,7 @@ const PaymentManagement = () => {
                                                 {record.trader_payment_status !== 'Paid' && (
                                                     <button
                                                         onClick={() => handleOpenPaymentModal(record, 'receive-trader')}
-                                                        className="px-3.5 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors"
+                                                        className="px-3.5 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors whitespace-nowrap"
                                                     >
                                                         Receive
                                                     </button>
@@ -579,7 +581,7 @@ const PaymentManagement = () => {
                                                 {record.farmer_payment_status !== 'Paid' && (
                                                     <button
                                                         onClick={() => handleOpenPaymentModal(record, 'pay-farmer')}
-                                                        className="px-3.5 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors"
+                                                        className="px-3.5 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors whitespace-nowrap"
                                                     >
                                                         Pay Farmer
                                                     </button>
