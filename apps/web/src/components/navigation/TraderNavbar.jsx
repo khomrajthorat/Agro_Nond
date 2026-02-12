@@ -98,6 +98,7 @@ export default function TraderNavbar({ onMenuClick }) {
         body: JSON.stringify({
           full_name: editForm.name,
           email: editForm.email,
+          phone: editForm.phone,
           location: editForm.location,
           profile_picture: editForm.photo,
           business_name: editForm.business_name,

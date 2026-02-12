@@ -18,6 +18,7 @@ import {
 import { toast } from 'react-hot-toast';
 import api from '../../lib/api';
 import { api as apiNamed } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 
 export default function LilavEntry() {
     // --- Data (Pre-loaded) ---
@@ -60,6 +61,10 @@ export default function LilavEntry() {
     // --- Token Search ---
     const [tokenSearch, setTokenSearch] = useState('');
     const [isSearchingToken, setIsSearchingToken] = useState(false);
+
+    // --- Auth ---
+    const { user } = useAuth();
+    const canAddUsers = ['admin', 'committee', 'lilav'].includes(user?.role);
 
     // --- Refs for click-outside ---
     const farmerDropdownRef = useRef(null);
@@ -109,7 +114,7 @@ export default function LilavEntry() {
             setTraders(tradersRes?.data || tradersRes || []);
             setDailyRates(ratesRes || []);
         } catch (error) {
-            if (!silent) toast.error('Failed to load data');
+            if (!silent) console.error('Failed to load data', error);
         } finally {
             if (!silent) setInitialLoading(false);
         }
@@ -316,12 +321,24 @@ export default function LilavEntry() {
 
     // --- Add Farmer ---
     const handleAddFarmer = async () => {
-        if (!newFarmer.full_name.trim()) return toast.error('Enter farmer name');
-        if (!newFarmer.phone.trim() || newFarmer.phone.length < 10) return toast.error('Enter valid phone number');
+        if (!newFarmer.full_name.trim() || newFarmer.full_name.length < 3) {
+            return toast.error('Name must be at least 3 characters');
+        }
+
+        const phoneRegex = /^\d{10}$/;
+        if (!newFarmer.phone.trim() || !phoneRegex.test(newFarmer.phone)) {
+            return toast.error('Enter valid 10-digit phone number');
+        }
+
+        // Duplicate Check
+        const existingFarmer = farmers.find(f => f.phone === newFarmer.phone);
+        if (existingFarmer) {
+            return toast.error(`Farmer already exists: ${existingFarmer.full_name}`);
+        }
 
         try {
             setAddingUser(true);
-            const result = await api.admin.users.create({
+            const result = await api.users.create({
                 full_name: newFarmer.full_name.trim(),
                 phone: newFarmer.phone.trim(),
                 role: 'farmer'
@@ -342,12 +359,24 @@ export default function LilavEntry() {
 
     // --- Add Trader ---
     const handleAddTrader = async () => {
-        if (!newTrader.full_name.trim()) return toast.error('Enter trader name');
-        if (!newTrader.phone.trim() || newTrader.phone.length < 10) return toast.error('Enter valid phone number');
+        if (!newTrader.full_name.trim() || newTrader.full_name.length < 3) {
+            return toast.error('Name must be at least 3 characters');
+        }
+
+        const phoneRegex = /^\d{10}$/;
+        if (!newTrader.phone.trim() || !phoneRegex.test(newTrader.phone)) {
+            return toast.error('Enter valid 10-digit phone number');
+        }
+
+        // Duplicate Check
+        const existingTrader = traders.find(t => t.phone === newTrader.phone);
+        if (existingTrader) {
+            return toast.error(`Trader already exists: ${existingTrader.full_name}`);
+        }
 
         try {
             setAddingUser(true);
-            const result = await api.admin.users.create({
+            const result = await api.users.create({
                 full_name: newTrader.full_name.trim(),
                 phone: newTrader.phone.trim(),
                 business_name: newTrader.business_name.trim() || undefined,
@@ -625,7 +654,7 @@ export default function LilavEntry() {
                                     onClick={() => setShowFarmerList(true)}
                                 >
                                     <span className="text-sm font-medium text-gray-600 group-hover:text-emerald-600 transition-colors">Select Farmer</span>
-                                    <span className="text-xs text-gray-400 mt-1">Search or add new</span>
+                                    <span className="text-xs text-gray-400 mt-1">{canAddUsers ? 'Search or add new' : 'Search farmer'}</span>
                                 </div>
 
                                 {showFarmerList && (
@@ -664,14 +693,16 @@ export default function LilavEntry() {
                                                 ))
                                             )}
                                         </div>
-                                        <div className="p-2 border-t border-gray-100 bg-gray-50/50">
-                                            <button
-                                                onClick={() => { setShowFarmerList(false); setShowAddFarmerModal(true); }}
-                                                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm shadow-sm"
-                                            >
-                                                <Plus size={16} /> Add New Farmer
-                                            </button>
-                                        </div>
+                                        {canAddUsers && (
+                                            <div className="p-2 border-t border-gray-100 bg-gray-50/50">
+                                                <button
+                                                    onClick={() => { setShowFarmerList(false); setShowAddFarmerModal(true); }}
+                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm shadow-sm"
+                                                >
+                                                    <Plus size={16} /> Add New Farmer
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </>
@@ -712,7 +743,7 @@ export default function LilavEntry() {
                                         onClick={() => setShowTraderList(true)}
                                     >
                                         <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Select Trader</span>
-                                        <span className="text-xs text-gray-400 mt-1">Search or add new</span>
+                                        <span className="text-xs text-gray-400 mt-1">{canAddUsers ? 'Search or add new' : 'Search trader'}</span>
                                     </div>
 
                                     {showTraderList && (
@@ -751,14 +782,16 @@ export default function LilavEntry() {
                                                     ))
                                                 )}
                                             </div>
-                                            <div className="p-2 border-t border-gray-100 bg-gray-50/50">
-                                                <button
-                                                    onClick={() => { setShowTraderList(false); setShowAddTraderModal(true); }}
-                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
-                                                >
-                                                    <Plus size={16} /> Add New Trader
-                                                </button>
-                                            </div>
+                                            {canAddUsers && (
+                                                <div className="p-2 border-t border-gray-100 bg-gray-50/50">
+                                                    <button
+                                                        onClick={() => { setShowTraderList(false); setShowAddTraderModal(true); }}
+                                                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
+                                                    >
+                                                        <Plus size={16} /> Add New Trader
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </>
@@ -1044,15 +1077,28 @@ export default function LilavEntry() {
 
                 {/* === ACTION BUTTONS === */}
                 <div className="flex justify-end gap-4 pt-4 pb-12">
-                    {/* Add Trader Button */}
-                    <button
-                        onClick={handleAddTraderAllocation}
-                        disabled={!selectedFarmer || !selectedTrader || !selectedCrop || saving}
-                        className="px-6 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center gap-3 transition-all shadow-lg shadow-blue-600/20 active:scale-95 disabled:shadow-none"
-                    >
-                        <Plus size={20} />
-                        Add Trader
-                    </button>
+                    {/* Add Trader Button - only for allowed roles */}
+                    {canAddUsers && (
+                        <button
+                            onClick={handleAddTraderAllocation}
+                            disabled={!selectedFarmer || !selectedTrader || !selectedCrop || saving}
+                            className="px-6 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center gap-3 transition-all shadow-lg shadow-blue-600/20 active:scale-95 disabled:shadow-none"
+                        >
+                            <Plus size={20} />
+                            Add Trader
+                        </button>
+                    )}
+
+                    {!canAddUsers && (
+                        <button
+                            onClick={handleAddTraderAllocation}
+                            disabled={!selectedFarmer || !selectedTrader || !selectedCrop || saving}
+                            className="px-6 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center gap-3 transition-all shadow-lg shadow-blue-600/20 active:scale-95 disabled:shadow-none"
+                        >
+                            <Plus size={20} />
+                            Add Allocation
+                        </button>
+                    )}
 
                     {/* Save & Create Transaction */}
                     <button
@@ -1092,7 +1138,10 @@ export default function LilavEntry() {
                                 <input
                                     type="tel"
                                     value={newFarmer.phone}
-                                    onChange={(e) => setNewFarmer(prev => ({ ...prev, phone: e.target.value }))}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                        setNewFarmer(prev => ({ ...prev, phone: val }));
+                                    }}
                                     placeholder="Enter 10-digit phone number"
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
                                 />
@@ -1144,7 +1193,10 @@ export default function LilavEntry() {
                                 <input
                                     type="tel"
                                     value={newTrader.phone}
-                                    onChange={(e) => setNewTrader(prev => ({ ...prev, phone: e.target.value }))}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                        setNewTrader(prev => ({ ...prev, phone: val }));
+                                    }}
                                     placeholder="Enter 10-digit phone number"
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
                                 />
