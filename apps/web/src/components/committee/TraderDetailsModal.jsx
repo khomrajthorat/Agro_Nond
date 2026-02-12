@@ -418,17 +418,18 @@ export default function TraderDetailsModal({ isOpen, onClose, trader }) {
                                                         <tr>
                                                             <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Date</th>
                                                             <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Item</th>
-                                                            <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Manufacturer</th>
                                                             <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Qty</th>
                                                             <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Rate</th>
-                                                            <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Amount</th>
-                                                            <th className="text-center text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Status</th>
+                                                            <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">
+                                                                Total Amount
+                                                                <span className="block text-[10px] lowercase font-normal text-slate-400">(inc. tax)</span>
+                                                            </th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
                                                         {history.length === 0 ? (
                                                             <tr>
-                                                                <td colSpan="7" className="px-6 py-12 text-center text-slate-500">
+                                                                <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
                                                                     No purchase history found for this trader.
                                                                 </td>
                                                             </tr>
@@ -449,9 +450,6 @@ export default function TraderDetailsModal({ isOpen, onClose, trader }) {
                                                                                 {record.vegetable}
                                                                             </span>
                                                                         </td>
-                                                                        <td className="px-6 py-4 text-sm text-slate-600">
-                                                                            {record.farmer_id?.full_name || record.farmer_id?.farmerId || '-'}
-                                                                        </td>
                                                                         {/* CLEAN QTY DISPLAY */}
                                                                         <td className="px-6 py-4 text-right text-sm font-medium text-slate-700">
                                                                             {formatQtyDisplay(qty, nag)}
@@ -461,19 +459,11 @@ export default function TraderDetailsModal({ isOpen, onClose, trader }) {
                                                                             {record.sale_rate ? `₹${record.sale_rate}/${rateUnit}` : '-'}
                                                                         </td>
                                                                         <td className="px-6 py-4 text-right">
-                                                                            {record.sale_amount ? (
-                                                                                <span className="font-bold text-emerald-600">₹{record.sale_amount.toLocaleString()}</span>
-                                                                            ) : '-'}
-                                                                        </td>
-                                                                        <td className="px-6 py-4">
-                                                                            <div className="flex justify-center">
-                                                                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${record.status === 'Sold' || record.status === 'Completed'
-                                                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                                                    : 'bg-amber-100 text-amber-700'
-                                                                                    }`}>
-                                                                                    {record.status}
+                                                                            {(record.net_receivable_from_trader || (record.sale_amount + (record.trader_commission || 0))) ? (
+                                                                                <span className="font-bold text-emerald-600">
+                                                                                    ₹{(record.net_receivable_from_trader || (record.sale_amount + (record.trader_commission || 0))).toLocaleString()}
                                                                                 </span>
-                                                                            </div>
+                                                                            ) : '-'}
                                                                         </td>
                                                                     </tr>
                                                                 );

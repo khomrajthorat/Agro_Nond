@@ -97,8 +97,8 @@ export default function LilavManagement() {
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider">Details</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider">Buyer (Trader)</th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-emerald-800 uppercase tracking-wider">Rate</th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-emerald-800 uppercase tracking-wider">Total Amount</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold text-emerald-800 uppercase tracking-wider">Rate</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold text-emerald-800 uppercase tracking-wider">Total Amount</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-emerald-800 uppercase tracking-wider pl-8">Auctioneer</th>
                             </tr>
                         </thead>
@@ -131,12 +131,12 @@ export default function LilavManagement() {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-center">
                                             <span className="font-bold text-slate-700 bg-slate-50 px-2 py-1 rounded">
                                                 ₹{bid.sale_rate} {bid.official_qty > 0 ? '/ kg' : (bid.nag > 0 ? '/ Nag' : '')}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-center">
                                             <div className="font-bold text-emerald-600 text-lg">₹{bid.sale_amount?.toLocaleString()}</div>
                                         </td>
                                         <td className="px-6 py-4 pl-8">

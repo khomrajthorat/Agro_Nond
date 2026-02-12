@@ -909,7 +909,8 @@ router.get('/farmer/:farmerId/history', requireAuth, async (req, res) => {
         records.forEach(record => {
             // Only count Sold items for revenue
             if (record.status === 'Sold' || record.status === 'Completed') {
-                totalRevenue += record.total_amount || 0;
+                // Use net_payable_to_farmer for accurate revenue (after tax deduction)
+                totalRevenue += record.net_payable_to_farmer || ((record.total_amount || 0) - (record.farmer_commission || 0));
 
                 // Track pending payments
                 if (record.farmer_payment_status === 'Pending') {

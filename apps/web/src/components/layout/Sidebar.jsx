@@ -155,7 +155,7 @@ export default function Sidebar({ role, isOpen, onClose, isCollapsed, onToggleCo
                         <style>{`.scrollbar-none::-webkit-scrollbar { display: none; }`}</style>
                         {items.map((item) => {
                             const isActive = location.pathname === item.path ||
-                                (item.path !== `/dashboard/${role}` && location.pathname.startsWith(item.path));
+                                (item.path !== `/dashboard/${role}` && location.pathname.startsWith(`${item.path}/`));
                             const Icon = item.icon;
 
                             return (

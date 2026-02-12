@@ -47,8 +47,6 @@ export default function TransactionHistory() {
         page: currentPage,
         limit: pageSize,
       };
-
-      // Add search if provided
       if (debouncedSearch) {
         params.search = debouncedSearch;
       }

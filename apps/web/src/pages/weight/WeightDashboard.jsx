@@ -224,12 +224,18 @@ const WeightDashboard = () => {
   // --- FILTER COMPLETED RECORDS ---
   const filteredRecords = records.filter(r => {
     const statusMatch = filterStatus === 'All' ? true : r.status === filterStatus;
+
+    // Filter by Token Search
+    const tokenMatch = tokenFilterFarmerId
+      ? String(r.farmer_ref_id) === String(tokenFilterFarmerId)
+      : true;
+
     let dateMatch = true;
     if (selectedDate) {
       const rDate = new Date(r.date).toLocaleDateString('en-CA');
       dateMatch = rDate === selectedDate;
     }
-    return statusMatch && dateMatch;
+    return statusMatch && dateMatch && tokenMatch;
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // --- HANDLERS ---
@@ -434,7 +440,7 @@ const WeightDashboard = () => {
         {/* SECTION 1: Ready to Weigh (Pending Records with Inline Input) */}
         {(() => {
           const displayPending = tokenFilterFarmerId
-            ? pendingRecords.filter(r => r.farmer_ref_id === tokenFilterFarmerId)
+            ? pendingRecords.filter(r => String(r.farmer_ref_id) === String(tokenFilterFarmerId))
             : pendingRecords;
           return displayPending.length > 0 && (
             <div className="bg-white border border-green-100 rounded-xl mb-6 overflow-hidden">

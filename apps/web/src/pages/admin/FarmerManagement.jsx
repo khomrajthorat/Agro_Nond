@@ -160,16 +160,18 @@ function FarmerAnalytics({ farmerId }) {
                             <tr>
                                 <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Date</th>
                                 <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Item</th>
-                                <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Trader</th>
                                 <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Qty</th>
                                 <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Rate</th>
-                                <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Amount</th>
+                                <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">
+                                    Net Amount
+                                    <span className="block text-[10px] lowercase font-normal text-slate-400">(after tax)</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {history.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-4 py-8 text-center text-slate-500">
+                                    <td colSpan="5" className="px-4 py-8 text-center text-slate-500">
                                         No sales history found.
                                     </td>
                                 </tr>
@@ -190,9 +192,6 @@ function FarmerAnalytics({ farmerId }) {
                                                     {record.vegetable}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-600">
-                                                {record.trader_id?.business_name || record.trader_id?.full_name || '-'}
-                                            </td>
                                             <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
                                                 {formatQtyDisplay(qty, nag)}
                                             </td>
@@ -200,8 +199,10 @@ function FarmerAnalytics({ farmerId }) {
                                                 {record.sale_rate ? `₹${record.sale_rate}/${rateUnit}` : '-'}
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                {record.total_amount ? (
-                                                    <span className="font-bold text-emerald-600">₹{record.total_amount.toLocaleString()}</span>
+                                                {(record.net_payable_to_farmer || record.total_amount) ? (
+                                                    <span className="font-bold text-emerald-600">
+                                                        ₹{(record.net_payable_to_farmer || ((record.total_amount || 0) - (record.farmer_commission || 0))).toLocaleString()}
+                                                    </span>
                                                 ) : '-'}
                                             </td>
                                         </tr>
