@@ -71,25 +71,11 @@ export default function Footer() {
                     <li><Link to="/about" className="text-gray-400 hover:text-green-400 text-sm transition-colors">About Us</Link></li>
                     <li><Link to="/services" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Services</Link></li>
                     <li><Link to="/contact" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Contact</Link></li>
-                    <li>
-                      <Link to="/status" className="text-gray-400 hover:text-green-400 text-sm transition-colors flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        System Status
-                      </Link>
-                    </li>
+
                   </ul>
                 </div>
 
-                {/* Portals Links */}
-                <div>
-                  <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-5">Portals</h4>
-                  <ul className="space-y-3">
-                    <li><Link to="/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Farmer Dashboard</Link></li>
-                    <li><Link to="/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Trader Portal</Link></li>
-                    <li><Link to="/market/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Market Committee</Link></li>
-                    <li><Link to="/admin/login" className="text-gray-400 hover:text-green-400 text-sm transition-colors">Admin Panel</Link></li>
-                  </ul>
-                </div>
+
 
                 {/* Legal Links */}
                 <div>

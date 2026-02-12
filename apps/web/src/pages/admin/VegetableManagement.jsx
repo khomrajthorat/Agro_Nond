@@ -3,30 +3,17 @@ import { Toaster, toast } from 'react-hot-toast';
 import api from '../../lib/api';
 import {
     Plus, Trash2, Upload, Search, X, Package,
-    ChevronDown, ChevronUp, Loader2, Save, Leaf, FileText, CheckCircle2,
-    FileSpreadsheet, Filter, RefreshCw, Pencil, Languages, CheckSquare, Square
+    Loader2, Save, Leaf, FileText, CheckCircle2,
+    FileSpreadsheet, RefreshCw, Pencil, Languages, CheckSquare, Square
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Category options for dropdown
-const CATEGORY_OPTIONS = [
-    'Onion-Potato',
-    'Daily Veg',
-    'Leafy Veg',
-    'Vine Veg / Gourds',
-    'Beans / Pods',
-    'Roots & Salad',
-    'Fruits',
-    'Other'
-];
+
 
 const VegetableManagement = () => {
     const [vegetables, setVegetables] = useState([]);
-    const [grouped, setGrouped] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState('All');
-    const [expandedCategories, setExpandedCategories] = useState([]);
 
     // Form state
     const [showAddForm, setShowAddForm] = useState(false);
@@ -34,7 +21,6 @@ const VegetableManagement = () => {
     const [formData, setFormData] = useState({
         name: '',
         marathiName: '',
-        category: 'Other',
         units: ['kg']
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,8 +41,6 @@ const VegetableManagement = () => {
             setIsLoading(true);
             const data = await api.vegetables.list();
             setVegetables(data.vegetables || []);
-            setGrouped(data.grouped || {});
-            setExpandedCategories(Object.keys(data.grouped || {}));
             setSelectedIds(new Set()); // Clear selection on refresh
         } catch (error) {
             console.error('Failed to fetch vegetables:', error);
@@ -70,35 +54,15 @@ const VegetableManagement = () => {
         fetchVegetables();
     }, [fetchVegetables]);
 
-    // Toggle category expansion
-    const toggleCategory = (category) => {
-        setExpandedCategories(prev =>
-            prev.includes(category)
-                ? prev.filter(c => c !== category)
-                : [...prev, category]
-        );
-    };
-
-    // Filter vegetables by search AND category
-    const filteredGrouped = Object.entries(grouped).reduce((acc, [category, items]) => {
-        if (categoryFilter !== 'All' && category !== categoryFilter) {
-            return acc;
-        }
-
-        const filtered = items.filter(veg =>
-            veg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            veg.marathiName.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-
-        if (filtered.length > 0) {
-            acc[category] = filtered;
-        }
-        return acc;
-    }, {});
+    // Filter vegetables by search
+    const filteredVegetables = vegetables.filter(veg =>
+        veg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        veg.marathiName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     // Helper: Get all currently filtered IDs
     const getAllFilteredIds = () => {
-        return Object.values(filteredGrouped).flat().map(v => v._id);
+        return filteredVegetables.map(v => v._id);
     };
 
     // Handle Select All
@@ -184,7 +148,7 @@ const VegetableManagement = () => {
 
     // Reset Form
     const resetForm = () => {
-        setFormData({ name: '', marathiName: '', category: 'Other', units: ['kg'] });
+        setFormData({ name: '', marathiName: '', units: ['kg'] });
         setEditingId(null);
         setShowAddForm(false);
     };
@@ -194,7 +158,6 @@ const VegetableManagement = () => {
         setFormData({
             name: veg.name,
             marathiName: veg.marathiName,
-            category: veg.category,
             units: veg.units || ['kg']
         });
         setEditingId(veg._id);
@@ -522,7 +485,7 @@ Spinach,पालक,Leafy Veg,kg|nag`;
                                 {editingId ? 'Edit Vegetable' : 'Add New Vegetable'}
                             </h3>
                             <form onSubmit={handleSubmit}>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Name (English)</label>
                                         <div className="relative">
@@ -557,18 +520,6 @@ Spinach,पालक,Leafy Veg,kg|nag`;
                                                 Translate
                                             </button>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Category</label>
-                                        <select
-                                            value={formData.category}
-                                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer font-medium text-slate-700"
-                                        >
-                                            {CATEGORY_OPTIONS.map(cat => (
-                                                <option key={cat} value={cat}>{cat}</option>
-                                            ))}
-                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Units</label>
@@ -711,31 +662,12 @@ Spinach,पालक,Leafy Veg,kg|nag`;
                         )}
                     </div>
 
-                    {/* Filters */}
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                                <Filter size={16} />
-                            </div>
-                            <select
-                                value={categoryFilter}
-                                onChange={(e) => setCategoryFilter(e.target.value)}
-                                className="pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer appearance-none min-w-[180px]"
-                            >
-                                <option value="All">All Categories</option>
-                                {CATEGORY_OPTIONS.map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                        </div>
-
-                        <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-200 text-sm text-slate-500">
-                            <span className="flex items-center gap-2">
-                                <Package size={16} />
-                                <span className="font-semibold text-slate-700">{vegetables.length}</span>
-                            </span>
-                        </div>
+                    {/* Count */}
+                    <div className="hidden sm:flex items-center gap-3 text-sm text-slate-500">
+                        <span className="flex items-center gap-2">
+                            <Package size={16} />
+                            <span className="font-semibold text-slate-700">{vegetables.length}</span>
+                        </span>
                     </div>
                 </div>
 
@@ -772,90 +704,61 @@ Spinach,पालक,Leafy Veg,kg|nag`;
                         </div>
                     </div>
                 ) : (
-                    <div className="divide-y divide-slate-100">
-                        {Object.entries(filteredGrouped).length === 0 ? (
+                    <div>
+                        {filteredVegetables.length === 0 ? (
                             <div className="py-12 text-center">
                                 <Search className="mx-auto text-slate-300 mb-2" size={32} />
                                 <p className="text-slate-500 font-medium">No results found</p>
-                                <p className="text-slate-400 text-sm mt-1">Try adjusting your search or category filter.</p>
+                                <p className="text-slate-400 text-sm mt-1">Try adjusting your search.</p>
                             </div>
-                        ) : Object.entries(filteredGrouped).map(([category, items]) => (
-                            <div key={category} className="group">
-                                <div className="w-full px-6 py-4 flex items-center justify-between bg-slate-50/50 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        ) : (
+                            <div className="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {filteredVegetables.map(veg => (
                                     <div
-                                        onClick={() => toggleCategory(category)}
-                                        className="flex items-center gap-3 cursor-pointer flex-1"
+                                        key={veg._id}
+                                        className={`p-3 rounded-xl border shadow-sm flex items-center gap-3 transition-all duration-200 ${selectedIds.has(veg._id)
+                                            ? 'bg-emerald-100/60 border-emerald-500 ring-1 ring-emerald-500 shadow-md transform scale-[1.01]'
+                                            : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-md'}`}
                                     >
-                                        <div className={`p-1.5 rounded-lg transition-colors ${expandedCategories.includes(category) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm'}`}>
-                                            {expandedCategories.includes(category) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                        {/* Checkbox */}
+                                        <div
+                                            onClick={(e) => { e.stopPropagation(); toggleSelection(veg._id); }}
+                                            className={`flex-shrink-0 w-6 h-6 rounded-md border-2 cursor-pointer flex items-center justify-center transition-all ${selectedIds.has(veg._id)
+                                                ? 'bg-emerald-500 border-emerald-500 text-white scale-110'
+                                                : 'bg-white border-slate-300 text-transparent hover:border-emerald-400'}`}
+                                        >
+                                            <CheckCircle2 size={16} strokeWidth={3} />
                                         </div>
-                                        <div>
-                                            <span className="font-semibold text-slate-700 block text-base">{category}</span>
-                                            <span className="text-xs text-slate-500 font-medium">{items.length} vegetables</span>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium text-slate-700 truncate">{veg.name}</div>
+                                            <div className="text-xs text-slate-500 truncate">{veg.marathiName}</div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex -space-x-1">
+                                                {veg.units.includes('kg') && (
+                                                    <div className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-bold border border-blue-100" title="Kilogram">KG</div>
+                                                )}
+                                                {veg.units.includes('nag') && (
+                                                    <div className="w-6 h-6 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] font-bold border border-purple-100" title="Nag/Count">N</div>
+                                                )}
+                                            </div>
+                                            {/* Actions */}
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => handleEdit(veg)}
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    {/* Category Select All - Optional improvement could be here */}
-                                </div>
-
-                                <AnimatePresence>
-                                    {expandedCategories.includes(category) && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            className="overflow-hidden bg-white"
-                                        >
-                                            <div className="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                {items.map(veg => (
-                                                    <div
-                                                        key={veg._id}
-                                                        className={`p-3 rounded-xl border shadow-sm flex items-center gap-3 transition-all duration-200 ${selectedIds.has(veg._id)
-                                                            ? 'bg-emerald-100/60 border-emerald-500 ring-1 ring-emerald-500 shadow-md transform scale-[1.01]'
-                                                            : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-md'}`}
-                                                    >
-                                                        {/* Checkbox */}
-                                                        <div
-                                                            onClick={(e) => { e.stopPropagation(); toggleSelection(veg._id); }}
-                                                            className={`flex-shrink-0 w-6 h-6 rounded-md border-2 cursor-pointer flex items-center justify-center transition-all ${selectedIds.has(veg._id)
-                                                                ? 'bg-emerald-500 border-emerald-500 text-white scale-110'
-                                                                : 'bg-white border-slate-300 text-transparent hover:border-emerald-400'}`}
-                                                        >
-                                                            <CheckCircle2 size={16} strokeWidth={3} />
-                                                        </div>
-
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="font-medium text-slate-700 truncate">{veg.name}</div>
-                                                            <div className="text-xs text-slate-500 truncate">{veg.marathiName}</div>
-                                                        </div>
-
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex -space-x-1">
-                                                                {veg.units.includes('kg') && (
-                                                                    <div className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-bold border border-blue-100" title="Kilogram">KG</div>
-                                                                )}
-                                                                {veg.units.includes('nag') && (
-                                                                    <div className="w-6 h-6 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] font-bold border border-purple-100" title="Nag/Count">N</div>
-                                                                )}
-                                                            </div>
-                                                            {/* Actions */}
-                                                            <div className="flex items-center gap-1">
-                                                                <button
-                                                                    onClick={() => handleEdit(veg)}
-                                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                                                    title="Edit"
-                                                                >
-                                                                    <Pencil size={16} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                ))}
                             </div>
-                        ))}
+                        )}
                     </div>
                 )}
             </div>
