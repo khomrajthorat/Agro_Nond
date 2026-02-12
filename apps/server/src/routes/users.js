@@ -82,7 +82,8 @@ router.get('/profile', requireAuth, async (req, res) => {
       photo: user.profile_picture, // Frontend expects 'photo', DB has 'profile_picture'
       initials: user.initials,
       license_number: user.license_number,
-      business_name: user.business_name
+      business_name: user.business_name,
+      customId: user.customId // Ensure customId is sent to frontend
     });
   } catch (error) {
     console.error('Get profile error:', error);
@@ -92,7 +93,7 @@ router.get('/profile', requireAuth, async (req, res) => {
 
 router.patch('/profile', requireAuth, async (req, res) => {
   try {
-    const { role, full_name, email, location, profile_picture, business_name, gst_number, license_number, business_address, operating_locations } = req.body;
+    const { role, full_name, email, phone, location, profile_picture, business_name, gst_number, license_number, business_address, operating_locations } = req.body;
 
     const user = req.user; // This comes from requireAuth middleware
 
@@ -109,6 +110,7 @@ router.patch('/profile', requireAuth, async (req, res) => {
       }
     }
     if (email) user.email = email;
+    if (phone) user.phone = phone; // Allow phone update
     if (location) user.location = location;
     if (profile_picture) user.profile_picture = profile_picture;
     if (business_name) user.business_name = business_name;

@@ -43,18 +43,43 @@ export default function LilavNavbar({ onMenuClick }) {
 
     const [editForm, setEditForm] = useState({ ...profile });
 
+    // Fetch Profile on Mount
     useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/api/users/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setProfile(prev => ({
+                        ...prev,
+                        name: data.name || data.full_name || prev.name,
+                        phone: data.phone || prev.phone,
+                        email: data.email || prev.email,
+                        location: data.location || prev.location,
+                        photo: data.photo || data.profile_picture || prev.photo,
+                        lilavId: data.customId || prev.lilavId,
+                        initials: getInitials(data.name || data.full_name || prev.name)
+                    }));
+                    setEditForm(prev => ({
+                        ...prev,
+                        name: data.name || data.full_name || prev.name,
+                        phone: data.phone || prev.phone,
+                        email: data.email || prev.email,
+                        location: data.location || prev.location,
+                        photo: data.photo || data.profile_picture || prev.photo
+                    }));
+                }
+            } catch (error) {
+                console.error("Failed to fetch profile:", error);
+            }
+        };
+
         if (user) {
-            setProfile(prev => ({
-                ...prev,
-                name: user.full_name || prev.name,
-                phone: user.phone || prev.phone,
-                email: user.email || prev.email,
-                location: user.location || prev.location,
-                photo: user.profile_picture || prev.photo,
-                lilavId: user.customId || prev.lilavId,
-                initials: getInitials(user.full_name || prev.name)
-            }));
+            fetchProfile();
         }
     }, [user]);
 
@@ -89,6 +114,7 @@ export default function LilavNavbar({ onMenuClick }) {
                 body: JSON.stringify({
                     full_name: editForm.name,
                     email: editForm.email,
+                    phone: editForm.phone,
                     location: editForm.location,
                     profile_picture: editForm.photo
                 })
@@ -99,7 +125,7 @@ export default function LilavNavbar({ onMenuClick }) {
             setProfile({ ...editForm, initials: getInitials(editForm.name) });
             setIsEditing(false);
             toast.success("Profile updated!");
-            window.location.reload();
+            // window.location.reload();
         } catch (error) {
             toast.error("Failed to save profile");
             console.error(error);

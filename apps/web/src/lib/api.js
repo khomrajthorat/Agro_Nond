@@ -171,6 +171,7 @@ export const api = {
     getProfile: () => apiRequest('/api/users/profile', { method: 'GET' }),
     updateProfile: (data) => apiRequest('/api/users/profile', { method: 'PATCH', body: JSON.stringify(data) }),
     setRole: (role) => apiRequest('/api/users/set-role', { method: 'POST', body: JSON.stringify({ role }) }),
+    create: (data) => apiRequest('/api/users/add', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   // Admin

@@ -28,29 +28,43 @@ export default function WeightNavbar() {
 
   const [editForm, setEditForm] = useState({ ...profile });
 
+  // Fetch Profile on Mount
   useEffect(() => {
-    const saved = localStorage.getItem('weight-profile');
-    if (saved) {
-      const p = JSON.parse(saved);
-      p.initials = getInitials(p.name);
-      setProfile(p);
-      setEditForm(p);
-    }
-  }, []);
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch('/api/users/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-  // Listen for external updates (e.g. from Dashboard)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem('weight-profile');
-      if (saved) {
-        const p = JSON.parse(saved);
-        p.initials = getInitials(p.name);
-        setProfile(p);
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(prev => ({
+            ...prev,
+            name: data.name || data.full_name || prev.name,
+            phone: data.phone || prev.phone,
+            location: data.location || prev.location,
+            photo: data.photo || data.profile_picture || prev.photo,
+            weightId: data.customId || prev.weightId,
+            initials: getInitials(data.name || data.full_name || prev.name)
+          }));
+          setEditForm(prev => ({
+            ...prev,
+            name: data.name || data.full_name || prev.name,
+            phone: data.phone || prev.phone,
+            location: data.location || prev.location,
+            photo: data.photo || data.profile_picture || prev.photo
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
       }
     };
-    window.addEventListener('weightProfileUpdated', handleStorageChange);
-    return () => window.removeEventListener('weightProfileUpdated', handleStorageChange);
-  }, []);
+
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
 
   const getInitials = (name) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -71,13 +85,34 @@ export default function WeightNavbar() {
     }
   };
 
-  const handleSave = () => {
-    const updated = { ...editForm, initials: getInitials(editForm.name) };
-    setProfile(updated);
-    localStorage.setItem('weight-profile', JSON.stringify(updated));
-    setIsEditing(false);
-    window.dispatchEvent(new CustomEvent('weightProfileUpdated'));
-    toast.success("Profile updated!");
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/users/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          full_name: editForm.name,
+          phone: editForm.phone,
+          location: editForm.location,
+          profile_picture: editForm.photo
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to update profile');
+
+      const updated = { ...editForm, initials: getInitials(editForm.name) };
+      setProfile(updated);
+      setIsEditing(false);
+      window.dispatchEvent(new CustomEvent('weightProfileUpdated'));
+      toast.success("Profile updated!");
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+      toast.error("Failed to update profile");
+    }
   };
 
   useEffect(() => {

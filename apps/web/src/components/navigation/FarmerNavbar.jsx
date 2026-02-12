@@ -173,10 +173,10 @@ export default function FarmerNavbar() {
       const initials = getInitials(editForm.name.trim());
 
       const payload = {
-        name: editForm.name.trim(),
+        full_name: editForm.name.trim(), // Backend expects full_name
         phone: editForm.phone.trim(),
         location: editForm.location.trim(),
-        photo: editForm.photo,
+        profile_picture: editForm.photo, // Backend expects profile_picture
         initials: initials,
       };
 
