@@ -9,7 +9,7 @@ import { pdf, PDFDownloadLink } from '@react-pdf/renderer';
 import BillingInvoice from '../../components/committee/BillingInvoice';
 import {
   Plus, TrendingUp, Clock, Package, X, Eye, ArrowLeft,
-  Trash2, CheckCircle, Calendar, MapPin, ChevronRight, Edit, FileText, ChevronDown, ChevronUp, AlertTriangle, History, Download
+  Trash2, CheckCircle, Calendar, MapPin, ChevronRight, Edit, FileText, ChevronDown, ChevronUp, AlertTriangle, History, Download, Ticket
 } from 'lucide-react';
 import { getInvoiceData as getInvoiceDataHelper } from '../../lib/invoiceUtils';
 
@@ -984,11 +984,18 @@ const FarmerDashboard = () => {
             </div>
 
             {/* Token Badge - Only show if token exists */}
+            {/* Token Badge - Professional Match */}
             {dailyToken && (
-              <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg shadow-green-200 animate-pulse-once">
+              <div className="bg-white px-5 py-3 rounded-2xl border border-emerald-100 shadow-sm flex items-center gap-4 group hover:border-emerald-200 transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-xl group-hover:scale-105 transition-transform duration-300">
+                  <Ticket size={24} strokeWidth={2.5} />
+                </div>
                 <div>
-                  <p className="text-xs font-medium text-white opacity-90">Your Token Today</p>
-                  <p className="text-3xl font-black text-white">#{dailyToken}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Your Today's Token</p>
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-lg font-medium text-emerald-500/50 -mb-1">No.</span>
+                    <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{dailyToken}</span>
+                  </div>
                 </div>
               </div>
             )}
