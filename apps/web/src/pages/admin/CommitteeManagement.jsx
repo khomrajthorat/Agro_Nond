@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, FileText, IndianRupee, PieChart, Filter } from 'lucide-react';
+import { Search, FileText, IndianRupee, PieChart, Filter, Coins, TrendingUp, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import api from '../../lib/api';
 
 export default function CommitteeManagement() {
@@ -11,6 +11,11 @@ export default function CommitteeManagement() {
         queryFn: () => api.admin.committeeRecords()
     });
 
+    const { data: stats } = useQuery({
+        queryKey: ['finance-stats'],
+        queryFn: () => api.finance.stats()
+    });
+
     const filteredRecords = records?.filter(record => {
         const hasValidDate = record.sold_at && !isNaN(new Date(record.sold_at).getTime());
         const hasValidAmount = record.sale_amount > 0;
@@ -19,6 +24,25 @@ export default function CommitteeManagement() {
 
         return hasValidDate && hasValidAmount && matchesSearch;
     });
+
+    const StatCard = ({ title, value, icon: Icon, subtext }) => (
+        <div className="bg-white p-6 rounded-xl border border-emerald-100 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+                <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                    <Icon size={24} />
+                </div>
+                <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                    {subtext}
+                </span>
+            </div>
+            <div>
+                <p className="text-sm font-medium text-slate-500">{title}</p>
+                <h3 className="text-2xl font-bold text-slate-800 mt-1">
+                    ₹{value?.toLocaleString() || '0'}
+                </h3>
+            </div>
+        </div>
+    );
 
     return (
         <div className="space-y-6">
@@ -38,10 +62,35 @@ export default function CommitteeManagement() {
                             className="pl-10 pr-4 py-2 w-full sm:w-64 border border-emerald-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm"
                         />
                     </div>
-                    <button className="p-2 bg-white border border-emerald-100 rounded-xl text-emerald-600 hover:bg-emerald-50 shadow-sm transition-colors">
-                        <Filter size={20} />
-                    </button>
                 </div>
+            </div>
+
+            {/* Financial Widgets */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                    title="Total Commission"
+                    value={stats?.totalCommission}
+                    icon={Coins}
+                    subtext="All Time"
+                />
+                <StatCard
+                    title="Pending from Traders"
+                    value={stats?.pendingPayments}
+                    icon={ArrowDownLeft}
+                    subtext="Receivable"
+                />
+                <StatCard
+                    title="Due to Farmers"
+                    value={stats?.farmerPaymentsDue}
+                    icon={ArrowUpRight}
+                    subtext="Payable"
+                />
+                <StatCard
+                    title="Collected Today"
+                    value={stats?.collectedToday}
+                    icon={TrendingUp}
+                    subtext="Today"
+                />
             </div>
 
             <div className="bg-white rounded-xl border border-emerald-100 shadow-sm overflow-hidden">

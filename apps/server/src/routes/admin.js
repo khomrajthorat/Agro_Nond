@@ -124,7 +124,11 @@ router.get('/weight-records', requireAuth, requireAdmin, async (req, res) => {
  */
 router.get('/lilav-bids', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const records = await Record.find({ status: { $in: ['Sold', 'Completed'] } })
+    const records = await Record.find({
+      status: { $in: ['Sold', 'Completed'] },
+      sale_amount: { $gt: 0 },
+      sale_rate: { $gt: 0 }
+    })
       .populate('farmer_id', 'full_name farmerId')
       .populate('trader_id', 'full_name customId business_name')
       .populate('sold_by', 'full_name') // Auctioneer/Staff
